@@ -5,13 +5,16 @@
 //  Created by Kevin Budain on 22/01/2025.
 //
 
+import SwiftRouting
 import SwiftUI
 
 @main
 struct SwiftRoutingDemoApp: App {
   var body: some Scene {
     WindowGroup {
-      AppRoute.home.view
+      RoutedNavigationStack(destination: AppRoute.self) {
+        AppRoute.home.view
+      }
     }
   }
 }
