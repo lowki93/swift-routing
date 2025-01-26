@@ -15,7 +15,7 @@ public struct RoutedNavigationStack<Destination: RouteDestination, Content: View
   private let destination: Destination.Type
   private var content: Content
 
-  public init(name: String?, destination: Destination.Type, @ViewBuilder content: () -> Content) {
+  public init(name: String?, destination: Destination.Type, @ViewBuilder content: () ->  Content) {
     self.name = name
     self.destination = destination
     self.content = content()
@@ -29,7 +29,6 @@ public struct RoutedNavigationStack<Destination: RouteDestination, Content: View
 
     @State private var router: Router
     private let destination: Destination.Type
-
     private let content: Content
 
     init(name: String?, destination: Destination.Type, parent: Router, content: Content) {
@@ -47,6 +46,5 @@ public struct RoutedNavigationStack<Destination: RouteDestination, Content: View
       .cover($router.cover, for: destination)
       .environment(\.router, router)
     }
-
   }
 }

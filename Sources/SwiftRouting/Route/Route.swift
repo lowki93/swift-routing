@@ -7,4 +7,6 @@
 
 import Foundation
 
-public typealias Route = Hashable & Sendable
+public protocol Route: Hashable, Sendable {
+  var name: String { get }
+}

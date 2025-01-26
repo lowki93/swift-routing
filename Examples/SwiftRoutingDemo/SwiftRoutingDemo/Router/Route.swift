@@ -12,6 +12,17 @@ enum AppRoute: Route {
   case home
   case user(name: String)
   case settings
+
+  var name: String {
+    switch self {
+    case .home:
+      "Home"
+    case let .user(name):
+      "User - \(name)"
+    case .settings:
+      "Settings"
+    }
+  }
 }
 
 extension AppRoute: RouteDestination {

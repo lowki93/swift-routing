@@ -10,17 +10,21 @@ import SwiftUI
 
 @Observable
 public class Router: @unchecked Sendable {
+  struct WeakContainer<T: AnyObject> {
+    weak var value: T?
+  }
+
   internal static let defaultRouter: Router = Router()
-
-  internal let id: UUID = UUID()
-  internal let name: String?
-  internal weak var parent: Router?
-
-  internal var children: [UUID: WeakContainer<Router>] = [:]
 
   public var path = NavigationPath()
   public var sheet: AnyRouteDestination?
   public var cover: AnyRouteDestination?
+
+  internal weak var parent: Router?
+  internal var children: [UUID: WeakContainer<Router>] = [:]
+
+  internal let id: UUID = UUID()
+  internal let name: String?
 
   public init() {
     self.name = "Root"
@@ -55,18 +59,18 @@ public extension Router {
 }
 
 public extension Router {
-  func dimiss() {
+  func dismiss() {
     sheet = nil
     cover = nil
   }
 }
 
 internal extension Router {
-  internal func addChild(_ child: Router) {
+  func addChild(_ child: Router) {
     children[child.id] = WeakContainer(value: child)
   }
 
-  internal func removeChild(_ child: Router) {
+  func removeChild(_ child: Router) {
     children.removeValue(forKey: child.id)
   }
 
@@ -87,13 +91,20 @@ private extension Router {
   }
 }
 
+internal extension Router {
+  func onAppear(_ route: some Route) {
+    log("OnAppear - \(route.name)")
+  }
+
+  func onDisappear(_ route: some Route) {
+    log("Disappear - \(route.name)")
+  }
+}
+
 private extension Router {
+
   func log(_ message: String) {
     let base = "Router \(name ?? "") (\(id)) - "
     print(base + message)
   }
-}
-
-struct WeakContainer<T: AnyObject> {
-  weak var value: T?
 }

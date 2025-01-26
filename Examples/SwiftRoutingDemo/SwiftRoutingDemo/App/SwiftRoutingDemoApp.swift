@@ -13,7 +13,7 @@ struct SwiftRoutingDemoApp: App {
   var body: some Scene {
     WindowGroup {
       RoutedNavigationStack(name: "Home", destination: AppRoute.self) {
-        AppRoute.home.view
+        AppRoute.home()
       }
     }
   }
