@@ -22,6 +22,7 @@ public extension View {
     self.sheet(item: route, onDismiss: onDismiss) { content in
       RoutedNavigationStack(name: "Sheet", destination: destination) {
         content()
+          .modifier(DismissModifier())
       }
     }
   }
@@ -34,6 +35,7 @@ public extension View {
     self.fullScreenCover(item: route, onDismiss: onDismiss) { content in
       RoutedNavigationStack(name: "Cover", destination: destination) {
         content()
+          .modifier(DismissModifier())
       }
     }
   }

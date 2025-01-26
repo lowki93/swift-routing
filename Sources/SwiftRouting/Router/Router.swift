@@ -16,9 +16,11 @@ public class Router: @unchecked Sendable {
 
   internal static let defaultRouter: Router = Router()
 
-  public var path = NavigationPath()
-  public var sheet: AnyRouteDestination?
-  public var cover: AnyRouteDestination?
+  internal var path = NavigationPath()
+  internal var sheet: AnyRouteDestination?
+  internal var cover: AnyRouteDestination?
+  internal var triggerDismiss: Bool = false
+  internal(set) var isPresented: Bool
 
   internal weak var parent: Router?
   internal var children: [UUID: WeakContainer<Router>] = [:]
@@ -28,12 +30,14 @@ public class Router: @unchecked Sendable {
 
   public init() {
     self.name = "Root"
+    self.isPresented = false
     log("init")
   }
 
-  public init(name: String?, parent: Router) {
+  public init(name: String?, parent: Router, isPresented: Bool) {
     self.name = name
     self.parent = parent
+    self.isPresented = isPresented
     parent.addChild(self)
     log("init from parent: \(parent.id)")
   }
@@ -60,8 +64,12 @@ public extension Router {
 
 public extension Router {
   func dismiss() {
-    sheet = nil
-    cover = nil
+    if isPresented {
+      triggerDismiss = true
+      log("dismiss")
+    } else {
+      path.removeLast()
+    }
   }
 }
 
