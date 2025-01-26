@@ -11,16 +11,18 @@ import SwiftUI
 public struct RoutedNavigationStack<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
+  private let name: String?
   private let destination: Destination.Type
   private var content: Content
 
-  public init(destination: Destination.Type, @ViewBuilder content: () -> Content) {
+  public init(name: String?, destination: Destination.Type, @ViewBuilder content: () -> Content) {
+    self.name = name
     self.destination = destination
     self.content = content()
   }
 
   public var body: some View {
-    WrappedView(destination: destination, parent: router, content: content)
+    WrappedView(name: name, destination: destination, parent: router, content: content)
   }
 
   private struct WrappedView: View {
@@ -30,9 +32,9 @@ public struct RoutedNavigationStack<Destination: RouteDestination, Content: View
 
     private let content: Content
 
-    init(destination: Destination.Type, parent: Router, content: Content) {
+    init(name: String?, destination: Destination.Type, parent: Router, content: Content) {
       self.destination = destination
-      self.router = Router(parent: parent)
+      self.router = Router(name: name, parent: parent)
       self.content = content
     }
 

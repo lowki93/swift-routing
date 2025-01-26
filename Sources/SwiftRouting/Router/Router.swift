@@ -12,24 +12,29 @@ import SwiftUI
 public class Router: @unchecked Sendable {
   internal static let defaultRouter: Router = Router()
 
-  let id: UUID = UUID()
+  internal let id: UUID = UUID()
+  internal let name: String?
   weak var parent: Router?
+
+  var children: [UUID: WeakContainer<Router>] = [:]
 
   public var path = NavigationPath()
   public var sheet: AnyRouteDestination?
   public var cover: AnyRouteDestination?
 
   public init() {
-    log("Router root: \(id)")
+    self.name = "Root"
+    log("init")
   }
 
-  public init(parent: Router) {
+  public init(name: String?, parent: Router) {
+    self.name = name
     self.parent = parent
-    log("Router init: \(id), from parent: \(parent.id)")
+    log("init from parent: \(parent.id)")
   }
 
   deinit {
-    log("Router deinit: \(id)")
+    log("deinit")
   }
 }
 
@@ -56,7 +61,7 @@ public extension Router {
 
 private extension Router {
   func route(to destination: some RouteDestination, type: RoutingType) {
-    log("Router \(id.uuidString) is navigating to: \(destination), type: \(type)")
+    log("navigating to: \(destination), type: \(type)")
 
     switch type {
     case .push:
@@ -71,6 +76,11 @@ private extension Router {
 
 private extension Router {
   func log(_ message: String) {
-    print(message)
+    let base = "Router \(name ?? "") (\(id)) - "
+    print(base + message)
   }
+}
+
+struct WeakContainer<T: AnyObject> {
+  weak var value: T?
 }

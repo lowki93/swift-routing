@@ -48,7 +48,7 @@ public extension View {
 
   func sheet<D: RouteDestination>(_ route: Binding<AnyRouteDestination?>, for destination: D.Type , onDismiss: (() -> Void)? = nil) -> some View {
     self.sheet(item: route, onDismiss: onDismiss) { content in
-      RoutedNavigationStack(destination: destination) {
+      RoutedNavigationStack(name: "Sheet", destination: destination) {
         content()
       }
     }
@@ -56,7 +56,7 @@ public extension View {
 
   func cover<D: RouteDestination>( _ route: Binding<AnyRouteDestination?>, for destination: D.Type , onDismiss: (() -> Void)? = nil) -> some View {
     self.fullScreenCover(item: route, onDismiss: onDismiss) { content in
-      RoutedNavigationStack(destination: destination) {
+      RoutedNavigationStack(name: "Cover", destination: destination) {
         content()
       }
     }
