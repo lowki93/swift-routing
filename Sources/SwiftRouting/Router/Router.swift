@@ -14,9 +14,9 @@ public class Router: @unchecked Sendable {
 
   internal let id: UUID = UUID()
   internal let name: String?
-  weak var parent: Router?
+  internal weak var parent: Router?
 
-  var children: [UUID: WeakContainer<Router>] = [:]
+  internal var children: [UUID: WeakContainer<Router>] = [:]
 
   public var path = NavigationPath()
   public var sheet: AnyRouteDestination?
@@ -30,10 +30,12 @@ public class Router: @unchecked Sendable {
   public init(name: String?, parent: Router) {
     self.name = name
     self.parent = parent
+    parent.addChild(self)
     log("init from parent: \(parent.id)")
   }
 
   deinit {
+    parent?.removeChild(self)
     log("deinit")
   }
 }
@@ -57,6 +59,17 @@ public extension Router {
     sheet = nil
     cover = nil
   }
+}
+
+internal extension Router {
+  internal func addChild(_ child: Router) {
+    children[child.id] = WeakContainer(value: child)
+  }
+
+  internal func removeChild(_ child: Router) {
+    children.removeValue(forKey: child.id)
+  }
+
 }
 
 private extension Router {
