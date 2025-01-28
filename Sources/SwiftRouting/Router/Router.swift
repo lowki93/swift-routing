@@ -10,30 +10,40 @@ import SwiftUI
 
 @Observable
 public class Router: @unchecked Sendable {
+  struct WeakContainer<T: AnyObject> {
+    weak var value: T?
+  }
+
   internal static let defaultRouter: Router = Router()
+
+  internal var path = NavigationPath()
+  internal var sheet: AnyRouteDestination?
+  internal var cover: AnyRouteDestination?
+  internal var triggerDismiss: Bool = false
+  internal(set) var isPresented: Bool
+
+  internal weak var parent: Router?
+  internal var children: [UUID: WeakContainer<Router>] = [:]
 
   internal let id: UUID = UUID()
   internal let name: String?
-  weak var parent: Router?
-
-  var children: [UUID: WeakContainer<Router>] = [:]
-
-  public var path = NavigationPath()
-  public var sheet: AnyRouteDestination?
-  public var cover: AnyRouteDestination?
 
   public init() {
     self.name = "Root"
+    self.isPresented = false
     log("init")
   }
 
-  public init(name: String?, parent: Router) {
+  public init(name: String?, parent: Router, isPresented: Bool) {
     self.name = name
     self.parent = parent
+    self.isPresented = isPresented
+    parent.addChild(self)
     log("init from parent: \(parent.id)")
   }
 
   deinit {
+    parent?.removeChild(self)
     log("deinit")
   }
 }
@@ -53,10 +63,25 @@ public extension Router {
 }
 
 public extension Router {
-  func dimiss() {
-    sheet = nil
-    cover = nil
+  func dismiss() {
+    if isPresented {
+      triggerDismiss = true
+      log("dismiss")
+    } else {
+      path.removeLast()
+    }
   }
+}
+
+internal extension Router {
+  func addChild(_ child: Router) {
+    children[child.id] = WeakContainer(value: child)
+  }
+
+  func removeChild(_ child: Router) {
+    children.removeValue(forKey: child.id)
+  }
+
 }
 
 private extension Router {
@@ -74,13 +99,20 @@ private extension Router {
   }
 }
 
+internal extension Router {
+  func onAppear(_ route: some Route) {
+    log("OnAppear - \(route.name)")
+  }
+
+  func onDisappear(_ route: some Route) {
+    log("Disappear - \(route.name)")
+  }
+}
+
 private extension Router {
+
   func log(_ message: String) {
     let base = "Router \(name ?? "") (\(id)) - "
     print(base + message)
   }
-}
-
-struct WeakContainer<T: AnyObject> {
-  weak var value: T?
 }

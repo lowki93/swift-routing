@@ -20,7 +20,7 @@ struct HomeScreen: View {
     }
     .navigationTitle("Home")
     .toolbar {
-      ToolbarItem(placement: .primaryAction) {
+      ToolbarItem(placement: .destructiveAction) {
         Button("Settings") {
           router.present(AppRoute.settings)
         }

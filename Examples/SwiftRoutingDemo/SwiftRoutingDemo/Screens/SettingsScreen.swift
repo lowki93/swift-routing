@@ -21,6 +21,12 @@ struct SettingsScreen: View {
         router.push(AppRoute.user(name: "Lowki"))
       }
     }
-    .padding()
+    .toolbar {
+      ToolbarItem(placement: .destructiveAction) {
+        Button("Dismiss") {
+          router.dismiss()
+        }
+      }
+    }
   }
 }
