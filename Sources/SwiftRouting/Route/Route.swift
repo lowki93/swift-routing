@@ -10,3 +10,8 @@ import Foundation
 public protocol Route: Hashable, Sendable {
   var name: String { get }
 }
+
+public struct AnyRoute: Identifiable {
+  public var id: Int { wrapped.hashValue }
+  var wrapped: any Route
+}

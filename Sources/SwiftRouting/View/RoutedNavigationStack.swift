@@ -8,15 +8,15 @@
 import SwiftUI
 
 @MainActor
-public struct RoutedNavigationStack<Destination: RouteDestination, Content: View>: View {
+public struct RoutedNavigationStack<Destination: RouteDestination2, Content: View>: View {
 
   @Environment(\.router) private var router
   @Environment(\.isPresented) private var isPresented
   private let name: String?
-  private let destination: Destination.Type
+  private let destination: Destination
   private var content: Content
 
-  public init(name: String?, destination: Destination.Type, @ViewBuilder content: () ->  Content) {
+  public init(name: String?, destination: Destination, @ViewBuilder content: () ->  Content) {
     self.name = name
     self.destination = destination
     self.content = content()
@@ -29,10 +29,10 @@ public struct RoutedNavigationStack<Destination: RouteDestination, Content: View
   private struct WrappedView: View {
 
     @State private var router: Router
-    private let destination: Destination.Type
+    private let destination: Destination
     private let content: Content
 
-    init(name: String?, destination: Destination.Type, parent: Router, isPresented: Bool, content: Content) {
+    init(name: String?, destination: Destination, parent: Router, isPresented: Bool, content: Content) {
       self.destination = destination
       self.router = Router(name: name, parent: parent, isPresented: isPresented)
       self.content = content
