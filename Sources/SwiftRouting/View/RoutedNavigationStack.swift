@@ -8,7 +8,7 @@
 import SwiftUI
 
 @MainActor
-public struct RoutedNavigationStack<Destination: RouteDestination2, Content: View>: View {
+public struct RoutedNavigationStack<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
   @Environment(\.isPresented) private var isPresented
