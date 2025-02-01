@@ -17,8 +17,8 @@ public class Router: @unchecked Sendable {
   internal static let defaultRouter: Router = Router()
 
   internal var path = NavigationPath()
-  internal var sheet: AnyRouteDestination?
-  internal var cover: AnyRouteDestination?
+  internal var sheet: AnyRoute?
+  internal var cover: AnyRoute?
   internal var triggerDismiss: Bool = false
   internal(set) var isPresented: Bool
 
@@ -49,15 +49,15 @@ public class Router: @unchecked Sendable {
 }
 
 public extension Router {
-  func push(_ destination: some RouteDestination) {
+  func push(_ destination: some Route) {
     route(to: destination, type: .push)
   }
 
-  func present(_ destination: some RouteDestination) {
+  func present(_ destination: some Route) {
     route(to: destination, type: .sheet)
   }
 
-  func cover(_ destination: some RouteDestination) {
+  func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
 }
@@ -85,16 +85,16 @@ internal extension Router {
 }
 
 private extension Router {
-  func route(to destination: some RouteDestination, type: RoutingType) {
+  func route(to destination: some Route, type: RoutingType) {
     log("navigating to: \(destination), type: \(type)")
 
     switch type {
     case .push:
       path.append(destination)
     case .sheet:
-      sheet = AnyRouteDestination(wrapped: destination)
+      sheet = AnyRoute(wrapped: destination)
     case .cover:
-      cover = AnyRouteDestination(wrapped: destination)
+      cover = AnyRoute(wrapped: destination)
     }
   }
 }

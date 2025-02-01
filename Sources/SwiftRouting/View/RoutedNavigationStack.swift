@@ -23,20 +23,18 @@ public struct RoutedNavigationStack<Destination: RouteDestination, Content: View
   }
 
   public var body: some View {
-    WrappedView(name: name, destination: destination, parent: router, isPresented: isPresented, content: content)
+    WrappedView(
+      router: Router(name: name, parent: router, isPresented: isPresented),
+      destination: destination,
+      content: content
+    )
   }
 
   private struct WrappedView: View {
 
-    @State private var router: Router
-    private let destination: Destination.Type
-    private let content: Content
-
-    init(name: String?, destination: Destination.Type, parent: Router, isPresented: Bool, content: Content) {
-      self.destination = destination
-      self.router = Router(name: name, parent: parent, isPresented: isPresented)
-      self.content = content
-    }
+    @State var router: Router
+    let destination: Destination.Type
+    let content: Content
 
     public var body: some View {
       NavigationStack(path: $router.path) {

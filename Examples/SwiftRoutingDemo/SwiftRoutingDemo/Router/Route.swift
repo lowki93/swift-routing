@@ -26,8 +26,8 @@ enum AppRoute: Route {
 }
 
 extension AppRoute: RouteDestination {
-  var view: some View {
-    switch self {
+  static func view(for route: AppRoute) -> some View {
+    switch route {
     case .home:
       HomeScreen()
     case let .user(name):
