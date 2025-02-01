@@ -25,8 +25,8 @@ enum AppRoute: Route {
   }
 }
 
-struct AppDestination: RouteDestination {
-  func view(for route: AppRoute) -> some View {
+extension AppRoute: RouteDestination {
+  static func view(for route: AppRoute) -> some View {
     switch route {
     case .home:
       HomeScreen()
