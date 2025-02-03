@@ -23,27 +23,34 @@ public struct RoutedNavigationStack<Destination: RouteDestination, Content: View
   }
 
   public var body: some View {
-    WrappedView(
-      router: Router(name: name, parent: router, isPresented: isPresented),
-      destination: destination,
-      content: content
-    )
+    WrappedView(name: name, destination: destination, parent: router, isPresented: isPresented, content: content)
+//    WrappedView(
+//      router: Router(name: name, parent: router, isPresented: isPresented),
+//      destination: destination,
+//      content: content
+//    )
   }
 
-  private struct WrappedView: View {
+  @MainActor private struct WrappedView: View {
 
-    @State var router: Router
-    let destination: Destination.Type
-    let content: Content
+//    @State private var router: Router
+    private let destination: Destination.Type
+    private let content: Content
+
+    init(name: String?, destination: Destination.Type, parent: Router, isPresented: Bool, content: Content) {
+      self.destination = destination
+//      self.router = Router(name: name, parent: parent, isPresented: isPresented)
+      self.content = content
+    }
 
     public var body: some View {
-      NavigationStack(path: $router.path) {
+//      NavigationStack(path: $router.path) {
         content
-          .navigationDestination(destination)
-      }
-      .sheet($router.sheet, for: destination)
-      .cover($router.cover, for: destination)
-      .environment(\.router, router)
+//          .navigationDestination(destination)
+//      }
+//      .sheet($router.sheet, for: destination)
+//      .cover($router.cover, for: destination)
+//      .environment(\.router, router)
     }
   }
 }

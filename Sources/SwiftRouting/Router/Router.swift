@@ -9,6 +9,27 @@ import Observation
 import SwiftUI
 
 @Observable
+public class RouterState: @unchecked Sendable {
+  enum `Type` {
+    case root
+    case stack(String)
+    case presented(String)
+  }
+
+  internal var path = NavigationPath()
+  internal var sheet: AnyRoute?
+  internal var cover: AnyRoute?
+  internal var triggerDismiss: Bool = false
+
+  internal let id: UUID = UUID()
+  internal let type: `Type`
+
+  init(type: `Type`) {
+    self.type = type
+  }
+}
+
+@Observable
 public class Router: @unchecked Sendable {
   struct WeakContainer<T: AnyObject> {
     weak var value: T?
