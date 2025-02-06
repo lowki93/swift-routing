@@ -8,12 +8,26 @@
 import Observation
 import SwiftUI
 
+struct WeakContainer<T: AnyObject> {
+  weak var value: T?
+}
+
 @Observable
-public class RouterState: @unchecked Sendable {
-  enum `Type` {
+public class RouterState: ObservableObject, @unchecked Sendable {
+  public enum `Type` {
     case root
+    case tab(String)
     case stack(String)
     case presented(String)
+
+    var name: String {
+      switch self {
+      case .root: "Roote"
+      case let .tab(name): "Tab - " + name
+      case let .stack(name): "Stack - " + name
+      case let .presented(name): "Presented - " + name
+      }
+    }
   }
 
   internal var path = NavigationPath()
@@ -23,49 +37,87 @@ public class RouterState: @unchecked Sendable {
 
   internal let id: UUID = UUID()
   internal let type: `Type`
+  internal weak var parent: RouterState?
+  internal var children: [UUID: WeakContainer<RouterState>] = [:]
 
   init(type: `Type`) {
     self.type = type
-  }
-}
-
-@Observable
-public class Router: @unchecked Sendable {
-  struct WeakContainer<T: AnyObject> {
-    weak var value: T?
-  }
-
-  internal static let defaultRouter: Router = Router()
-
-  internal var path = NavigationPath()
-  internal var sheet: AnyRoute?
-  internal var cover: AnyRoute?
-  internal var triggerDismiss: Bool = false
-  internal(set) var isPresented: Bool
-
-  internal weak var parent: Router?
-  internal var children: [UUID: WeakContainer<Router>] = [:]
-
-  internal let id: UUID = UUID()
-  internal let name: String?
-
-  public init() {
-    self.name = "Root"
-    self.isPresented = false
-    log("init")
-  }
-
-  public init(name: String?, parent: Router, isPresented: Bool) {
-    self.name = name
-    self.parent = parent
-    self.isPresented = isPresented
-    parent.addChild(self)
-    log("init from parent: \(parent.id)")
+    log("init \(type)")
   }
 
   deinit {
     parent?.removeChild(self)
     log("deinit")
+  }
+}
+
+internal extension RouterState {
+  func addChild(_ child: RouterState) {
+    children[child.id] = WeakContainer(value: child)
+  }
+
+  func removeChild(_ child: RouterState) {
+    children.removeValue(forKey: child.id)
+  }
+}
+
+private extension RouterState {
+
+  func log(_ message: String) {
+    let base = "Router \(type.name) (\(id)) - "
+    print(base + message)
+  }
+}
+
+
+@Observable
+public class Router: ObservableObject, @unchecked Sendable {
+
+  internal static let defaultRouter: Router = Router(type: .root)
+
+  public enum `Type` {
+    case root
+    case tab(String)
+    case stack(String)
+    case presented(String)
+
+    var name: String {
+      switch self {
+      case .root: "Root"
+      case let .tab(name): "Tab - " + name
+      case let .stack(name): "Stack - " + name
+      case let .presented(name): "Presented - " + name
+      }
+    }
+  }
+
+  internal var path = NavigationPath()
+  internal var sheet: AnyRoute?
+  internal var cover: AnyRoute?
+  internal var triggerDismiss: Bool = false
+
+  internal let id: UUID = UUID()
+  internal let type: `Type`
+  internal weak var parent: Router?
+  internal var children: [UUID: WeakContainer<Router>] = [:]
+
+  init(type: `Type`) {
+    self.type = type
+//    self.name = "Root"
+//    self.isPresented = false
+    log("init `\(type)`")
+  }
+
+  init(type: `Type`, parent: Router) {
+    self.type = type
+    self.parent = parent
+    parent.addChild(self)
+    log("init `\(type)` from parent `\(parent.type)`")
+//    self.name = name
+//    self.parent = parent
+//    self.isPresented = isPresented
+//    parent.addChild(self)
+//    state.log("init from parent: \(state.id)")
   }
 }
 
@@ -85,12 +137,12 @@ public extension Router {
 
 public extension Router {
   func dismiss() {
-    if isPresented {
-      triggerDismiss = true
-      log("dismiss")
-    } else {
-      path.removeLast()
-    }
+//    if isPresented {
+//      triggerDismiss = true
+//      log("dismiss")
+//    } else {
+//      path.removeLast()
+//    }
   }
 }
 
@@ -102,7 +154,6 @@ internal extension Router {
   func removeChild(_ child: Router) {
     children.removeValue(forKey: child.id)
   }
-
 }
 
 private extension Router {
@@ -122,18 +173,18 @@ private extension Router {
 
 internal extension Router {
   func onAppear(_ route: some Route) {
-    log("OnAppear - \(route.name)")
+//    log("OnAppear - \(route.name)")
   }
 
   func onDisappear(_ route: some Route) {
-    log("Disappear - \(route.name)")
+//    log("Disappear - \(route.name)")
   }
 }
 
 private extension Router {
 
   func log(_ message: String) {
-    let base = "Router \(name ?? "") (\(id)) - "
+    let base = "Router \(type.name) (\(id)) - "
     print(base + message)
   }
 }

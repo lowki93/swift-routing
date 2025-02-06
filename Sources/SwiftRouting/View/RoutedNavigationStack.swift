@@ -11,46 +11,40 @@ import SwiftUI
 public struct RoutedNavigationStack<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
-  @Environment(\.isPresented) private var isPresented
-  private let name: String?
+  private let type: Router.`Type`
   private let destination: Destination.Type
-  private var content: Content
+  private let content: Content
 
-  public init(name: String?, destination: Destination.Type, @ViewBuilder content: () ->  Content) {
-    self.name = name
+  public init(type: Router.`Type`, destination: Destination.Type, @ViewBuilder content: () ->  Content) {
+    self.type = type
     self.destination = destination
     self.content = content()
   }
 
   public var body: some View {
-    WrappedView(name: name, destination: destination, parent: router, isPresented: isPresented, content: content)
-//    WrappedView(
-//      router: Router(name: name, parent: router, isPresented: isPresented),
-//      destination: destination,
-//      content: content
-//    )
+    WrappedView(type: type, destination: destination, parent: router, content: content)
   }
 
-  @MainActor private struct WrappedView: View {
+  private struct WrappedView: View {
 
-//    @State private var router: Router
-    private let destination: Destination.Type
-    private let content: Content
+    @StateObject var router: Router
+    let destination: Destination.Type
+    let content: Content
 
-    init(name: String?, destination: Destination.Type, parent: Router, isPresented: Bool, content: Content) {
+    init(type: Router.`Type`, destination: Destination.Type, parent: Router, content: Content) {
       self.destination = destination
-//      self.router = Router(name: name, parent: parent, isPresented: isPresented)
+      self._router = StateObject(wrappedValue: Router(type: type, parent: parent))
       self.content = content
     }
 
     public var body: some View {
-//      NavigationStack(path: $router.path) {
+      NavigationStack(path: $router.path) {
         content
-//          .navigationDestination(destination)
-//      }
-//      .sheet($router.sheet, for: destination)
-//      .cover($router.cover, for: destination)
-//      .environment(\.router, router)
+          .navigationDestination(destination)
+      }
+      .sheet($router.sheet, for: destination)
+      .cover($router.cover, for: destination)
+      .environment(\.router, router)
     }
   }
 }
