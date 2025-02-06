@@ -10,19 +10,19 @@ import SwiftUI
 @MainActor
 public struct RoutedNavigationStack<Destination: RouteDestination, Content: View>: View {
 
-  @Environment(\.router) private var router
-  private let type: Router.`Type`
+  @Environment(\.router) private var parent
+  private let type: RouterType
   private let destination: Destination.Type
   private let content: Content
 
-  public init(type: Router.`Type`, destination: Destination.Type, @ViewBuilder content: () ->  Content) {
+  public init(type: RouterType, destination: Destination.Type, @ViewBuilder content: () ->  Content) {
     self.type = type
     self.destination = destination
     self.content = content()
   }
 
   public var body: some View {
-    WrappedView(type: type, destination: destination, parent: router, content: content)
+    WrappedView(router: Router(type: type, parent: parent), destination: destination, content: content)
   }
 
   private struct WrappedView: View {
@@ -30,12 +30,6 @@ public struct RoutedNavigationStack<Destination: RouteDestination, Content: View
     @StateObject var router: Router
     let destination: Destination.Type
     let content: Content
-
-    init(type: Router.`Type`, destination: Destination.Type, parent: Router, content: Content) {
-      self.destination = destination
-      self._router = StateObject(wrappedValue: Router(type: type, parent: parent))
-      self.content = content
-    }
 
     public var body: some View {
       NavigationStack(path: $router.path) {
