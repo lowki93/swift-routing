@@ -58,9 +58,26 @@ public extension Router {
   func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
+
+  func route(to destination: some Route, type: RoutingType) {
+    log("navigating to: \(destination), type: \(type)")
+
+    switch type {
+    case .push:
+      path.append(destination)
+    case .sheet:
+      sheet = AnyRoute(wrapped: destination)
+    case .cover:
+      cover = AnyRoute(wrapped: destination)
+    }
+  }
 }
 
 public extension Router {
+  func popToRoot() {
+    path.popToRoot()
+  }
+
   func dismiss() {
     if type.isPresented {
       triggerDismiss = true
@@ -76,33 +93,22 @@ internal extension Router {
     children[child.id] = WeakContainer(value: child)
   }
 
+  public func findChild(from type: RouterType) -> Router? {
+    children.values.compactMap(\.value).first(where: { $0.type == type })
+  }
+
   func removeChild(_ child: Router) {
     children.removeValue(forKey: child.id)
   }
 }
 
-private extension Router {
-  func route(to destination: some Route, type: RoutingType) {
-    log("navigating to: \(destination), type: \(type)")
-
-    switch type {
-    case .push:
-      path.append(destination)
-    case .sheet:
-      sheet = AnyRoute(wrapped: destination)
-    case .cover:
-      cover = AnyRoute(wrapped: destination)
-    }
-  }
-}
-
 internal extension Router {
   func onAppear(_ route: some Route) {
-//    log("OnAppear - \(route.name)")
+    log("OnAppear - \(route.name)")
   }
 
   func onDisappear(_ route: some Route) {
-//    log("Disappear - \(route.name)")
+    log("Disappear - \(route.name)")
   }
 }
 

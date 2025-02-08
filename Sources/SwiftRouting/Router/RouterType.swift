@@ -5,7 +5,7 @@
 //  Created by Kevin Budain on 06/02/2025.
 //
 
-public enum RouterType {
+public enum RouterType: Hashable, Sendable {
   case root
   case tab(String)
   case stack(String)
