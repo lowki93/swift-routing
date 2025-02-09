@@ -8,14 +8,15 @@
 import SwiftUI
 
 public extension Binding where Value: TabRoute {
-  func tapToRoot(for router: Router) -> Binding<Value> {
+
+  static func tabToRoot(for tab: Binding<Value>, in router: Router) -> Binding<Value> {
     Binding(
-      get: { wrappedValue },
+      get: { tab.wrappedValue },
       set: {
-        if $0 == wrappedValue {
+        if tab.wrappedValue == $0 {
           router.findChild(from: .tab($0.name))?.popToRoot()
         } else {
-          wrappedValue == $0
+          tab.wrappedValue = $0
         }
       }
     )
