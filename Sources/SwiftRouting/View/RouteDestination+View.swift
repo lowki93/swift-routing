@@ -20,7 +20,7 @@ public extension View {
     onDismiss: (() -> Void)? = nil
   ) -> some View {
     self.sheet(item: route, onDismiss: onDismiss) { route in
-      dismissableContent("sheet", route: route, for: destination)
+      dismissableContent(route: route, for: destination)
     }
   }
 
@@ -30,16 +30,15 @@ public extension View {
     onDismiss: (() -> Void)? = nil
   ) -> some View {
     self.fullScreenCover(item: route, onDismiss: onDismiss) { route in
-      dismissableContent("Cover", route: route, for: destination)
+      dismissableContent(route: route, for: destination)
     }
   }
 
   private func dismissableContent<D: RouteDestination>(
-    _ name: String,
     route: AnyRoute,
     for destination: D.Type
   ) -> some View {
-    RoutedNavigationStack(name: "\(route.name) - " + name, destination: destination) {
+    RoutedNavigationStack(type: .presented(route.name), destination: destination) {
       // TODO: Add condition to fatalError or not
       if let route = route.wrapped as? D.R {
         destination[route]

@@ -8,38 +8,36 @@
 import Observation
 import SwiftUI
 
-@Observable
-public class Router: @unchecked Sendable {
-  struct WeakContainer<T: AnyObject> {
-    weak var value: T?
-  }
+struct WeakContainer<T: AnyObject> {
+  weak var value: T?
+}
 
-  internal static let defaultRouter: Router = Router()
+@Observable
+public class Router: ObservableObject, Identifiable, @unchecked Sendable {
+
+  internal static let defaultRouter: Router = Router(type: .root)
+
+  public let id: UUID = UUID()
 
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
   internal var cover: AnyRoute?
   internal var triggerDismiss: Bool = false
-  internal(set) var isPresented: Bool
 
+  internal let type: RouterType
   internal weak var parent: Router?
   internal var children: [UUID: WeakContainer<Router>] = [:]
 
-  internal let id: UUID = UUID()
-  internal let name: String?
-
-  public init() {
-    self.name = "Root"
-    self.isPresented = false
-    log("init")
+  init(type: RouterType) {
+    self.type = type
+    log("init `\(type)`")
   }
 
-  public init(name: String?, parent: Router, isPresented: Bool) {
-    self.name = name
+  init(type: RouterType, parent: Router) {
+    self.type = type
     self.parent = parent
-    self.isPresented = isPresented
     parent.addChild(self)
-    log("init from parent: \(parent.id)")
+    log("init `\(type)` from parent `\(parent.type)`")
   }
 
   deinit {
@@ -60,11 +58,28 @@ public extension Router {
   func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
+
+  func route(to destination: some Route, type: RoutingType) {
+    log("navigating to: \(destination), type: \(type)")
+
+    switch type {
+    case .push:
+      path.append(destination)
+    case .sheet:
+      sheet = AnyRoute(wrapped: destination)
+    case .cover:
+      cover = AnyRoute(wrapped: destination)
+    }
+  }
 }
 
 public extension Router {
+  func popToRoot() {
+    path.popToRoot()
+  }
+
   func dismiss() {
-    if isPresented {
+    if type.isPresented {
       triggerDismiss = true
       log("dismiss")
     } else {
@@ -82,20 +97,8 @@ internal extension Router {
     children.removeValue(forKey: child.id)
   }
 
-}
-
-private extension Router {
-  func route(to destination: some Route, type: RoutingType) {
-    log("navigating to: \(destination), type: \(type)")
-
-    switch type {
-    case .push:
-      path.append(destination)
-    case .sheet:
-      sheet = AnyRoute(wrapped: destination)
-    case .cover:
-      cover = AnyRoute(wrapped: destination)
-    }
+  public func find(tab: some TabRoute) -> Router? {
+    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
   }
 }
 
@@ -112,7 +115,7 @@ internal extension Router {
 private extension Router {
 
   func log(_ message: String) {
-    let base = "Router \(name ?? "") (\(id)) - "
+    let base = "Router \(type.name) (\(id)) - "
     print(base + message)
   }
 }

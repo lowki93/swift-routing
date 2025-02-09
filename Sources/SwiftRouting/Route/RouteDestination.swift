@@ -15,7 +15,7 @@ public protocol RouteDestination: Hashable, Identifiable {
 }
 
 public extension RouteDestination {
-  var id: Int { hashValue }
+  public var id: Int { hashValue }
 
   @MainActor static subscript(route: R) -> some View {
     Self.view(for: route).modifier(LifecycleModifier(route: route))
