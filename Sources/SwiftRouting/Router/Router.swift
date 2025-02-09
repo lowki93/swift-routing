@@ -12,6 +12,12 @@ struct WeakContainer<T: AnyObject> {
   weak var value: T?
 }
 
+public protocol DeeplinkHandler {
+  associatedtype R: Route
+  associatedtype D: Route
+  func deeplink(route: R) -> DeeplinkRoute<D>?
+}
+
 @Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
@@ -23,6 +29,9 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var sheet: AnyRoute?
   internal var cover: AnyRoute?
   internal var triggerDismiss: Bool = false
+  internal var isPresented: Bool {
+    sheet != nil || cover != nil
+  }
 
   internal let type: RouterType
   internal weak var parent: Router?
@@ -74,6 +83,16 @@ public extension Router {
 }
 
 public extension Router {
+  func handle(deeplink: DeeplinkRoute<some Route>) {
+    for route in deeplink.path {
+      push(route)
+    }
+
+    route(to: deeplink.route, type: deeplink.type)
+  }
+}
+
+public extension Router {
   func popToRoot() {
     path.popToRoot()
   }
@@ -84,6 +103,13 @@ public extension Router {
       log("dismiss")
     } else {
       path.removeLast()
+    }
+  }
+
+  func dismissChildren() {
+    for router in children.values.compactMap(\.value) where router.isPresented {
+      router.sheet = nil
+      router.cover = nil
     }
   }
 }
