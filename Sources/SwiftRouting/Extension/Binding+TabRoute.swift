@@ -14,7 +14,7 @@ public extension Binding where Value: TabRoute {
       get: { tab.wrappedValue },
       set: {
         if tab.wrappedValue == $0 {
-          router.findChild(from: .tab($0.name))?.popToRoot()
+          router.find(tab: $0)?.popToRoot()
         } else {
           tab.wrappedValue = $0
         }

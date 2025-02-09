@@ -93,12 +93,12 @@ internal extension Router {
     children[child.id] = WeakContainer(value: child)
   }
 
-  public func findChild(from type: RouterType) -> Router? {
-    children.values.compactMap(\.value).first(where: { $0.type == type })
-  }
-
   func removeChild(_ child: Router) {
     children.removeValue(forKey: child.id)
+  }
+
+  public func find(tab: some TabRoute) -> Router? {
+    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
   }
 }
 

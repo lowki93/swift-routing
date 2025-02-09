@@ -7,4 +7,9 @@
 
 public protocol TabRoute: Hashable, Sendable {
   var name: String { get }
+  var type: RouterType { get }
+}
+
+public extension TabRoute {
+  var type: RouterType { .tab(name) }
 }
