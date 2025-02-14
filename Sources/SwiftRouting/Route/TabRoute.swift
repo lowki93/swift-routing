@@ -7,7 +7,6 @@
 
 public protocol TabRoute: Hashable, Sendable {
   var name: String { get }
-  var type: RouterType { get }
 }
 
 public extension TabRoute {

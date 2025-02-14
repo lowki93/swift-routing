@@ -34,19 +34,17 @@ public extension View {
     }
   }
 
+  @ViewBuilder
   private func dismissableContent<D: RouteDestination>(
     route: AnyRoute,
     for destination: D.Type
   ) -> some View {
-    RoutedNavigationStack(type: .presented(route.name), destination: destination) {
-      // TODO: Add condition to fatalError or not
-      if let route = route.wrapped as? D.R {
-        destination[route]
-          .modifier(DismissModifier())
-      } else {
-        Text("Route '\(route)' are not define in '\(D.self)'")
-          .padding()
-      }
+    // TODO: Add condition to fatalError or not
+    if let route = route.wrapped as? D.R {
+      RoutedNavigationStack(type: .presented(route.name), destination: destination, route: route)
+    } else {
+      Text("Route '\(route)' are not define in '\(D.self)'")
+        .padding()
     }
   }
 }

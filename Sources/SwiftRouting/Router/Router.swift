@@ -8,10 +8,6 @@
 import Observation
 import SwiftUI
 
-struct WeakContainer<T: AnyObject> {
-  weak var value: T?
-}
-
 @Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
@@ -22,7 +18,10 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
   internal var cover: AnyRoute?
-  internal var triggerDismiss: Bool = false
+  internal var triggerClose: Bool = false
+  internal var present: Bool {
+    sheet != nil || cover != nil
+  }
 
   internal let type: RouterType
   internal weak var parent: Router?
@@ -30,14 +29,14 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
   init(type: RouterType) {
     self.type = type
-    log("init `\(type)`")
+    log("init")
   }
 
   init(type: RouterType, parent: Router) {
     self.type = type
     self.parent = parent
     parent.addChild(self)
-    log("init `\(type)` from parent `\(parent.type)`")
+    log("init from parent `\(parent.type)`")
   }
 
   deinit {
@@ -58,9 +57,11 @@ public extension Router {
   func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
+}
 
-  func route(to destination: some Route, type: RoutingType) {
-    log("navigating to: \(destination), type: \(type)")
+extension Router: RouterModel {
+  public func route(to destination: some Route, type: RoutingType) {
+    log("navigating to: \(destination.name), type: \(type)")
 
     switch type {
     case .push:
@@ -74,17 +75,46 @@ public extension Router {
 }
 
 public extension Router {
+  func handle(deeplink: DeeplinkRoute<some Route>) {
+    parent?.closeChildren()
+    popToRoot()
+
+    for route in deeplink.path {
+      push(route)
+    }
+
+    route(to: deeplink.route, type: deeplink.type)
+  }
+}
+
+public extension Router {
   func popToRoot() {
     path.popToRoot()
+    log("back")
   }
 
-  func dismiss() {
+  func close() {
     if type.isPresented {
-      triggerDismiss = true
-      log("dismiss")
-    } else {
-      path.removeLast()
+      triggerClose = true
+      log("close")
     }
+  }
+
+  func back() {
+    path.removeLast()
+  }
+
+  func closeChildren() {
+    for router in children.values.compactMap(\.value) where router.present {
+      router.sheet = nil
+      router.cover = nil
+    }
+  }
+}
+
+public extension Router {
+  @discardableResult func find(tab: some TabRoute) -> Router? {
+    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
   }
 }
 
@@ -95,10 +125,6 @@ internal extension Router {
 
   func removeChild(_ child: Router) {
     children.removeValue(forKey: child.id)
-  }
-
-  public func find(tab: some TabRoute) -> Router? {
-    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
   }
 }
 
@@ -115,7 +141,7 @@ internal extension Router {
 private extension Router {
 
   func log(_ message: String) {
-    let base = "Router \(type.name) (\(id)) - "
+    let base = "[Router]:\(type) - "
     print(base + message)
   }
 }
