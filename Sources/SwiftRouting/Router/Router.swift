@@ -14,8 +14,9 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal static let defaultRouter: Router = Router(type: .root)
 
   public let id: UUID = UUID()
+  internal var rootID: UUID = UUID()
 
-  internal var rootRoute: AnyRoute?
+  internal var root: AnyRoute?
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
   internal var cover: AnyRoute?
@@ -33,7 +34,8 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
     log("init")
   }
 
-  init(type: RouterType, parent: Router) {
+  init(root: AnyRoute, type: RouterType, parent: Router) {
+    self.root = root
     self.type = type
     self.parent = parent
     parent.addChild(self)
@@ -72,7 +74,8 @@ private extension Router  {
     case .cover:
       cover = AnyRoute(wrapped: destination)
     case .root:
-      rootRoute = AnyRoute(wrapped: destination)
+      root = AnyRoute(wrapped: destination)
+      rootID = UUID()
     }
   }
 }
