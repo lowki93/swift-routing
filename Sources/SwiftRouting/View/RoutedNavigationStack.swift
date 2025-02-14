@@ -33,13 +33,22 @@ public struct RoutedNavigationStack<Destination: RouteDestination>: View {
 
     public var body: some View {
       NavigationStack(path: $router.path) {
-        destination[route]
+        rootView
           .navigationDestination(destination)
       }
       .sheet($router.sheet, for: destination)
       .cover($router.cover, for: destination)
       .modifier(CloseModifier())
       .environment(\.router, router)
+    }
+
+    @ViewBuilder
+    private var rootView: some View {
+      if let route = router.rootRoute?.wrapped as? Destination.R {
+        destination[route]
+      } else {
+        destination[route]
+      }
     }
   }
 }

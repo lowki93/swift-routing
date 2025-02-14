@@ -6,6 +6,7 @@
 //
 
 public enum RoutingType {
+  case root
   case push
   case sheet
   case cover

@@ -22,6 +22,7 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var present: Bool {
     sheet != nil || cover != nil
   }
+  internal var rootRoute: AnyRoute?
 
   internal let type: RouterType
   internal weak var parent: Router?
@@ -70,6 +71,8 @@ extension Router: RouterModel {
       sheet = AnyRoute(wrapped: destination)
     case .cover:
       cover = AnyRoute(wrapped: destination)
+    case .root:
+      rootRoute = AnyRoute(wrapped: destination)
     }
   }
 }
@@ -90,7 +93,7 @@ public extension Router {
 public extension Router {
   func popToRoot() {
     path.popToRoot()
-    log("back")
+    log("popToRoot")
   }
 
   func close() {
@@ -102,6 +105,7 @@ public extension Router {
 
   func back() {
     path.removeLast()
+    log("back")
   }
 
   func closeChildren() {
