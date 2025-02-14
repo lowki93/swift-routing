@@ -38,7 +38,7 @@ public struct RoutedNavigationStack<Destination: RouteDestination>: View {
       }
       .sheet($router.sheet, for: destination)
       .cover($router.cover, for: destination)
-      .modifier(DismissModifier())
+      .modifier(CloseModifier())
       .environment(\.router, router)
     }
   }

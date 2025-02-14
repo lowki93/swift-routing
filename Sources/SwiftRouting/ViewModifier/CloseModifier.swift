@@ -1,5 +1,5 @@
 //
-//  DismissModifier.swift
+//  CloseModifier.swift
 //  SwiftRouting
 //
 //  Created by Kevin Budain on 27/01/2025.
@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-struct DismissModifier: ViewModifier {
+struct CloseModifier: ViewModifier {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.router) private var router
 
   func body(content: Content) -> some View {
     content
-      .onChange(of: router.triggerDismiss) {
-        guard router.triggerDismiss else { return }
+      .onChange(of: router.triggerClose) {
+        guard router.triggerClose else { return }
         dismiss()
       }
   }

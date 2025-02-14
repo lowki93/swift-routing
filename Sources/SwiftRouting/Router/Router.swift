@@ -18,8 +18,8 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
   internal var cover: AnyRoute?
-  internal var triggerDismiss: Bool = false
-  internal var isPresented: Bool {
+  internal var triggerClose: Bool = false
+  internal var present: Bool {
     sheet != nil || cover != nil
   }
 
@@ -76,7 +76,7 @@ extension Router: RouterModel {
 
 public extension Router {
   func handle(deeplink: DeeplinkRoute<some Route>) {
-    parent?.dismissChildren()
+    parent?.closeChildren()
     popToRoot()
 
     for route in deeplink.path {
@@ -90,19 +90,22 @@ public extension Router {
 public extension Router {
   func popToRoot() {
     path.popToRoot()
+    log("back")
   }
 
-  func dismiss() {
+  func close() {
     if type.isPresented {
-      triggerDismiss = true
-      log("dismiss")
-    } else {
-      path.removeLast()
+      triggerClose = true
+      log("close")
     }
   }
 
-  func dismissChildren() {
-    for router in children.values.compactMap(\.value) where router.isPresented {
+  func back() {
+    path.removeLast()
+  }
+
+  func closeChildren() {
+    for router in children.values.compactMap(\.value) where router.present {
       router.sheet = nil
       router.cover = nil
     }
