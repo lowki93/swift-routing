@@ -14,7 +14,9 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal static let defaultRouter: Router = Router(type: .root)
 
   public let id: UUID = UUID()
+  internal var rootID: UUID = UUID()
 
+  internal var root: AnyRoute?
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
   internal var cover: AnyRoute?
@@ -32,7 +34,8 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
     log("init")
   }
 
-  init(type: RouterType, parent: Router) {
+  init(root: AnyRoute, type: RouterType, parent: Router) {
+    self.root = root
     self.type = type
     self.parent = parent
     parent.addChild(self)
@@ -45,22 +48,22 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   }
 }
 
-public extension Router {
-  func push(_ destination: some Route) {
+extension Router: RouterModel {
+  public func push(_ destination: some Route) {
     route(to: destination, type: .push)
   }
 
-  func present(_ destination: some Route) {
+  public func present(_ destination: some Route) {
     route(to: destination, type: .sheet)
   }
 
-  func cover(_ destination: some Route) {
+  public func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
 }
 
-extension Router: RouterModel {
-  public func route(to destination: some Route, type: RoutingType) {
+private extension Router  {
+  func route(to destination: some Route, type: RoutingType) {
     log("navigating to: \(destination.name), type: \(type)")
 
     switch type {
@@ -70,6 +73,9 @@ extension Router: RouterModel {
       sheet = AnyRoute(wrapped: destination)
     case .cover:
       cover = AnyRoute(wrapped: destination)
+    case .root:
+      root = AnyRoute(wrapped: destination)
+      rootID = UUID()
     }
   }
 }
@@ -90,7 +96,7 @@ public extension Router {
 public extension Router {
   func popToRoot() {
     path.popToRoot()
-    log("back")
+    log("popToRoot")
   }
 
   func close() {
@@ -102,6 +108,7 @@ public extension Router {
 
   func back() {
     path.removeLast()
+    log("back")
   }
 
   func closeChildren() {
@@ -141,7 +148,9 @@ internal extension Router {
 private extension Router {
 
   func log(_ message: String) {
+    #if DEBUG
     let base = "[Router]:\(type) - "
     print(base + message)
+    #endif
   }
 }

@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "SwiftRouting",
+  name: "swift-routing",
   platforms: [
     .iOS(.v17),
   ],
