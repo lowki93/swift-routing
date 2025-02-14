@@ -13,8 +13,8 @@ struct DismissModifier: ViewModifier {
 
   func body(content: Content) -> some View {
     content
-      .onChange(of: router.triggerDismiss) { triggerDismiss in
-        guard triggerDismiss else { return }
+      .onChange(of: router.triggerDismiss) {
+        guard router.triggerDismiss else { return }
         dismiss()
       }
   }

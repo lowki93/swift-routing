@@ -11,15 +11,6 @@ public enum RouterType: Hashable, Sendable {
   case stack(String)
   case presented(String)
 
-  var name: String {
-    switch self {
-    case .root: "Root"
-    case let .tab(name): "Tab - " + name
-    case let .stack(name): "Stack - " + name
-    case let .presented(name): "Presented - " + name
-    }
-  }
-
   var isPresented: Bool {
     switch self {
     case .presented:  true

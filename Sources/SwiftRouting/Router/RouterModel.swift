@@ -8,7 +8,5 @@
 import SwiftUI
 
 public protocol RouterModel: ObservableObject {
-  associatedtype R: Route
-
-  var routeTo: (type: RoutingType, route: R)? { get set }
+  func route(to destination: some Route, type: RoutingType)
 }

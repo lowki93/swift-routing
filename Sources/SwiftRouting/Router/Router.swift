@@ -8,16 +8,6 @@
 import Observation
 import SwiftUI
 
-struct WeakContainer<T: AnyObject> {
-  weak var value: T?
-}
-
-public protocol DeeplinkHandler {
-  associatedtype R: Route
-  associatedtype D: Route
-  func deeplink(route: R) -> DeeplinkRoute<D>?
-}
-
 @Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
@@ -39,14 +29,14 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
   init(type: RouterType) {
     self.type = type
-    log("init `\(type)`")
+    log("init")
   }
 
   init(type: RouterType, parent: Router) {
     self.type = type
     self.parent = parent
     parent.addChild(self)
-    log("init `\(type)` from parent `\(parent.type)`")
+    log("init from parent `\(parent.type)`")
   }
 
   deinit {
@@ -67,9 +57,11 @@ public extension Router {
   func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
+}
 
-  func route(to destination: some Route, type: RoutingType) {
-    log("navigating to: \(destination), type: \(type)")
+extension Router: RouterModel {
+  public func route(to destination: some Route, type: RoutingType) {
+    log("navigating to: \(destination.name), type: \(type)")
 
     switch type {
     case .push:
@@ -84,6 +76,9 @@ public extension Router {
 
 public extension Router {
   func handle(deeplink: DeeplinkRoute<some Route>) {
+    parent?.dismissChildren()
+    popToRoot()
+
     for route in deeplink.path {
       push(route)
     }
@@ -114,6 +109,12 @@ public extension Router {
   }
 }
 
+public extension Router {
+  @discardableResult func find(tab: some TabRoute) -> Router? {
+    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
+  }
+}
+
 internal extension Router {
   func addChild(_ child: Router) {
     children[child.id] = WeakContainer(value: child)
@@ -121,10 +122,6 @@ internal extension Router {
 
   func removeChild(_ child: Router) {
     children.removeValue(forKey: child.id)
-  }
-
-  public func find(tab: some TabRoute) -> Router? {
-    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
   }
 }
 
@@ -141,7 +138,7 @@ internal extension Router {
 private extension Router {
 
   func log(_ message: String) {
-    let base = "Router \(type.name) (\(id)) - "
+    let base = "[Router]:\(type) - "
     print(base + message)
   }
 }

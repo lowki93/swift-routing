@@ -14,10 +14,10 @@ public protocol RouteDestination: Hashable, Identifiable {
   @MainActor @ViewBuilder static func view(for route: R) -> Destination
 }
 
-public extension RouteDestination {
+extension RouteDestination {
   public var id: Int { hashValue }
 
-  @MainActor static subscript(route: R) -> some View {
+  @MainActor public static subscript(route: R) -> some View {
     Self.view(for: route).modifier(LifecycleModifier(route: route))
   }
 }
