@@ -15,6 +15,7 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
   public let id: UUID = UUID()
 
+  internal var rootRoute: AnyRoute?
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
   internal var cover: AnyRoute?
@@ -22,7 +23,6 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var present: Bool {
     sheet != nil || cover != nil
   }
-  internal var rootRoute: AnyRoute?
 
   internal let type: RouterType
   internal weak var parent: Router?
@@ -46,22 +46,22 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   }
 }
 
-public extension Router {
-  func push(_ destination: some Route) {
+extension Router: RouterModel {
+  public func push(_ destination: some Route) {
     route(to: destination, type: .push)
   }
 
-  func present(_ destination: some Route) {
+  public func present(_ destination: some Route) {
     route(to: destination, type: .sheet)
   }
 
-  func cover(_ destination: some Route) {
+  public func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
 }
 
-extension Router: RouterModel {
-  public func route(to destination: some Route, type: RoutingType) {
+private extension Router  {
+  func route(to destination: some Route, type: RoutingType) {
     log("navigating to: \(destination.name), type: \(type)")
 
     switch type {
@@ -145,7 +145,9 @@ internal extension Router {
 private extension Router {
 
   func log(_ message: String) {
+    #if DEBUG
     let base = "[Router]:\(type) - "
     print(base + message)
+    #endif
   }
 }

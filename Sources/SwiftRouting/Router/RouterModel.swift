@@ -8,5 +8,7 @@
 import SwiftUI
 
 public protocol RouterModel: ObservableObject {
-  func route(to destination: some Route, type: RoutingType)
+  func push(_ destination: some Route)
+  func present(_ destination: some Route)
+  func cover(_ destination: some Route)
 }
