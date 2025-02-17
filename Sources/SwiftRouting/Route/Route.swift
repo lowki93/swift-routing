@@ -18,6 +18,14 @@ import Foundation
 ///   case page1
 ///   case page2(Int)
 ///   case page3(String)
+///
+///   public var name: String {
+///     switch self {
+///       case .page1: "page1"
+///       case let .page2(int): "page2(\(int))"
+///       case let .page3(string): "page3(\(string))"
+///     }
+///   }
 /// }
 /// ```
 ///

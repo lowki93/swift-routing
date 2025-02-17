@@ -21,6 +21,10 @@ public struct RoutingNavigationStack<Destination: RouteDestination>: View {
     self.route = route
   }
 
+  public init(tab: any TabRoute, destination: Destination.Type, route: Destination.R) {
+    self.init(type: tab.type, destination: destination, route: route)
+  }
+
   public var body: some View {
     WrappedView(
       router: Router(root: AnyRoute(wrapped: route), type: type, parent: parent),
