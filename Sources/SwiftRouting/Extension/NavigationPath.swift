@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public extension NavigationPath {
+extension NavigationPath {
   mutating func popToRoot() {
     removeLast(count)
   }
