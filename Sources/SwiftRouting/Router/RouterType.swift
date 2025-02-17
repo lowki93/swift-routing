@@ -6,7 +6,7 @@
 //
 
 public enum RouterType: Hashable, Sendable {
-  case root
+  case app
   case tab(String)
   case stack(String)
   case presented(String)

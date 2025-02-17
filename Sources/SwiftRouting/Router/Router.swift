@@ -11,7 +11,7 @@ import SwiftUI
 @Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
-  internal static let defaultRouter: Router = Router(type: .root)
+  internal static let defaultRouter: Router = Router(type: .app)
 
   public let id: UUID = UUID()
   internal var rootID: UUID = UUID()
