@@ -26,7 +26,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// Alternatively, you can create a separate view if you need to use an environment object:
+/// Alternatively, you can create a separate view if you need to use an environment object, make depency injecton ..:
 /// ```swift
 /// extension HomeRoute: @retroactive RouteDestination {
 ///   public static func view(for route: HomeRoute) -> some View {
@@ -38,7 +38,12 @@ public protocol RouteDestination: Hashable, Identifiable {
   associatedtype R: Route
   associatedtype Destination: View
 
-  /// Return the corect view link to a Route
+  /// Returns the correct view associated with a `Route`.
+  ///
+  /// - Parameter route: The route to display.
+  /// - Returns: The corresponding `View`.
+  ///
+  /// Example:
   /// ```swift
   /// extension HomeRoute: @retroactive RouteDestination {
   ///   public static func view(for route: HomeRoute) -> some View {
