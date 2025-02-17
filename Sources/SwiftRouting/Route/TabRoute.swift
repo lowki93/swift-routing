@@ -12,7 +12,7 @@ import Foundation
 /// The `TabRoute` protocol represents an enumeration of all available tabs.
 ///
 /// ## Defining a Tab
-/// To define a tab, create an enumeration conforming to `TabRoute`:
+/// To define a tab, create an enumeration conforming to `TabRoute`.
 /// ```swift
 /// public enum HomeTab: TabRoute {
 ///   case tab1
