@@ -1,5 +1,5 @@
 //
-//  RoutingNavigationPath.swift
+//  RoutingNavigationStack.swift
 //  SwiftRouting
 //
 //  Created by Kevin Budain on 25/01/2025.
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @MainActor
-public struct RoutingNavigationPath<Destination: RouteDestination>: View {
+public struct RoutingNavigationStack<Destination: RouteDestination>: View {
 
   @Environment(\.router) private var parent
   private let type: RouterType

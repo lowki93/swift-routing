@@ -12,7 +12,7 @@ import SwiftUI
 struct SwiftRoutingDemoApp: App {
   var body: some Scene {
     WindowGroup {
-      RoutingNavigationPath(name: "Home", destination: AppRoute.self) {
+      RoutingNavigationStack(name: "Home", destination: AppRoute.self) {
         AppRoute[.home]
       }
     }
