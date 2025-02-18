@@ -60,7 +60,7 @@ public struct AnyRoute: Identifiable, Equatable {
   public var id: Int { wrapped.hashValue }
   var wrapped: any Route
 
-  public subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {
+  subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {
     wrapped[keyPath: keyPath]
   }
 

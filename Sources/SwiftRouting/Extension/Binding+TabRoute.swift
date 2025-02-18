@@ -16,7 +16,7 @@ public extension Binding where Value: TabRoute {
   ///
   /// - Parameters:
   ///   - tab: A binding to the current tab.
-  ///   - router: The router managing the navigation stack.
+  ///   - router: The router managing the tabview.
   /// - Returns: A binding that updates the tab and clears its navigation stack when reselected.
   static func tabToRoot(for tab: Binding<Value>, in router: Router) -> Binding<Value> {
     Binding(

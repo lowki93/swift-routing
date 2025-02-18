@@ -40,6 +40,6 @@ public protocol TabRoute: Hashable, Sendable {
   var name: String { get }
 }
 
-public extension TabRoute {
+extension TabRoute {
   var type: RouterType { .tab(name) }
 }
