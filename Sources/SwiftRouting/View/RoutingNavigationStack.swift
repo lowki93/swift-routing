@@ -15,10 +15,10 @@ import SwiftUI
 /// ## Usage
 /// ```swift
 /// // For a tab-based navigation:
-/// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, route: .page1)
+/// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
 ///
 /// // For a stack-based navigation:
-/// RoutingNavigationStack(stack: "Page", destination: HomeRoute.self, route: .page1)
+/// RoutingNavigationStack(stack: "Page", destination: HomeRoute.self, root: .page1)
 /// ```
 ///
 /// ## Closable
@@ -29,12 +29,12 @@ public struct RoutingNavigationStack<Destination: RouteDestination>: View {
   @Environment(\.router) private var parent
   private let type: RouterType
   private let destination: Destination.Type
-  private let route: Destination.R
+  private let root: Destination.R
 
-  init(type: RouterType, destination: Destination.Type, route: Destination.R) {
+  init(type: RouterType, destination: Destination.Type, root: Destination.R) {
     self.type = type
     self.destination = destination
-    self.route = route
+    self.root = root
   }
 
   /// Initializes a `RoutingNavigationStack` for tab-based navigation.
@@ -42,9 +42,9 @@ public struct RoutingNavigationStack<Destination: RouteDestination>: View {
   /// - Parameters:
   ///   - tab: The tab associated with the navigation.
   ///   - destination: The destination type conforming to `RouteDestination`.
-  ///   - route: The initial route.
-  public init(tab: any TabRoute, destination: Destination.Type, route: Destination.R) {
-    self.init(type: tab.type, destination: destination, route: route)
+  ///   - root: The initial route.
+  public init(tab: any TabRoute, destination: Destination.Type, root: Destination.R) {
+    self.init(type: tab.type, destination: destination, root: root)
   }
 
   /// Initializes a `RoutingNavigationStack` for stack-based navigation.
@@ -52,14 +52,14 @@ public struct RoutingNavigationStack<Destination: RouteDestination>: View {
   /// - Parameters:
   ///   - name: The name of the navigation stack.
   ///   - destination: The destination type conforming to `RouteDestination`.
-  ///   - route: The initial route.
-  public init(stack name: String, destination: Destination.Type, route: Destination.R) {
-    self.init(type: .stack(name), destination: destination, route: route)
+  ///   - root: The initial route.
+  public init(stack name: String, destination: Destination.Type, root: Destination.R) {
+    self.init(type: .stack(name), destination: destination, root: root)
   }
 
   public var body: some View {
     WrappedView(
-      router: Router(root: AnyRoute(wrapped: route), type: type, parent: parent),
+      router: Router(root: AnyRoute(wrapped: root), type: type, parent: parent),
       destination: destination
     )
   }
