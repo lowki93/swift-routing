@@ -8,10 +8,23 @@
 import Observation
 import SwiftUI
 
+/// Every `RoutingNavigationStack`has his own router
+///
+///Router enable progamatic control of their navigation stacks
+/// ```swift
+/// Button("To page2") {
+///   router.push(HomeRoute.page2(10))
+/// }
+/// ```
+///
+/// Router are accessible from the environment inside a `RoutingNavigationStack`
+/// ```swift
+/// @Environment(\.router) var router
+/// ```
 @Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
-  internal static let defaultRouter: Router = Router(type: .root)
+  internal static let defaultRouter: Router = Router(type: .app)
 
   public let id: UUID = UUID()
   internal var rootID: UUID = UUID()
@@ -81,24 +94,41 @@ private extension Router  {
 }
 
 public extension Router {
+  /// Handles a deeplink and navigates to the corresponding route.
+  ///
+  /// This method processes a deeplink by performing the following steps:
+  /// 1. Closes all currently presented child routers.
+  /// 2. Clears the current navigation path, returning to the root.
+  /// 3. Pushes the intermediate routes defined in the deeplink's path.
+  /// 4. Navigates to the final destination route with the specified presentation type.
+  ///
+  /// - Parameter deeplink: The `DeeplinkRoute` containing the navigation path and target route.
   func handle(deeplink: DeeplinkRoute<some Route>) {
+    // Dismiss all presented child routers
     parent?.closeChildren()
+
+    // Clear the current navigation path
     popToRoot()
 
+    // Add intermediate routes to the navigation path
     for route in deeplink.path {
       push(route)
     }
 
+    // Navigate to the target route with the specified presentation type
     route(to: deeplink.route, type: deeplink.type)
   }
 }
 
 public extension Router {
+  /// Clears the entire navigation path, returning to the root.
   func popToRoot() {
     path.popToRoot()
     log("popToRoot")
   }
 
+  /// Closes the navigation stack.
+  /// > **Warning:** This function is only available if the stack is presented.
   func close() {
     if type.isPresented {
       triggerClose = true
@@ -106,11 +136,13 @@ public extension Router {
     }
   }
 
+  /// Removes the last element from the navigation path, navigating back one step.
   func back() {
     path.removeLast()
     log("back")
   }
 
+  /// Closes all child routers presented from the parent router.
   func closeChildren() {
     for router in children.values.compactMap(\.value) where router.present {
       router.sheet = nil
@@ -120,6 +152,11 @@ public extension Router {
 }
 
 public extension Router {
+  /// Finds the corresponding router for a given tab.
+  ///
+  /// This method searches among the child routers to find the one associated with the specified tab.
+  ///
+  /// - Parameter tab: The `TabRoute` to search for.
   @discardableResult func find(tab: some TabRoute) -> Router? {
     children.values.compactMap(\.value).first(where: { $0.type == tab.type })
   }

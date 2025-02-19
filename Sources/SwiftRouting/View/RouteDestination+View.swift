@@ -41,7 +41,7 @@ public extension View {
   ) -> some View {
     // TODO: Add condition to fatalError or not
     if let route = route.wrapped as? D.R {
-      RoutingNavigationPath(type: .presented(route.name), destination: destination, route: route)
+      RoutingNavigationStack(type: .presented(route.name), destination: destination, root: route)
     } else {
       Text("Route '\(route)' are not define in '\(D.self)'")
         .padding()
