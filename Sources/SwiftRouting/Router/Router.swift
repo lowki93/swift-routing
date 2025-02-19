@@ -94,14 +94,28 @@ private extension Router  {
 }
 
 public extension Router {
+  /// Handles a deeplink and navigates to the corresponding route.
+  ///
+  /// This method processes a deeplink by performing the following steps:
+  /// 1. Closes all currently presented child routers.
+  /// 2. Clears the current navigation path, returning to the root.
+  /// 3. Pushes the intermediate routes defined in the deeplink's path.
+  /// 4. Navigates to the final destination route with the specified presentation type.
+  ///
+  /// - Parameter deeplink: The `DeeplinkRoute` containing the navigation path and target route.
   func handle(deeplink: DeeplinkRoute<some Route>) {
+    // Dismiss all presented child routers
     parent?.closeChildren()
+
+    // Clear the current navigation path
     popToRoot()
 
+    // Add intermediate routes to the navigation path
     for route in deeplink.path {
       push(route)
     }
 
+    // Navigate to the target route with the specified presentation type
     route(to: deeplink.route, type: deeplink.type)
   }
 }
