@@ -8,6 +8,19 @@
 import Observation
 import SwiftUI
 
+/// Every `RoutingNavigationStack`has his own router
+///
+///Router enable progamatic control of their navigation stacks
+/// ```swift
+/// Button("To page2") {
+///   router.push(HomeRoute.page2(10))
+/// }
+/// ```
+///
+/// Router are accessible from the environment inside a `RoutingNavigationStack`
+/// ```swift
+/// @Environment(\.router) var router
+/// ```
 @Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
@@ -94,11 +107,14 @@ public extension Router {
 }
 
 public extension Router {
+  /// Clears the entire navigation path, returning to the root.
   func popToRoot() {
     path.popToRoot()
     log("popToRoot")
   }
 
+  /// Closes the navigation stack.
+  /// > **Warning:** This function is only available if the stack is presented.
   func close() {
     if type.isPresented {
       triggerClose = true
@@ -106,11 +122,13 @@ public extension Router {
     }
   }
 
+  /// Removes the last element from the navigation path, navigating back one step.
   func back() {
     path.removeLast()
     log("back")
   }
 
+  /// Closes all child routers presented from the parent router.
   func closeChildren() {
     for router in children.values.compactMap(\.value) where router.present {
       router.sheet = nil
@@ -120,6 +138,11 @@ public extension Router {
 }
 
 public extension Router {
+  /// Finds the corresponding router for a given tab.
+  ///
+  /// This method searches among the child routers to find the one associated with the specified tab.
+  ///
+  /// - Parameter tab: The `TabRoute` to search for.
   @discardableResult func find(tab: some TabRoute) -> Router? {
     children.values.compactMap(\.value).first(where: { $0.type == tab.type })
   }
