@@ -26,3 +26,14 @@ enum RouterType: Hashable, Sendable {
     }
   }
 }
+
+extension RouterType: CustomStringConvertible {
+  var description: String{
+    switch self {
+    case .app: "app"
+    case let .tab(value): "tab(\(value))"
+    case let .stack(value): "stack(\(value))"
+    case let .presented(value): "presented(\(value))"
+    }
+  }
+}
