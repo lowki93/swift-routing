@@ -35,10 +35,7 @@ import Foundation
 /// ```swift
 /// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, route: .page1)
 /// ```
-public protocol TabRoute: Hashable, Sendable {
-  /// `Name` of your route
-  var name: String { get }
-}
+public typealias TabRoute = Route
 
 extension TabRoute {
   var type: RouterType { .tab(name) }
