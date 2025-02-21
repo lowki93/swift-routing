@@ -14,15 +14,39 @@ import SwiftUI
 ///
 /// ## Usage
 /// ```swift
-/// // For a tab-based navigation:
+/// // For a tab-based navigation with a route as root:
 /// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
 ///
-/// // For a stack-based navigation:
+/// // For a tab-based navigation with a view as root:
+/// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self) { Page1View() }
+///
+/// // For a stack-based navigation with a route as root:
 /// RoutingNavigationStack(stack: "Page", destination: HomeRoute.self, root: .page1)
+///
+/// // For a stack-based navigation with a view as root:
+/// RoutingNavigationStack(stack: "Page", destination: HomeRoute.self) { Page1View() }
 /// ```
 ///
 /// ## Closable
 /// Any presented `RoutingNavigationStack` instance is automatically closable.
+///
+/// ## Notes
+/// - This navigation system supports deep linking and maintains navigation state.
+/// - It allows navigation operations such as `push`, `present`, and `cover` within the stack.
+/// - Works seamlessly with `TabView` by creating independent navigation stacks per tab.
+///
+/// ## Example with `TabView`
+/// ```swift
+/// TabView {
+///     RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
+///     RoutingNavigationStack(tab: HomeTab.tab2, destination: HomeRoute.self) { Page2View() }
+/// }
+/// ```
+///
+/// ## Example with Stack Navigation
+/// ```swift
+/// RoutingNavigationStack(stack: "Main", destination: HomeRoute.self, root: .page1)
+/// ```
 @MainActor
 public struct RoutingNavigationStack<Destination: RouteDestination, Content: View>: View {
 
@@ -42,27 +66,19 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
   /// Initializes a `RoutingNavigationStack` for tab-based navigation.
   ///
   /// - Parameters:
-  ///   - tab: The tab associated with the navigation.
-  ///   - destination: The destination type conforming to `RouteDestination`.
-  ///   - root: The initial route.
-  public init(tab: any TabRoute, destination: Destination.Type, root: Destination.R) {
-    self.init(type: tab.type, destination: destination, root: root, content: nil)
-  }
-
+  ///   - tab: The tab associated with the navigation, conforming to `TabRoute`.
+  ///   - destination: The type conforming to `RouteDestination`, defining the available routes.
+  ///   - content: A `ViewBuilder` closure providing the root view for this tab's navigation stack.
   public init(tab: any TabRoute, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
     self.init(type: tab.type, destination: destination, root: nil, content: content)
   }
 
-  /// Initializes a `RoutingNavigationStack` for stack-based navigation.
+  /// Initializes a `RoutingNavigationStack` for tab-based navigation.
   ///
   /// - Parameters:
-  ///   - name: The name of the navigation stack.
-  ///   - destination: The destination type conforming to `RouteDestination`.
-  ///   - root: The initial route.
-  public init(stack name: String, destination: Destination.Type, root: Destination.R) {
-    self.init(type: .stack(name), destination: destination, root: root, content: nil)
-  }
-
+  ///   - tab: The name of the navigation stack.
+  ///   - destination: The type conforming to `RouteDestination`, defining the available routes.
+  ///   - content: A `ViewBuilder` closure providing the root view for this tab's navigation stack.
   public init(stack name: String, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
     self.init(type: .stack(name), destination: destination, root: nil, content: content)
   }
@@ -101,5 +117,31 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
         content
       }
     }
+  }
+}
+
+extension RoutingNavigationStack where Content == EmptyView {
+  init(type: RouterType, destination: Destination.Type, root: Destination.R) {
+    self.init(type: type, destination: destination, root: root, content: nil)
+  }
+
+  /// Initializes a `RoutingNavigationStack` for tab-based navigation.
+  ///
+  /// - Parameters:
+  ///   - tab: The tab associated with the navigation.
+  ///   - destination: The destination type conforming to `RouteDestination`.
+  ///   - root: The initial route.
+  public init(tab: any TabRoute, destination: Destination.Type, root: Destination.R) {
+    self.init(type: tab.type, destination: destination, root: root)
+  }
+
+  /// Initializes a `RoutingNavigationStack` for stack-based navigation.
+  ///
+  /// - Parameters:
+  ///   - name: The name of the navigation stack.
+  ///   - destination: The destination type conforming to `RouteDestination`.
+  ///   - root: The initial route.
+  public init(stack name: String, destination: Destination.Type, root: Destination.R) {
+    self.init(type: .stack(name), destination: destination, root: root, content: nil)
   }
 }
