@@ -18,7 +18,7 @@ enum AppRoute: Route {
     case .home:
       "Home"
     case let .user(name):
-      "User - \(name)"
+      "User(\(name))"
     case .settings:
       "Settings"
     }
