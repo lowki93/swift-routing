@@ -24,17 +24,19 @@ import SwiftUI
 /// ## Closable
 /// Any presented `RoutingNavigationStack` instance is automatically closable.
 @MainActor
-public struct RoutingNavigationStack<Destination: RouteDestination>: View {
+public struct RoutingNavigationStack<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var parent
   private let type: RouterType
   private let destination: Destination.Type
-  private let root: Destination.R
+  private let root: Destination.R?
+  private let content: Content?
 
-  init(type: RouterType, destination: Destination.Type, root: Destination.R) {
+  init(type: RouterType, destination: Destination.Type, root: Destination.R?, content: (() -> Content)?) {
     self.type = type
     self.destination = destination
     self.root = root
+    self.content = content?()
   }
 
   /// Initializes a `RoutingNavigationStack` for tab-based navigation.
@@ -44,7 +46,11 @@ public struct RoutingNavigationStack<Destination: RouteDestination>: View {
   ///   - destination: The destination type conforming to `RouteDestination`.
   ///   - root: The initial route.
   public init(tab: any TabRoute, destination: Destination.Type, root: Destination.R) {
-    self.init(type: tab.type, destination: destination, root: root)
+    self.init(type: tab.type, destination: destination, root: root, content: nil)
+  }
+
+  public init(tab: any TabRoute, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
+    self.init(type: tab.type, destination: destination, root: nil, content: content)
   }
 
   /// Initializes a `RoutingNavigationStack` for stack-based navigation.
@@ -54,13 +60,18 @@ public struct RoutingNavigationStack<Destination: RouteDestination>: View {
   ///   - destination: The destination type conforming to `RouteDestination`.
   ///   - root: The initial route.
   public init(stack name: String, destination: Destination.Type, root: Destination.R) {
-    self.init(type: .stack(name), destination: destination, root: root)
+    self.init(type: .stack(name), destination: destination, root: root, content: nil)
+  }
+
+  public init(stack name: String, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
+    self.init(type: .stack(name), destination: destination, root: nil, content: content)
   }
 
   public var body: some View {
     WrappedView(
-      router: Router(root: AnyRoute(wrapped: root), type: type, parent: parent),
-      destination: destination
+      router: Router(root: root.flatMap(AnyRoute.init(wrapped:)), type: type, parent: parent),
+      destination: destination,
+      content: content
     )
   }
 
@@ -68,18 +79,26 @@ public struct RoutingNavigationStack<Destination: RouteDestination>: View {
 
     @StateObject var router: Router
     let destination: Destination.Type
+    let content: Content?
 
     public var body: some View {
+      NavigationStack(path: $router.path) {
+        root
+          .id(router.rootID)
+          .navigationDestination(destination)
+      }
+      .sheet($router.sheet, for: destination)
+      .cover($router.cover, for: destination)
+      .modifier(CloseModifier())
+      .environment(\.router, router)
+    }
+
+    @ViewBuilder
+    private var root: some View {
       if let root = router.root?.wrapped as? Destination.R {
-        NavigationStack(path: $router.path) {
-          destination[root]
-            .id(router.rootID)
-            .navigationDestination(destination)
-        }
-        .sheet($router.sheet, for: destination)
-        .cover($router.cover, for: destination)
-        .modifier(CloseModifier())
-        .environment(\.router, router)
+        Destination[root]
+      } else if let content {
+        content
       }
     }
   }

@@ -47,7 +47,7 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
     log("init")
   }
 
-  init(root: AnyRoute, type: RouterType, parent: Router) {
+  init(root: AnyRoute?, type: RouterType, parent: Router) {
     self.root = root
     self.type = type
     self.parent = parent
