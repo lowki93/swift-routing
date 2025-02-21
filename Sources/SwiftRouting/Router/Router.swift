@@ -29,6 +29,7 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   public let id: UUID = UUID()
   internal var rootID: UUID = UUID()
 
+  // MARK: Navigation
   internal var root: AnyRoute?
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
@@ -38,11 +39,13 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
     sheet != nil || cover != nil
   }
 
+  // MARK: Configuration
   internal let type: RouterType
   internal let configuration: Configuration
   internal weak var parent: Router?
   internal var children: [UUID: WeakContainer<Router>] = [:]
 
+  // MARK: Initialization
   init(type: RouterType, configuration: Configuration) {
     self.type = type
     self.configuration = configuration
@@ -63,6 +66,8 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
     log(.routerLifecycle, message: "deinit")
   }
 }
+
+// MARK: - Navigation
 
 extension Router: RouterModel {
   public func push(_ destination: some Route) {
@@ -96,6 +101,8 @@ private extension Router  {
   }
 }
 
+// MARK: - Deeplink
+
 public extension Router {
   /// Handles a deeplink and navigates to the corresponding route.
   ///
@@ -122,6 +129,8 @@ public extension Router {
     route(to: deeplink.route, type: deeplink.type)
   }
 }
+
+// MARK: - Action
 
 public extension Router {
   /// Clears the entire navigation path, returning to the root.
@@ -150,6 +159,7 @@ public extension Router {
     for router in children.values.compactMap(\.value) where router.present {
       router.sheet = nil
       router.cover = nil
+      log(.action, message: "closeChildren", metadata: ["router": router.type])
     }
   }
 }
@@ -165,6 +175,8 @@ public extension Router {
   }
 }
 
+// MARK: - Child
+
 internal extension Router {
   func addChild(_ child: Router) {
     children[child.id] = WeakContainer(value: child)
@@ -175,17 +187,9 @@ internal extension Router {
   }
 }
 
-internal extension Router {
-  func onAppear(_ route: some Route) {
-    log(.viewLifecycle, metadata: ["OnAppear": route])
-  }
+// MARK: - Log
 
-  func onDisappear(_ route: some Route) {
-    log(.viewLifecycle, metadata: ["Disappear": route])
-  }
-}
-
-private extension Router {
+extension Router {
   func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
     guard configuration.loggerAction.contains(type) else { return }
 
