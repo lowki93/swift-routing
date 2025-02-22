@@ -34,7 +34,7 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
   internal var cover: AnyRoute?
-  internal var triggerClose: Bool = false
+  internal var triggerClose: Bool =  false
   internal var present: Bool {
     sheet != nil || cover != nil
   }
