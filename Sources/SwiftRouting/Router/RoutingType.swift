@@ -22,7 +22,7 @@ import Foundation
 /// ```
 ///
 /// > **Warning:** `RoutingType.root` is only available for deep linking, allowing you to override the current root of the `NavigationStack`.
-public enum RoutingType {
+public enum RoutingType: CustomStringConvertible {
   /// Sets the root of a navigation stack.
   case root
   /// Pushes a route onto the navigation stack.
@@ -31,4 +31,13 @@ public enum RoutingType {
   case sheet
   /// Presents a route as a full-screen cover.
   case cover
+
+  public var description: String {
+    switch self {
+    case .root: "root"
+    case .push: "push"
+    case .sheet: "sheet"
+    case .cover: "cover"
+    }
+  }
 }

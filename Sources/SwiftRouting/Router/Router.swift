@@ -24,11 +24,12 @@ import SwiftUI
 @Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
-  internal static let defaultRouter: Router = Router(type: .app)
+  internal static let defaultRouter: Router = Router(type: .app, configuration: .default)
 
   public let id: UUID = UUID()
   internal var rootID: UUID = UUID()
 
+  // MARK: Navigation
   internal var root: AnyRoute?
   internal var path = NavigationPath()
   internal var sheet: AnyRoute?
@@ -38,28 +39,35 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
     sheet != nil || cover != nil
   }
 
+  // MARK: Configuration
   internal let type: RouterType
+  internal let configuration: Configuration
   internal weak var parent: Router?
   internal var children: [UUID: WeakContainer<Router>] = [:]
 
-  init(type: RouterType) {
+  // MARK: Initialization
+  init(type: RouterType, configuration: Configuration) {
     self.type = type
-    log("init")
+    self.configuration = configuration
+    log(.routerLifecycle, message: "init")
   }
 
   init(root: AnyRoute?, type: RouterType, parent: Router) {
     self.root = root
     self.type = type
+    self.configuration = parent.configuration
     self.parent = parent
     parent.addChild(self)
-    log("init from parent `\(parent.type)`")
+    log(.routerLifecycle, message: "init", metadata: ["from": parent.type])
   }
 
   deinit {
     parent?.removeChild(self)
-    log("deinit")
+    log(.routerLifecycle, message: "deinit")
   }
 }
+
+// MARK: - Navigation
 
 extension Router: RouterModel {
   public func push(_ destination: some Route) {
@@ -77,7 +85,7 @@ extension Router: RouterModel {
 
 private extension Router  {
   func route(to destination: some Route, type: RoutingType) {
-    log("navigating to: \(destination.name), type: \(type)")
+    log(.action, metadata: ["navigating": destination, "type": type])
 
     switch type {
     case .push:
@@ -92,6 +100,8 @@ private extension Router  {
     }
   }
 }
+
+// MARK: - Deeplink
 
 public extension Router {
   /// Handles a deeplink and navigates to the corresponding route.
@@ -120,11 +130,13 @@ public extension Router {
   }
 }
 
+// MARK: - Action
+
 public extension Router {
   /// Clears the entire navigation path, returning to the root.
   func popToRoot() {
     path.popToRoot()
-    log("popToRoot")
+    log(.action, message: "popToRoot")
   }
 
   /// Closes the navigation stack.
@@ -132,14 +144,14 @@ public extension Router {
   func close() {
     if type.isPresented {
       triggerClose = true
-      log("close")
+      log(.action, message: "close")
     }
   }
 
   /// Removes the last element from the navigation path, navigating back one step.
   func back() {
     path.removeLast()
-    log("back")
+    log(.action, message: "back")
   }
 
   /// Closes all child routers presented from the parent router.
@@ -147,6 +159,7 @@ public extension Router {
     for router in children.values.compactMap(\.value) where router.present {
       router.sheet = nil
       router.cover = nil
+      log(.action, message: "closeChildren", metadata: ["router": router.type])
     }
   }
 }
@@ -162,6 +175,8 @@ public extension Router {
   }
 }
 
+// MARK: - Child
+
 internal extension Router {
   func addChild(_ child: Router) {
     children[child.id] = WeakContainer(value: child)
@@ -172,22 +187,12 @@ internal extension Router {
   }
 }
 
-internal extension Router {
-  func onAppear(_ route: some Route) {
-    log("OnAppear - \(route.name)")
-  }
+// MARK: - Log
 
-  func onDisappear(_ route: some Route) {
-    log("Disappear - \(route.name)")
-  }
-}
+extension Router {
+  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
+    guard configuration.loggerAction.contains(type) else { return }
 
-private extension Router {
-
-  func log(_ message: String) {
-    #if DEBUG
-    let base = "[Router]:\(type) - "
-    print(base + message)
-    #endif
+    configuration.logger?(self, message, metadata)
   }
 }

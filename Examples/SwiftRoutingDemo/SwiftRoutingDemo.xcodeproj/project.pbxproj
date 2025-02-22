@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		6C08D2B22D4063040013100F /* SwiftRouting in Frameworks */ = {isa = PBXBuildFile; productRef = 6C08D2B12D4063040013100F /* SwiftRouting */; };
+		71907CB82D693A6C00E91B2D /* SwiftRouting in Frameworks */ = {isa = PBXBuildFile; productRef = 71907CB72D693A6C00E91B2D /* SwiftRouting */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6C08D2B22D4063040013100F /* SwiftRouting in Frameworks */,
+				71907CB82D693A6C00E91B2D /* SwiftRouting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = SwiftRoutingDemo;
 			packageProductDependencies = (
 				6C08D2B12D4063040013100F /* SwiftRouting */,
+				71907CB72D693A6C00E91B2D /* SwiftRouting */,
 			);
 			productName = SwiftRoutingDemo;
 			productReference = 6C08D29E2D4062EA0013100F /* SwiftRoutingDemo.app */;
@@ -101,7 +104,7 @@
 			mainGroup = 6C08D2952D4062EA0013100F;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				6C08D2B02D4063040013100F /* XCLocalSwiftPackageReference "../../../SwiftRouting" */,
+				71907CB62D693A6C00E91B2D /* XCLocalSwiftPackageReference "../../../swift-routing" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6C08D29F2D4062EA0013100F /* Products */;
@@ -348,14 +351,18 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		6C08D2B02D4063040013100F /* XCLocalSwiftPackageReference "../../../SwiftRouting" */ = {
+		71907CB62D693A6C00E91B2D /* XCLocalSwiftPackageReference "../../../swift-routing" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../../SwiftRouting;
+			relativePath = "../../../swift-routing";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		6C08D2B12D4063040013100F /* SwiftRouting */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftRouting;
+		};
+		71907CB72D693A6C00E91B2D /* SwiftRouting */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftRouting;
 		};

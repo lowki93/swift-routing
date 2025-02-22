@@ -50,9 +50,16 @@ import Foundation
 ///   router.push(HomeRoute.page1)
 /// }
 /// ```
-public protocol Route: Hashable, Sendable {
+public protocol Route: Hashable, Sendable, CustomStringConvertible {
   /// `Name` of your route
   var name: String { get }
+  var description: String { get }
+}
+
+public extension Route {
+  var description: String {
+    name
+  }
 }
 
 @dynamicMemberLookup
