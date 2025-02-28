@@ -14,8 +14,11 @@ struct HomeScreen: View {
 
   var body: some View {
     VStack {
-      Button("User") {
+      Button("User: lowki") {
         router.push(AppRoute.user(name: "Lowki"))
+      }
+      NavigationLink(value: AppRoute.user(name: "Alexia")) {
+        Text("User: alexia")
       }
     }
     .navigationTitle("Home")
