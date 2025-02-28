@@ -7,8 +7,6 @@
 
 import OSLog
 
-public typealias LogMessage = OSLogMessage
-
 extension Logger {
   static let `default` = Logger(
     subsystem: Bundle.main.bundleIdentifier ?? "Package",

@@ -24,7 +24,7 @@ import SwiftUI
 @Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
-  internal static let defaultRouter: Router = Router(type: .app, configuration: .default)
+  internal static let defaultRouter: Router = Router(configuration: .default)
 
   public let id: UUID = UUID()
   internal var rootID: UUID = UUID()
@@ -46,8 +46,14 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var children: [UUID: WeakContainer<Router>] = [:]
 
   // MARK: Initialization
-  init(type: RouterType, configuration: Configuration) {
-    self.type = type
+  /// Initializes a `Router` with a custom configuration.
+  ///
+  /// This initializer sets up the router with a specified `Configuration`, defining behaviors such as logging.
+  /// By default, the router type is set to `.app`, and an initialization log entry is created.
+  ///
+  /// - Parameter configuration: The configuration used to customize the router's behavior.
+  public init(configuration: Configuration) {
+    self.type = .app
     self.configuration = configuration
     log(.routerLifecycle, message: "init")
   }
@@ -85,7 +91,7 @@ extension Router: RouterModel {
 
 private extension Router  {
   func route(to destination: some Route, type: RoutingType) {
-    log(.action, metadata: ["navigating": destination, "type": type])
+    log(.navigation, metadata: ["navigating": destination, "type": type])
 
     switch type {
     case .push:
@@ -191,8 +197,13 @@ internal extension Router {
 
 extension Router {
   func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
-    guard configuration.loggerAction.contains(type) else { return }
-
-    configuration.logger?(self, message, metadata)
+    configuration.logger?(
+      LoggerConfiguration(
+        type: type,
+        router: self,
+        message: message,
+        metadata: metadata
+      )
+    )
   }
 }
