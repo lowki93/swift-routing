@@ -38,6 +38,8 @@ public final class Router: BaseRouter, @unchecked Sendable {
     sheet != nil || cover != nil
   }
 
+  internal var onTerminate: ((any TerminationRoute) -> Void)?
+
   // MARK: Configuration
   let type: RouterType
 
@@ -65,21 +67,51 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
 // MARK: - Navigation
 
+<<<<<<< HEAD
 extension Router: @preconcurrency RouterModel {
   @MainActor public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }
 
   @MainActor public func push(_ destination: some Route) {
+=======
+extension Router: RouterModel {
+  @discardableResult
+  public func push(_ destination: some Route) -> NavigationContext {
+>>>>>>> 9f30bed (valid concept)
     route(to: destination, type: .push)
+
+    return NavigationContext(router: self)
   }
 
+<<<<<<< HEAD
   @MainActor public func present(_ destination: some Route) {
+=======
+  @discardableResult
+  public func present(_ destination: some Route) -> NavigationContext {
+>>>>>>> 9f30bed (valid concept)
     route(to: destination, type: .sheet)
+
+    return NavigationContext(router: self)
   }
 
+<<<<<<< HEAD
   @MainActor public func cover(_ destination: some Route) {
+=======
+  @discardableResult
+  public func cover(_ destination: some Route) -> NavigationContext {
+>>>>>>> 9f30bed (valid concept)
     route(to: destination, type: .cover)
+
+    return NavigationContext(router: self)
+  }
+
+  // TODO: Terminate pass type (Close modal or back) how handle both
+  public func terminate(_ value: some TerminationRoute) {
+    onTerminate?(value)
+    if type.isPresented {
+      parent?.onTerminate?(value)
+    }
   }
 
   @MainActor public func popToRoot() {
@@ -154,3 +186,91 @@ public extension Router {
     route(to: deeplink.route, type: deeplink.type)
   }
 }
+<<<<<<< HEAD
+=======
+
+// MARK: - Action
+
+public extension Router {
+  /// Clears the entire navigation path, returning to the root.
+  func popToRoot() {
+    path.popToRoot()
+    log(.action, message: "popToRoot")
+  }
+
+  /// Closes the navigation stack.
+  /// > **Warning:** This function is only available if the stack is presented.
+  func close() {
+    if type.isPresented {
+      triggerClose = true
+      log(.action, message: "close")
+    }
+  }
+
+  /// Removes the last element from the navigation path, navigating back one step.
+  func back() {
+    path.removeLast()
+    log(.action, message: "back")
+  }
+
+  /// Closes all child routers presented from the parent router.
+  func closeChildren() {
+    for router in children.values.compactMap(\.value) where router.present {
+      router.sheet = nil
+      router.cover = nil
+      log(.action, message: "closeChildren", metadata: ["router": router.type])
+    }
+  }
+}
+
+public extension Router {
+  /// Finds the corresponding router for a given tab.
+  ///
+  /// This method searches among the child routers to find the one associated with the specified tab.
+  ///
+  /// - Parameter tab: The `TabRoute` to search for.
+  @discardableResult func find(tab: some TabRoute) -> Router? {
+    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
+  }
+}
+
+// MARK: - Child
+
+internal extension Router {
+  func addChild(_ child: Router) {
+    children[child.id] = WeakContainer(value: child)
+  }
+
+  func removeChild(_ child: Router) {
+    children.removeValue(forKey: child.id)
+  }
+}
+
+// MARK: - Log
+
+extension Router {
+  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
+    configuration.logger?(
+      LoggerConfiguration(
+        type: type,
+        router: self,
+        message: message,
+        metadata: metadata
+      )
+    )
+  }
+}
+
+public typealias TerminationRoute = Hashable & Sendable
+
+public struct NavigationContext {
+  let router: Router
+
+  public func onTerminate<R: TerminationRoute>(_ type: R.Type, perform: @escaping (R) -> Void)  {
+    router.onTerminate = {
+      guard let value = $0 as? R else { print("--- ERROR"); return }
+      perform(value)
+    }
+ }
+}
+>>>>>>> 9f30bed (valid concept)
