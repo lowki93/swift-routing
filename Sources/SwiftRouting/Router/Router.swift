@@ -38,6 +38,8 @@ public final class Router: BaseRouter, @unchecked Sendable {
     sheet != nil || cover != nil
   }
 
+  internal var onTerminate: ((any TerminationRoute) -> Void)?
+
   // MARK: Configuration
   let type: RouterType
 
@@ -70,16 +72,20 @@ extension Router: @preconcurrency RouterModel {
     route(to: destination, type: .root)
   }
 
-  @MainActor public func push(_ destination: some Route) {
-    route(to: destination, type: .push)
-  }
-
   @MainActor public func present(_ destination: some Route, withStack: Bool) {
     route(to: destination, type: .sheet(withStack: withStack))
   }
 
   @MainActor public func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
+  }
+
+  // TODO: Terminate pass type (Close modal or back) how handle both
+  public func terminate(_ value: some TerminationRoute) {
+    onTerminate?(value)
+    if type.isPresented {
+      parent?.onTerminate?(value)
+    }
   }
 
   @MainActor public func popToRoot() {

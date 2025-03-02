@@ -24,7 +24,11 @@ struct SettingsScreen: View {
     .navigationTitle("Settings")
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
-        Button("Dismiss") { router.close() }
+        Button("Dismiss") {
+          router.terminate(1)
+          router.terminate(Success(value: 4))
+          router.close()
+        }
       }
     }
   }
