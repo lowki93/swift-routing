@@ -40,17 +40,19 @@ public protocol RouterModel: ObservableObject {
   ///
   /// This method adds the specified route to the navigation path, allowing for a push-style transition.
   /// - Parameter destination: The `Route` to be pushed onto the stack.
-  func push(_ destination: some Route)
+  func push(_ destination: some Route) -> NavigationContext
 
   /// Presents a route as a modal sheet.
   ///
   /// This method displays the specified route as a sheet, overlaying the current view.
   /// - Parameter destination: The `Route` to be presented as a sheet.
-  func present(_ destination: some Route)
+  func present(_ destination: some Route) -> NavigationContext
 
   /// Presents a route as a full-screen cover.
   ///
   /// This method presents the specified route as a cover, taking over the entire screen.
   /// - Parameter destination: The `Route` to be presented as a cover.
-  func cover(_ destination: some Route)
+  func cover(_ destination: some Route) -> NavigationContext
+
+  func terminate(_ value: some TerminationRoute)
 }

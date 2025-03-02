@@ -9,6 +9,7 @@ import SwiftUI
 
 struct UserScreen: View {
 
+  @Environment(\.router) private var router
   let name: String
 
   var body: some View {
@@ -17,6 +18,10 @@ struct UserScreen: View {
         .imageScale(.large)
         .foregroundStyle(.tint)
       Text("Hello \(name)")
+      Button("Go back") {
+        router.terminate(name)
+        router.back()
+      }
     }
     .padding()
   }

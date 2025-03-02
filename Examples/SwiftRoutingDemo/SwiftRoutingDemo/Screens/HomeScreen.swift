@@ -15,7 +15,9 @@ struct HomeScreen: View {
   var body: some View {
     VStack {
       Button("User: lowki") {
-        router.push(AppRoute.user(name: "Lowki"))
+        router.push(AppRoute.user(name: "Lowki")).onTerminate(String.self) {
+          print($0)
+        }
       }
       NavigationLink(value: AppRoute.user(name: "Alexia")) {
         Text("User: alexia")
@@ -25,7 +27,9 @@ struct HomeScreen: View {
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
         Button("Settings") {
-          router.present(AppRoute.settings)
+          router.present(AppRoute.settings).onTerminate(Success.self) {
+            print($0.value)
+          }
         }
       }
     }

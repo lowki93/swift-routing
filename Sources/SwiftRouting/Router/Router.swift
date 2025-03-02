@@ -39,6 +39,8 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
     sheet != nil || cover != nil
   }
 
+  internal var onTerminate: ((any TerminationRoute) -> Void)?
+
   // MARK: Configuration
   internal let type: RouterType
   internal let configuration: Configuration
@@ -76,16 +78,33 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 // MARK: - Navigation
 
 extension Router: RouterModel {
-  public func push(_ destination: some Route) {
+  @discardableResult
+  public func push(_ destination: some Route) -> NavigationContext {
     route(to: destination, type: .push)
+
+    return NavigationContext(router: self)
   }
 
-  public func present(_ destination: some Route) {
+  @discardableResult
+  public func present(_ destination: some Route) -> NavigationContext {
     route(to: destination, type: .sheet)
+
+    return NavigationContext(router: self)
   }
 
-  public func cover(_ destination: some Route) {
+  @discardableResult
+  public func cover(_ destination: some Route) -> NavigationContext {
     route(to: destination, type: .cover)
+
+    return NavigationContext(router: self)
+  }
+
+  // TODO: Terminate pass type (Close modal or back) how handle both
+  public func terminate(_ value: some TerminationRoute) {
+    onTerminate?(value)
+    if type.isPresented {
+      parent?.onTerminate?(value)
+    }
   }
 }
 
@@ -206,4 +225,17 @@ extension Router {
       )
     )
   }
+}
+
+public typealias TerminationRoute = Hashable & Sendable
+
+public struct NavigationContext {
+  let router: Router
+
+  public func onTerminate<R: TerminationRoute>(_ type: R.Type, perform: @escaping (R) -> Void)  {
+    router.onTerminate = {
+      guard let value = $0 as? R else { print("--- ERROR"); return }
+      perform(value)
+    }
+ }
 }
