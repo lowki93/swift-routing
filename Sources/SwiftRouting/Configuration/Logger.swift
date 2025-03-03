@@ -13,3 +13,14 @@ extension Logger {
     category: "swift-routing"
   )
 }
+
+extension OSLogType {
+  init(from verbosity: LogVerbosity) {
+    switch verbosity {
+    case .debug: self = .debug
+    case .info: self = .info
+    case .error: self = .error
+    case .fault:  self = .fault
+    }
+  }
+}

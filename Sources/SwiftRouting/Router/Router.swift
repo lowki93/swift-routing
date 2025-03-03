@@ -37,8 +37,12 @@ public final class Router: BaseRouter, @unchecked Sendable {
   internal var present: Bool {
     sheet != nil || cover != nil
   }
+  internal var isPresented: Bool {
+    type.isPresented
+  }
 
-  internal var onTerminate: ((any TerminationRoute) -> Void)?
+  // MARK: Termination
+  internal var onTerminate: ((any TerminationRoute, Router) -> Void)?
 
   // MARK: Configuration
   let type: RouterType
@@ -67,7 +71,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
 // MARK: - Navigation
 
-<<<<<<< HEAD
+<<<<<< HEAD
 extension Router: @preconcurrency RouterModel {
   @MainActor public func update(root destination: some Route) {
     route(to: destination, type: .root)
@@ -77,40 +81,47 @@ extension Router: @preconcurrency RouterModel {
 =======
 extension Router: RouterModel {
   @discardableResult
+<<<<<<< HEAD
   public func push(_ destination: some Route) -> NavigationContext {
 >>>>>>> 9f30bed (valid concept)
+=======
+  public func push(_ destination: some Route) -> RouterContext {
+>>>>>>> 126296a (clear + add log)
     route(to: destination, type: .push)
-
-    return NavigationContext(router: self)
   }
 
 <<<<<<< HEAD
   @MainActor public func present(_ destination: some Route) {
 =======
   @discardableResult
+<<<<<<< HEAD
   public func present(_ destination: some Route) -> NavigationContext {
 >>>>>>> 9f30bed (valid concept)
+=======
+  public func present(_ destination: some Route) -> RouterContext {
+>>>>>>> 126296a (clear + add log)
     route(to: destination, type: .sheet)
-
-    return NavigationContext(router: self)
   }
 
 <<<<<<< HEAD
   @MainActor public func cover(_ destination: some Route) {
 =======
   @discardableResult
+<<<<<<< HEAD
   public func cover(_ destination: some Route) -> NavigationContext {
 >>>>>>> 9f30bed (valid concept)
+=======
+  public func cover(_ destination: some Route) -> RouterContext {
+>>>>>>> 126296a (clear + add log)
     route(to: destination, type: .cover)
-
-    return NavigationContext(router: self)
   }
 
   // TODO: Terminate pass type (Close modal or back) how handle both
   public func terminate(_ value: some TerminationRoute) {
-    onTerminate?(value)
-    if type.isPresented {
-      parent?.onTerminate?(value)
+    if isPresented {
+      terminateOrClose(value)
+    } else {
+      terminateOrBack(value)
     }
   }
 
@@ -141,8 +152,14 @@ extension Router: RouterModel {
 }
 
 private extension Router  {
+<<<<<<< HEAD
   @MainActor func route(to destination: some Route, type: RoutingType) {
+=======
+  @discardableResult
+  func route(to destination: some Route, type: RoutingType) -> RouterContext {
+>>>>>>> 126296a (clear + add log)
     log(.navigation, metadata: ["navigating": destination, "type": type])
+    let pathCount = path.count
 
     switch type {
     case .push:
@@ -154,6 +171,28 @@ private extension Router  {
     case .root:
       root = AnyRoute(wrapped: destination)
       rootID = UUID()
+    }
+
+    return RouterContext(router: self, pathCount: pathCount)
+  }
+
+  func terminateOrClose(_ value: some TerminationRoute) {
+    if let terminate = parent?.onTerminate, let parent {
+      log(.terminate, verbosity: .debug, message: "terminate", metadata: ["from": parent.type])
+      terminate(value, self)
+      parent.onTerminate = nil
+    } else {
+      close()
+    }
+  }
+
+  func terminateOrBack(_ value: some TerminationRoute) {
+    if let action = onTerminate {
+      log(.terminate, verbosity: .debug, message: "terminate")
+      action(value, self)
+      onTerminate = nil
+    } else {
+      back()
     }
   }
 }
@@ -213,6 +252,12 @@ public extension Router {
     log(.action, message: "back")
   }
 
+  func back(to index: Int) {
+    let remove = path.count - index
+    path.removeLast(remove)
+    log(.action, message: "back", metadata: ["clear": remove])
+  }
+
   /// Closes all child routers presented from the parent router.
   func closeChildren() {
     for router in children.values.compactMap(\.value) where router.present {
@@ -249,10 +294,16 @@ internal extension Router {
 // MARK: - Log
 
 extension Router {
-  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
+  func log(
+    _ type: LoggerAction,
+    verbosity: LogVerbosity = .debug,
+    message: String? = nil,
+    metadata: [String: Any]? = nil
+  ) {
     configuration.logger?(
       LoggerConfiguration(
         type: type,
+        verbosity: verbosity,
         router: self,
         message: message,
         metadata: metadata
@@ -260,6 +311,7 @@ extension Router {
     )
   }
 }
+<<<<<<< HEAD
 
 public typealias TerminationRoute = Hashable & Sendable
 
@@ -274,3 +326,5 @@ public struct NavigationContext {
  }
 }
 >>>>>>> 9f30bed (valid concept)
+=======
+>>>>>>> 126296a (clear + add log)
