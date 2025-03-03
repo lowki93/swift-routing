@@ -18,10 +18,14 @@ struct UserScreen: View {
         .imageScale(.large)
         .foregroundStyle(.tint)
       Text("Hello \(name)")
-      Button("Go back") {
-        router.terminate(name)
-        router.back()
+      Button("User: Ben") {
+        router.push(AppRoute.user(name: "Ben"))
       }
+//      if router.canTerminate {
+        Button("Go back") {
+          router.terminate(name)
+        }
+//      }
     }
     .padding()
   }

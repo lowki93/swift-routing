@@ -38,8 +38,12 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var present: Bool {
     sheet != nil || cover != nil
   }
+  internal var isPresented: Bool {
+    type.isPresented
+  }
 
-  internal var onTerminate: ((any TerminationRoute) -> Void)?
+  // MARK: Termination
+  internal var onTerminate: ((any TerminationRoute, Router) -> Void)?
 
   // MARK: Configuration
   internal let type: RouterType
@@ -79,38 +83,35 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
 extension Router: RouterModel {
   @discardableResult
-  public func push(_ destination: some Route) -> NavigationContext {
+  public func push(_ destination: some Route) -> RouterContext {
     route(to: destination, type: .push)
-
-    return NavigationContext(router: self)
   }
 
   @discardableResult
-  public func present(_ destination: some Route) -> NavigationContext {
+  public func present(_ destination: some Route) -> RouterContext {
     route(to: destination, type: .sheet)
-
-    return NavigationContext(router: self)
   }
 
   @discardableResult
-  public func cover(_ destination: some Route) -> NavigationContext {
+  public func cover(_ destination: some Route) -> RouterContext {
     route(to: destination, type: .cover)
-
-    return NavigationContext(router: self)
   }
 
   // TODO: Terminate pass type (Close modal or back) how handle both
   public func terminate(_ value: some TerminationRoute) {
-    onTerminate?(value)
-    if type.isPresented {
-      parent?.onTerminate?(value)
+    if isPresented {
+      terminateOrClose(value)
+    } else {
+      terminateOrBack(value)
     }
   }
 }
 
 private extension Router  {
-  func route(to destination: some Route, type: RoutingType) {
+  @discardableResult
+  func route(to destination: some Route, type: RoutingType) -> RouterContext {
     log(.navigation, metadata: ["navigating": destination, "type": type])
+    let pathCount = path.count
 
     switch type {
     case .push:
@@ -122,6 +123,28 @@ private extension Router  {
     case .root:
       root = AnyRoute(wrapped: destination)
       rootID = UUID()
+    }
+
+    return RouterContext(router: self, pathCount: pathCount)
+  }
+
+  func terminateOrClose(_ value: some TerminationRoute) {
+    if let terminate = parent?.onTerminate, let parent {
+      log(.terminate, verbosity: .debug, message: "terminate", metadata: ["from": parent.type])
+      terminate(value, self)
+      parent.onTerminate = nil
+    } else {
+      close()
+    }
+  }
+
+  func terminateOrBack(_ value: some TerminationRoute) {
+    if let action = onTerminate {
+      log(.terminate, verbosity: .debug, message: "terminate")
+      action(value, self)
+      onTerminate = nil
+    } else {
+      back()
     }
   }
 }
@@ -179,6 +202,12 @@ public extension Router {
     log(.action, message: "back")
   }
 
+  func back(to index: Int) {
+    let remove = path.count - index
+    path.removeLast(remove)
+    log(.action, message: "back", metadata: ["clear": remove])
+  }
+
   /// Closes all child routers presented from the parent router.
   func closeChildren() {
     for router in children.values.compactMap(\.value) where router.present {
@@ -215,27 +244,20 @@ internal extension Router {
 // MARK: - Log
 
 extension Router {
-  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
+  func log(
+    _ type: LoggerAction,
+    verbosity: LogVerbosity = .debug,
+    message: String? = nil,
+    metadata: [String: Any]? = nil
+  ) {
     configuration.logger?(
       LoggerConfiguration(
         type: type,
+        verbosity: verbosity,
         router: self,
         message: message,
         metadata: metadata
       )
     )
   }
-}
-
-public typealias TerminationRoute = Hashable & Sendable
-
-public struct NavigationContext {
-  let router: Router
-
-  public func onTerminate<R: TerminationRoute>(_ type: R.Type, perform: @escaping (R) -> Void)  {
-    router.onTerminate = {
-      guard let value = $0 as? R else { print("--- ERROR"); return }
-      perform(value)
-    }
- }
 }
