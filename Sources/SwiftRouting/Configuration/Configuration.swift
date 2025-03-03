@@ -40,7 +40,10 @@ extension Configuration {
         let messageString = if let message = loggerConfiguration.message { message + " " } else { "" }
         let metadataString = loggerConfiguration.metadata?.map { "\($0): '\($1)'" }.joined(separator: ", ") ?? ""
 
-        Logger.default.debug("Router: \(loggerConfiguration.router) | \(messageString)\(metadataString)")
+        Logger.default.log(
+          level: OSLogType(from: loggerConfiguration.verbosity),
+          "Router: \(loggerConfiguration.router.type) | \(messageString)\(metadataString)"
+        )
       }
     )
   }

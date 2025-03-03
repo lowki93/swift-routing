@@ -37,8 +37,12 @@ public final class Router: BaseRouter, @unchecked Sendable {
   internal var present: Bool {
     sheet != nil || cover != nil
   }
+  internal var isPresented: Bool {
+    type.isPresented
+  }
 
-  internal var onTerminate: ((any TerminationRoute) -> Void)?
+  // MARK: Termination
+  internal var onTerminate: ((any TerminationRoute, Router) -> Void)?
 
   // MARK: Configuration
   let type: RouterType
@@ -76,15 +80,20 @@ extension Router: @preconcurrency RouterModel {
     route(to: destination, type: .sheet(withStack: withStack))
   }
 
+  @MainActor public func push(_ destination: some Route) {
+    route(to: destination, type: .push)
+  }
+
   @MainActor public func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
 
   // TODO: Terminate pass type (Close modal or back) how handle both
   public func terminate(_ value: some TerminationRoute) {
-    onTerminate?(value)
-    if type.isPresented {
-      parent?.onTerminate?(value)
+    if isPresented {
+      terminateOrClose(value)
+    } else {
+      terminateOrBack(value)
     }
   }
 
@@ -117,6 +126,7 @@ extension Router: @preconcurrency RouterModel {
 private extension Router  {
   @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation, metadata: ["navigating": destination, "type": type])
+    let pathCount = path.count
 
     switch type {
     case .push:
@@ -128,6 +138,28 @@ private extension Router  {
     case .root:
       root = AnyRoute(wrapped: destination, inStack: true)
       rootID = UUID()
+    }
+
+    return RouterContext(router: self, pathCount: pathCount)
+  }
+
+  func terminateOrClose(_ value: some TerminationRoute) {
+    if let terminate = parent?.onTerminate, let parent {
+      log(.terminate, verbosity: .debug, message: "terminate", metadata: ["from": parent.type])
+      terminate(value, self)
+      parent.onTerminate = nil
+    } else {
+      close()
+    }
+  }
+
+  func terminateOrBack(_ value: some TerminationRoute) {
+    if let action = onTerminate {
+      log(.terminate, verbosity: .debug, message: "terminate")
+      action(value, self)
+      onTerminate = nil
+    } else {
+      back()
     }
   }
 }
