@@ -20,8 +20,6 @@ import Foundation
 /// // Present as a full-screen cover
 /// router.cover(HomeRoute.page1)
 /// ```
-///
-/// > **Warning:** `RoutingType.root` is only available for deep linking, allowing you to override the current root of the `NavigationStack`.
 public enum RoutingType: CustomStringConvertible {
   /// Sets the root of a navigation stack.
   case root

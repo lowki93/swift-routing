@@ -76,6 +76,10 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 // MARK: - Navigation
 
 extension Router: RouterModel {
+  public func update(root destination: some Route) {
+    route(to: destination, type: .root)
+  }
+
   public func push(_ destination: some Route) {
     route(to: destination, type: .push)
   }

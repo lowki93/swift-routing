@@ -36,6 +36,12 @@ import SwiftUI
 ///   let viewModel = ViewModel(router: router)
 /// ```
 public protocol RouterModel: ObservableObject {
+  /// Updates the current root of the navigation stack.
+  ///
+  /// This method replaces the existing root with a new destination, effectively resetting navigation.
+  /// - Parameter destination: The new `Route` to set as the root.
+  func update(root destination: some Route)
+
   /// Pushes a new route onto the navigation stack.
   ///
   /// This method adds the specified route to the navigation path, allowing for a push-style transition.
