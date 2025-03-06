@@ -42,7 +42,8 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   // MARK: Configuration
   internal let type: RouterType
   internal let configuration: Configuration
-  internal weak var parent: Router?
+  // TODO: Not expose parent -> Create a TabRouter accessible in the Environment
+  public weak var parent: Router?
   internal var children: [UUID: WeakContainer<Router>] = [:]
 
   // MARK: Initialization
