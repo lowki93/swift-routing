@@ -42,8 +42,10 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   // MARK: Configuration
   internal let type: RouterType
   internal let configuration: Configuration
-  // TODO: Not expose parent -> Create a TabRouter accessible in the Environment
+  // TODO: [TabBarRouter] Not expose parent -> Create a TabRouter accessible in the Environment
+  public var hideTabBar: Bool
   public weak var parent: Router?
+
   internal var children: [UUID: WeakContainer<Router>] = [:]
 
   // MARK: Initialization
@@ -55,15 +57,19 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
     self.type = .app
+    // TODO: [TabBarRouter] Move in tabarRouter
+    self.hideTabBar = false
     self.configuration = configuration
     log(.routerLifecycle, message: "init")
   }
 
-  init(root: AnyRoute?, type: RouterType, parent: Router) {
+  init(root: AnyRoute?, type: RouterType, parent: Router, hideTabBar: Bool) {
     self.root = root
     self.type = type
     self.configuration = parent.configuration
     self.parent = parent
+    // TODO: [TabBarRouter] Move in tabarRouter
+    self.hideTabBar = hideTabBar
     parent.addChild(self)
     log(.routerLifecycle, message: "init", metadata: ["from": parent.type])
   }
