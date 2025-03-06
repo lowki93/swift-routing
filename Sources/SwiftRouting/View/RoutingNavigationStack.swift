@@ -52,12 +52,15 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
 
   @Environment(\.router) private var parent
   private let type: RouterType
+  // TODO: [TabBarRouter] mode in RoutingTabBar
+  private let hideTabBar: Bool
   private let destination: Destination.Type
   private let root: Destination.R?
   private let content: Content?
 
-  init(type: RouterType, destination: Destination.Type, root: Destination.R?, content: (() -> Content)?) {
+  init(type: RouterType, hideTabBar: Bool = false, destination: Destination.Type, root: Destination.R?, content: (() -> Content)?) {
     self.type = type
+    self.hideTabBar = hideTabBar
     self.destination = destination
     self.root = root
     self.content = content?()
@@ -69,8 +72,8 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
   ///   - tab: The tab associated with the navigation, conforming to `TabRoute`.
   ///   - destination: The type conforming to `RouteDestination`, defining the available routes.
   ///   - content: A `ViewBuilder` closure providing the root view for this tab's navigation stack.
-  public init(tab: any TabRoute, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
-    self.init(type: tab.type, destination: destination, root: nil, content: content)
+  public init(tab: any TabRoute, hideTabBar: Bool, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
+    self.init(type: tab.type, hideTabBar: hideTabBar, destination: destination, root: nil, content: content)
   }
 
   /// Initializes a `RoutingNavigationStack` for tab-based navigation.
@@ -85,7 +88,7 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
 
   public var body: some View {
     WrappedView(
-      router: Router(root: root.flatMap(AnyRoute.init(wrapped:)), type: type, parent: parent),
+      router: Router(root: root.flatMap(AnyRoute.init(wrapped:)), type: type, parent: parent, hideTabBar: hideTabBar),
       destination: destination,
       content: content
     )
@@ -121,8 +124,8 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
 }
 
 extension RoutingNavigationStack where Content == EmptyView {
-  init(type: RouterType, destination: Destination.Type, root: Destination.R) {
-    self.init(type: type, destination: destination, root: root, content: nil)
+  init(type: RouterType, hideTabBar: Bool = false ,destination: Destination.Type, root: Destination.R) {
+    self.init(type: type, hideTabBar: hideTabBar, destination: destination, root: root, content: nil)
   }
 
   /// Initializes a `RoutingNavigationStack` for tab-based navigation.
@@ -131,8 +134,8 @@ extension RoutingNavigationStack where Content == EmptyView {
   ///   - tab: The tab associated with the navigation.
   ///   - destination: The destination type conforming to `RouteDestination`.
   ///   - root: The initial route.
-  public init(tab: any TabRoute, destination: Destination.Type, root: Destination.R) {
-    self.init(type: tab.type, destination: destination, root: root)
+  public init(tab: any TabRoute, hideTabBar: Bool, destination: Destination.Type, root: Destination.R) {
+    self.init(type: tab.type, hideTabBar: hideTabBar, destination: destination, root: root)
   }
 
   /// Initializes a `RoutingNavigationStack` for stack-based navigation.
