@@ -72,6 +72,6 @@ public struct AnyRoute: Identifiable, Equatable {
   }
 
   public static func == (lhs: Self, rhs: Self) -> Bool {
-    lhs.hashValue == rhs.hashValue
+    lhs.id == rhs.id
   }
 }

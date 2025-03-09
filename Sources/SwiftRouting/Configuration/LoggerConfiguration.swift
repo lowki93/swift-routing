@@ -22,7 +22,7 @@ public struct LoggerConfiguration {
   let type: LoggerAction
 
   /// The router instance that performed the action.
-  let router: Router
+  let router: BaseRouter
 
   /// An optional message providing additional context about the action.
   let message: String?
