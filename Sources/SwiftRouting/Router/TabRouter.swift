@@ -5,8 +5,8 @@
 //  Created by Kevin Budain on 06/03/2025.
 //
 
+import Foundation
 import Observation
-import SwiftUI
 
 /// A router managing navigation within a `RoutingTabView`.
 ///

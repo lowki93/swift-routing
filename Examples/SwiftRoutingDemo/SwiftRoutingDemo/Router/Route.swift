@@ -13,6 +13,7 @@ enum AppRoute: Route {
   case notifications
   case user(name: String)
   case settings
+  case notifications
 
   var name: String {
     switch self {
