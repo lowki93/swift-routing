@@ -20,11 +20,15 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
+<<<<<<< HEAD
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
+=======
+@Observable
+public final class Router: BaseRouter, @unchecked Sendable {
+>>>>>>> 785d4a3 (add TabRouter)
 
   internal static let defaultRouter: Router = Router(configuration: .default)
 
-  public let id: UUID = UUID()
   internal var rootID: UUID = UUID()
 
   // MARK: Navigation
@@ -42,12 +46,6 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
   // MARK: Configuration
   internal let type: RouterType
-  internal let configuration: Configuration
-  // TODO: [TabBarRouter] Not expose parent -> Create a TabRouter accessible in the Environment
-  public var hideTabBar: Bool
-  public weak var parent: Router?
-
-  internal var children: [UUID: WeakContainer<Router>] = [:]
 
   // MARK: Initialization
   /// Initializes a `Router` with a custom configuration.
@@ -58,26 +56,25 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
     self.type = .app
-    // TODO: [TabBarRouter] Move in tabarRouter
-    self.hideTabBar = false
-    self.configuration = configuration
+    super.init(configuration: configuration)
     log(.routerLifecycle, message: "init")
   }
 
-  init(root: AnyRoute?, type: RouterType, parent: Router, hideTabBar: Bool) {
+  init(root: AnyRoute?, type: RouterType, parent: Router) {
     self.root = root
     self.type = type
-    self.configuration = parent.configuration
-    self.parent = parent
-    // TODO: [TabBarRouter] Move in tabarRouter
-    self.hideTabBar = hideTabBar
+    super.init(configuration: parent.configuration, parent: parent)
+    // TODO: [TabRouter] Move in tabarRouter
     parent.addChild(self)
-    log(.routerLifecycle, message: "init", metadata: ["from": parent.type])
+    log(.routerLifecycle, message: "init", metadata: ["from": parent])
   }
 
-  deinit {
-    parent?.removeChild(self)
-    log(.routerLifecycle, message: "deinit")
+  init(root: AnyRoute?, tab: some TabRoute, parent: TabRouter) {
+    self.root = root
+    self.type = tab.type
+    super.init(configuration: parent.configuration, parent: parent)
+    parent.addChild(self)
+    log(.routerLifecycle, message: "init", metadata: ["from": parent])
   }
 }
 
@@ -139,7 +136,7 @@ public extension Router {
   @MainActor
   func handle(deeplink: DeeplinkRoute<some Route>) {
     // Dismiss all presented child routers
-    parent?.closeChildren()
+    (parent as? Router)?.closeChildren()
 
     // Clear the current navigation path
     popToRoot()
@@ -184,48 +181,16 @@ public extension Router {
   /// Closes all child routers presented from the parent router.
   @MainActor
   func closeChildren() {
+<<<<<<< HEAD
     for router in children.values.compactMap(\.value) where router.isPresented {
       sheet = nil
       cover = nil
+=======
+    for router in children.values.compactMap { $0.value as? Router } where router.present {
+      router.sheet = nil
+      router.cover = nil
+>>>>>>> 785d4a3 (add TabRouter)
       log(.action, message: "closeChildren", metadata: ["router": router.type])
     }
-  }
-}
-
-public extension Router {
-  /// Finds the corresponding router for a given tab.
-  ///
-  /// This method searches among the child routers to find the one associated with the specified tab.
-  ///
-  /// - Parameter tab: The `TabRoute` to search for.
-  @discardableResult func find(tab: some TabRoute) -> Router? {
-    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
-  }
-}
-
-// MARK: - Child
-
-internal extension Router {
-  func addChild(_ child: Router) {
-    children[child.id] = WeakContainer(value: child)
-  }
-
-  func removeChild(_ child: Router) {
-    children.removeValue(forKey: child.id)
-  }
-}
-
-// MARK: - Log
-
-extension Router {
-  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
-    configuration.logger?(
-      LoggerConfiguration(
-        type: type,
-        router: self,
-        message: message,
-        metadata: metadata
-      )
-    )
   }
 }
