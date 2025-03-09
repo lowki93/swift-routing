@@ -28,7 +28,7 @@ enum RouterType: Hashable, Sendable {
 }
 
 extension RouterType: CustomStringConvertible {
-  var description: String{
+  var description: String {
     switch self {
     case .app: "app"
     case let .tab(value): "tab(\(value))"
