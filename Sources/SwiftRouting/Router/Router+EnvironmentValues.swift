@@ -17,4 +17,6 @@ extension EnvironmentValues {
   ///
   /// This provides access to the current router within the navigation stack.
   @Entry public var router: Router = .defaultRouter
+
+  @Entry public var tabRouter: TabRouter?
 }

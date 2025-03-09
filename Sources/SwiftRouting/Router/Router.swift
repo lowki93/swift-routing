@@ -20,11 +20,10 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-public class Router: ObservableObject, Identifiable, @unchecked Sendable {
+public final class Router: BaseRouter, @unchecked Sendable {
 
   internal static let defaultRouter: Router = Router(configuration: .default)
 
-  public let id: UUID = UUID()
   internal var rootID: UUID = UUID()
 
   // MARK: Navigation
@@ -42,12 +41,6 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
   // MARK: Configuration
   internal let type: RouterType
-  internal let configuration: Configuration
-  // TODO: [TabBarRouter] Not expose parent -> Create a TabRouter accessible in the Environment
-  public var hideTabBar: Bool
-  public weak var parent: Router?
-
-  internal var children: [UUID: WeakContainer<Router>] = [:]
 
   // MARK: Initialization
   /// Initializes a `Router` with a custom configuration.
@@ -58,26 +51,25 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
     self.type = .app
-    // TODO: [TabBarRouter] Move in tabarRouter
-    self.hideTabBar = false
-    self.configuration = configuration
+    super.init(configuration: configuration)
     log(.routerLifecycle, message: "init")
   }
 
-  init(root: AnyRoute?, type: RouterType, parent: Router, hideTabBar: Bool) {
+  init(root: AnyRoute?, type: RouterType, parent: Router) {
     self.root = root
     self.type = type
-    self.configuration = parent.configuration
-    self.parent = parent
-    // TODO: [TabBarRouter] Move in tabarRouter
-    self.hideTabBar = hideTabBar
+    super.init(configuration: parent.configuration, parent: parent)
+    // TODO: [TabRouter] Move in tabarRouter
     parent.addChild(self)
-    log(.routerLifecycle, message: "init", metadata: ["from": parent.type])
+    log(.routerLifecycle, message: "init", metadata: ["from": parent])
   }
 
-  deinit {
-    parent?.removeChild(self)
-    log(.routerLifecycle, message: "deinit")
+  init(root: AnyRoute?, tab: some TabRoute, parent: TabRouter) {
+    self.root = root
+    self.type = tab.type
+    super.init(configuration: parent.configuration, parent: parent)
+    parent.addChild(self)
+    log(.routerLifecycle, message: "init", metadata: ["from": parent])
   }
 }
 
@@ -218,5 +210,41 @@ extension Router {
         metadata: metadata
       )
     )
+=======
+// MARK: - Action
+
+public extension Router {
+  /// Clears the entire navigation path, returning to the root.
+  @MainActor
+  func popToRoot() {
+    path.popToRoot()
+    log(.action, message: "popToRoot")
+  }
+
+  /// Closes the navigation stack.
+  /// > **Warning:** This function is only available if the stack is presented.
+  @MainActor
+  func close() {
+    if type.isPresented {
+      triggerClose = true
+      log(.action, message: "close")
+    }
+  }
+
+  /// Removes the last element from the navigation path, navigating back one step.
+  @MainActor
+  func back() {
+    path.removeLast()
+    log(.action, message: "back")
+  }
+
+  /// Closes all child routers presented from the parent router.
+  @MainActor
+  func closeChildren() {
+    for router in children.values.compactMap(\.value) where router.isPresented {
+      sheet = nil
+      cover = nil
+      log(.action, message: "closeChildren", metadata: ["router": router.type])
+    }
   }
 }

@@ -40,3 +40,12 @@ public typealias TabRoute = Route
 extension TabRoute {
   var type: RouterType { .tab(name) }
 }
+
+public struct AnyTabRoute: Identifiable, Equatable {
+  public var id: Int { wrapped.hashValue }
+  var wrapped: any TabRoute
+
+  public static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.id == rhs.id
+  }
+}
