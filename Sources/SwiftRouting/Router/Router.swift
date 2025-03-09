@@ -59,7 +59,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
     self.root = root
     self.type = type
     super.init(configuration: parent.configuration, parent: parent)
-    // TODO: [TabRouter] Move in tabarRouter
     parent.addChild(self)
     log(.routerLifecycle, message: "init", metadata: ["from": parent])
   }
@@ -141,6 +140,40 @@ private extension Router  {
     case .root:
       root = AnyRoute(wrapped: destination)
       rootID = UUID()
+    }
+  }
+}
+
+// MARK: - Action
+
+public extension Router {
+  /// Clears the entire navigation path, returning to the root.
+  func popToRoot() {
+    path.popToRoot()
+    log(.action, message: "popToRoot")
+  }
+
+  /// Closes the navigation stack.
+  /// > **Warning:** This function is only available if the stack is presented.
+  func close() {
+    if type.isPresented {
+      triggerClose = true
+      log(.action, message: "close")
+    }
+  }
+
+  /// Removes the last element from the navigation path, navigating back one step.
+  func back() {
+    path.removeLast()
+    log(.action, message: "back")
+  }
+
+  /// Closes all child routers presented from the parent router.
+  func closeChildren() {
+    for router in children.values.compactMap({ $0.value as? Router }) where router.present {
+      router.sheet = nil
+      router.cover = nil
+      log(.action, message: "closeChildren", metadata: ["router": router.type])
     }
   }
 }

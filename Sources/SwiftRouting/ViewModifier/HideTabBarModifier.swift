@@ -7,11 +7,6 @@
 
 import SwiftUI
 
-extension EnvironmentValues {
-
-  @Entry public var hideTabBar = false
-}
-
 public struct HideTabBarModifier: ViewModifier {
   @Environment(\.hideTabBar) private var hideTabBar
 

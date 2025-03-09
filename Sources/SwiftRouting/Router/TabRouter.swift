@@ -54,54 +54,18 @@ public extension TabRouter {
   ///
   /// - Parameter tab: The `TabRoute` to search for.
   @discardableResult func find(tab: some TabRoute) -> Router? {
-    children.values.compactMap { $0.value as? Router }.first(where: { $0.type == tab.type })
+    children.values.compactMap({ $0.value as? Router }).first(where: { $0.type == tab.type })
   }
 }
 
-public class BaseRouter: ObservableObject, Identifiable {
-  public let id: UUID = UUID()
-  let configuration: Configuration
-  var parent: BaseRouter?
-  var children: [UUID: WeakContainer<BaseRouter>] = [:]
+// MARK: - Deeplink
 
-  init(configuration: Configuration, parent: BaseRouter? = nil) {
-    self.configuration = configuration
-    self.parent = parent
-  }
+public extension TabRouter {
 
-  deinit {
-    parent?.removeChild(self)
-    log(.routerLifecycle, message: "deinit")
-  }
+  func handle(tabDeeplink: TabDeeplink<some TabRoute, some Route>) {
+    change(tab: tabDeeplink.tab)
 
-  func addChild(_ child: BaseRouter) {
-    children[child.id] = WeakContainer(value: child)
-  }
-
-  func removeChild(_ child: BaseRouter) {
-    children.removeValue(forKey: child.id)
-  }
-
-  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
-    configuration.logger?(
-      LoggerConfiguration(
-        type: type,
-        router: self,
-        message: message,
-        metadata: metadata
-      )
-    )
-  }
-}
-
-extension BaseRouter: CustomStringConvertible {
-  public var description: String {
-    if let router = self as? Router {
-      String(describing: router.type)
-    } else if let tabRouter = self as? TabRouter {
-      "tabRouter(\(String(describing: type(of: tabRouter.tab.wrapped)).lowercased()))"
-    } else {
-      "baseRouter"
-    }
+    guard let deeplink = tabDeeplink.deeplink else { return }
+    find(tab: tabDeeplink.tab)?.handle(deeplink: deeplink)
   }
 }
