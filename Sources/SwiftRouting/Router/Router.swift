@@ -22,7 +22,7 @@ import SwiftUI
 /// ```
 public final class Router: BaseRouter, @unchecked Sendable {
 
-  internal static let defaultRouter: Router = Router(configuration: .default)
+  static let defaultRouter: Router = Router(configuration: .default)
 
   // MARK: Navigation
   @Published internal var root: AnyRoute?
@@ -38,7 +38,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   }
 
   // MARK: Configuration
-  internal let type: RouterType
+  let type: RouterType
 
   // MARK: Initialization
   /// Initializes a `Router` with a custom configuration.
