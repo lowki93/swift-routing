@@ -16,7 +16,11 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
   private let destination: Destination.Type
   private let content: (Destination.Type) -> Content
 
-  public init(tab: Binding<Tab>, destination: Destination.Type,  @ViewBuilder content: @escaping (Destination.Type) -> Content) {
+  public init(
+    tab: Binding<Tab>,
+    destination: Destination.Type,
+    @ViewBuilder content: @escaping (Destination.Type) -> Content
+  ) {
     self._tab = tab
     self.destination = destination
     self.content = content
@@ -41,13 +45,14 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
     public var body: some View {
       TabView(selection: .tabToRoot(for: $tab, in: tabRouter)) {
         content(destination)
+        // TODO: Try to had RoutingNavigationStack for each child
 //        _VariadicView.Tree(TabViewContainer(currentTab: tab, destination: destination)) {
 //          content(destination)
 //        }
       }
       .environment(\.tabRouter, tabRouter)
       .onChange(of: tabRouter.tab) {
-        if let tab = $0.wrapped as? Tab {
+        if let tab = tabRouter.tab.wrapped as? Tab {
           self.tab = tab
         }
       }
