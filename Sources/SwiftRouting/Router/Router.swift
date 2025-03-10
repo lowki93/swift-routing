@@ -24,8 +24,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
   internal static let defaultRouter: Router = Router(configuration: .default)
 
-  internal var rootID: UUID = UUID()
-
   // MARK: Navigation
   @Published internal var root: AnyRoute?
   @Published internal var path = NavigationPath()
