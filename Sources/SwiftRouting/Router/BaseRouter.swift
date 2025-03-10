@@ -44,10 +44,18 @@ public class BaseRouter: ObservableObject, Identifiable {
   }
 }
 
+public extension BaseRouter {
+  func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
+    let tabRouters = children.compactMap { $0.value.value as? TabRouter }
+
+    return tabRouters.first { type(of: $0.tab.wrapped) == type(of: tabRoute) }
+  }
+}
+
 extension BaseRouter: CustomStringConvertible {
   public var description: String {
     if let router = self as? Router {
-      String(describing: router.type)
+      "router(\(String(describing: router.type)))"
     } else if let tabRouter = self as? TabRouter {
       "tabRouter(\(String(describing: type(of: tabRouter.tab.wrapped)).lowercased()))"
     } else {
