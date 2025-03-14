@@ -21,8 +21,8 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-@Observable
-public final class Router: BaseRouter, @unchecked Sendable {
+@MainActor @Observable
+public final class Router: BaseRouter {
 
   internal static let defaultRouter: Router = Router(configuration: .default)
 
@@ -72,7 +72,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
 // MARK: - Navigation
 
-extension Router: RouterModel {
+extension Router: @preconcurrency RouterModel {
   public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }
