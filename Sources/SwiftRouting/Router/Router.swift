@@ -8,9 +8,9 @@
 import Observation
 import SwiftUI
 
-/// Every `RoutingNavigationStack`has his own router
+/// Every `RoutingNavigationStack` has his own router
 ///
-///Router enable progamatic control of their navigation stacks
+/// Router enable progamatic control of their navigation stacks
 /// ```swift
 /// Button("To page2") {
 ///   router.push(HomeRoute.page2(10))
@@ -21,8 +21,8 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-@MainActor @Observable
-public final class Router: BaseRouter {
+@Observable
+public final class Router: BaseRouter, @unchecked Sendable {
 
   internal static let defaultRouter: Router = Router(configuration: .default)
 
@@ -72,7 +72,7 @@ public final class Router: BaseRouter {
 
 // MARK: - Navigation
 
-extension Router: @preconcurrency RouterModel {
+extension Router: RouterModel {
   public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }
