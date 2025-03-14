@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// Creates a `NavigationStack` with its own `Router` to manage navigation, sheets, and covers.
+/// Creates a `NavigationStack` with its own `Router` to manage navigation, sheets, and covers.
 ///
 /// `RoutingNavigationStack` functions like a standard `NavigationStack`, but it automatically manages
 /// the root `Route`, all `RouteDestination` instances, and presentation types such as sheets or covers.
@@ -34,14 +34,6 @@ import SwiftUI
 /// - This navigation system supports deep linking and maintains navigation state.
 /// - It allows navigation operations such as `push`, `present`, and `cover` within the stack.
 /// - Works seamlessly with `TabView` by creating independent navigation stacks per tab.
-///
-/// ## Example with `TabView`
-/// ```swift
-/// TabView {
-///     RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
-///     RoutingNavigationStack(tab: HomeTab.tab2, destination: HomeRoute.self) { Page2View() }
-/// }
-/// ```
 ///
 /// ## Example with Stack Navigation
 /// ```swift

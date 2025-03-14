@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-/// Every `RoutingNavigationStack`has his own router
+/// Every `RoutingNavigationStack` has his own router
 ///
-///Router enable progamatic control of their navigation stacks
+/// Router enable progamatic control of their navigation stacks
 /// ```swift
 /// Button("To page2") {
 ///   router.push(HomeRoute.page2(10))
@@ -20,7 +20,7 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-public class Router: BaseRouter, @unchecked Sendable {
+public final class Router: BaseRouter, @unchecked Sendable {
 
   internal static let defaultRouter: Router = Router(configuration: .default)
 
@@ -72,8 +72,12 @@ public class Router: BaseRouter, @unchecked Sendable {
 
 // MARK: - Navigation
 
+<<<<<<< HEAD
 extension Router: @preconcurrency RouterModel {
   @MainActor
+=======
+extension Router: RouterModel {
+>>>>>>> 1ae75fe (add missing doc)
   public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }
