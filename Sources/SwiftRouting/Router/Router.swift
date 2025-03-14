@@ -20,7 +20,7 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-public class Router: ObservableObject, Identifiable, @unchecked Sendable {
+public class Router: BaseRouter, @unchecked Sendable {
 
   internal static let defaultRouter: Router = Router(configuration: .default)
 

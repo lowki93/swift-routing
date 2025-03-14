@@ -8,7 +8,7 @@
 import Observation
 import SwiftUI
 
-@Observable
+@MainActor @Observable
 public final class TabRouter: BaseRouter, @unchecked Sendable {
 
   public var tab: AnyTabRoute
