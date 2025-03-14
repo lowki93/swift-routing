@@ -73,6 +73,23 @@ public class BaseRouter: ObservableObject, Identifiable {
   }
 }
 
+// MARK: - Tab Management
+
+public extension BaseRouter {
+
+  /// Finds the corresponding `Router` for a given tab.
+  ///
+  /// This method searches among the child routers to locate the one managing the specified tab.
+  ///
+  /// - Parameter tab: The `TabRoute` to search for.
+  /// - Returns: The `Router` managing the specified tab, if found.
+  @discardableResult func find(tab: some TabRoute) -> Router? {
+    children.values.compactMap({ $0.value as? Router }).first(where: { $0.type == tab.type })
+  }
+}
+
+// MARK: - TabRouter
+
 public extension BaseRouter {
 
   /// Finds and returns a `TabRouter` instance associated with the given `TabRoute` type.

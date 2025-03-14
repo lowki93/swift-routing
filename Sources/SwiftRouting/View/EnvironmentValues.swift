@@ -8,5 +8,5 @@
 import SwiftUI
 
 extension EnvironmentValues {
-  @Entry public var hideTabBar = false
+  @Entry var hideTabBar = false
 }

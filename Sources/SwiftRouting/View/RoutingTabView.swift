@@ -8,6 +8,35 @@
 import Observation
 import SwiftUI
 
+/// A custom `TabView` with its own `TabRouter` for managing tab-based navigation.
+///
+/// `RoutingTabView` behaves like a standard `TabView` but integrates with `TabRouter`
+/// to enable programmatic navigation control.
+///
+/// ## Usage
+/// ```swift
+/// @State var tab: HomeTab = .home
+///
+/// RoutingTabView(tab: $tab, destination: HomeRoute.self) { destination in
+///   RoutingNavigationStack(tab: HomeTab.home, destination: destination, root: .page1)
+///   RoutingNavigationStack(tab: HomeTab.user, destination: destination, root: .page2)
+/// }
+/// ```
+///
+/// ## TabToRoot Behavior
+/// - If the user taps on the currently selected tab, the navigation stack is reset.
+///
+/// ## Notes
+/// - You can still use `TabView` without `RoutingTabView` if `TabRouter` is not needed.
+/// ```swift
+/// @Environment(\.router) var router
+/// @State var tab: HomeTab = .home
+///
+/// TabView(selection: .tabToRoot(for: $tab, in: router)) {
+///     RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
+///     RoutingNavigationStack(tab: HomeTab.tab2, destination: HomeRoute.self) { Page2View() }
+/// }
+/// ```
 @MainActor
 public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Content: View>: View {
 
@@ -16,6 +45,12 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
   private let destination: Destination.Type
   private let content: (Destination.Type) -> Content
 
+  /// Initializes a `RoutingTabView` instance.
+  ///
+  /// - Parameters:
+  ///   - tab: A binding to the currently selected tab.
+  ///   - destination: The type of the route destination.
+  ///   - content: A closure that generates the tab views based on the destination type.
   public init(
     tab: Binding<Tab>,
     destination: Destination.Type,
@@ -82,7 +117,6 @@ extension View {
   }
 }
 
-// https://stackoverflow.com/questions/78282952/how-swiftuis-tabview-identify-each-item-internally
 private struct TabTraitKey: @preconcurrency _ViewTraitKey {
   @MainActor static var defaultValue: AnyHashable?
 }

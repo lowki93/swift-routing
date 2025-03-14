@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-public struct HideTabBarModifier: ViewModifier {
+struct HideTabBarModifier: ViewModifier {
   @Environment(\.hideTabBar) private var hideTabBar
 
-  public func body(content: Content) -> some View {
+  func body(content: Content) -> some View {
     if hideTabBar {
       content
         .toolbar(.hidden, for: .tabBar)
