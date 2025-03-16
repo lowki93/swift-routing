@@ -10,17 +10,16 @@ import SwiftRouting
 
 enum AppRoute: Route {
   case home
+  case notifications
   case user(name: String)
   case settings
 
   var name: String {
     switch self {
-    case .home:
-      "Home"
-    case let .user(name):
-      "User(\(name))"
-    case .settings:
-      "Settings"
+    case .home:  "Home"
+    case .notifications: "Notificatons"
+    case let .user(name): "User(\(name))"
+    case .settings: "Settings"
     }
   }
 }
@@ -28,12 +27,10 @@ enum AppRoute: Route {
 extension AppRoute: RouteDestination {
   static func view(for route: AppRoute) -> some View {
     switch route {
-    case .home:
-      HomeScreen()
-    case let .user(name):
-      UserScreen(name: name)
-    case .settings:
-      SettingsScreen()
+    case .home: HomeScreen()
+    case .notifications: NotificationsScreen()
+    case let .user(name): UserScreen(name: name)
+    case .settings: SettingsScreen()
     }
   }
 }
