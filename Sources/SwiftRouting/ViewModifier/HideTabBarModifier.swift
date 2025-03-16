@@ -14,6 +14,8 @@ struct HideTabBarModifier: ViewModifier {
     if hideTabBar {
       content
         .toolbar(.hidden, for: .tabBar)
+    } else {
+      content
     }
   }
 }

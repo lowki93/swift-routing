@@ -95,38 +95,38 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
   }
 }
 
-struct TabViewContainer<Tab: TabRoute, Destination: RouteDestination>: _VariadicView_MultiViewRoot {
-
-  let currentTab: Tab
-  let destination: Destination.Type
-
-  @ViewBuilder
-  func body(children: _VariadicView.Children) -> some View {
-    ForEach(children) { child in
-      if let tab = child.tab(as: Tab.self) {
-        RoutingNavigationStack(tab: tab, destination: destination) { child }
-      }
-    }
-  }
-}
-
-
-extension View {
-  public func tab(_ tab: some TabRoute) -> some View {
-    _trait(TabTraitKey.self, AnyHashable(tab))
-  }
-}
-
-private struct TabTraitKey: @preconcurrency _ViewTraitKey {
-  @MainActor static var defaultValue: AnyHashable?
-}
-
-extension _VariadicView_Children.Element {
-  var tab: AnyHashable? {
-    self[TabTraitKey.self]
-  }
-
-  func tab<T: TabRoute>(as: T.Type) -> T? {
-    tab as? T
-  }
-}
+//struct TabViewContainer<Tab: TabRoute, Destination: RouteDestination>: _VariadicView_MultiViewRoot {
+//
+//  let currentTab: Tab
+//  let destination: Destination.Type
+//
+//  @ViewBuilder
+//  func body(children: _VariadicView.Children) -> some View {
+//    ForEach(children) { child in
+//      if let tab = child.tab(as: Tab.self) {
+//        RoutingNavigationStack(tab: tab, destination: destination) { child }
+//      }
+//    }
+//  }
+//}
+//
+//
+//extension View {
+//  public func tab(_ tab: some TabRoute) -> some View {
+//    _trait(TabTraitKey.self, AnyHashable(tab))
+//  }
+//}
+//
+//private struct TabTraitKey: @preconcurrency _ViewTraitKey {
+//  @MainActor static var defaultValue: AnyHashable?
+//}
+//
+//extension _VariadicView_Children.Element {
+//  var tab: AnyHashable? {
+//    self[TabTraitKey.self]
+//  }
+//
+//  func tab<T: TabRoute>(as: T.Type) -> T? {
+//    tab as? T
+//  }
+//}
