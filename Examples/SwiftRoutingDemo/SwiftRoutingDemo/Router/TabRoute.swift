@@ -17,4 +17,6 @@ enum HomeTab: TabRoute {
     case .notifications: "notifications"
     }
   }
+
+  var hideTabBarOnPush: Bool { true }
 }
