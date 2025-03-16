@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct HideTabBarModifier: ViewModifier {
-  @Environment(\.hideTabBar) private var hideTabBar
+  @Environment(\.router) private var router
 
   func body(content: Content) -> some View {
-    if hideTabBar {
+    if case let .tab(_, hideTabBarOnPush) = router.type, hideTabBarOnPush {
       content
         .toolbar(.hidden, for: .tabBar)
     } else {
