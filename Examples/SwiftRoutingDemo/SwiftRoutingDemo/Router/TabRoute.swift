@@ -9,12 +9,12 @@ import SwiftRouting
 
 enum HomeTab: TabRoute {
   case home
-  case user
+  case notifications
 
   var name: String {
     switch self {
     case .home: "home"
-    case .user: "user"
+    case .notifications: "notifications"
     }
   }
 }
