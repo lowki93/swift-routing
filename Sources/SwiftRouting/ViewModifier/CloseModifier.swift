@@ -13,8 +13,8 @@ struct CloseModifier: ViewModifier {
 
   func body(content: Content) -> some View {
     content
-      .onChange(of: router.triggerClose) {
-        guard router.triggerClose else { return }
+      .onReceive(router.$triggerClose) { triggerClose in
+        guard triggerClose else { return }
         dismiss()
       }
   }

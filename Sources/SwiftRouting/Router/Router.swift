@@ -5,7 +5,6 @@
 //  Created by Kevin Budain on 22/01/2025.
 //
 
-import Observation
 import SwiftUI
 
 /// Every `RoutingNavigationStack`has his own router
@@ -21,7 +20,6 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-@Observable
 public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
   internal static let defaultRouter: Router = Router(configuration: .default)
@@ -30,11 +28,11 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   internal var rootID: UUID = UUID()
 
   // MARK: Navigation
-  internal var root: AnyRoute?
-  internal var path = NavigationPath()
-  internal var sheet: AnyRoute?
-  internal var cover: AnyRoute?
-  internal var triggerClose: Bool = false
+  @Published internal var root: AnyRoute?
+  @Published internal var path = NavigationPath()
+  @Published internal var sheet: AnyRoute?
+  @Published internal var cover: AnyRoute?
+  @Published internal var triggerClose: Bool = false
   internal var present: Bool {
     sheet != nil || cover != nil
   }
@@ -82,25 +80,30 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
 
 // MARK: - Navigation
 
-extension Router: RouterModel {
+extension Router: @preconcurrency RouterModel {
+  @MainActor
   public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }
 
+  @MainActor
   public func push(_ destination: some Route) {
     route(to: destination, type: .push)
   }
 
+  @MainActor
   public func present(_ destination: some Route) {
     route(to: destination, type: .sheet)
   }
 
+  @MainActor
   public func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
 }
 
 private extension Router  {
+  @MainActor
   func route(to destination: some Route, type: RoutingType) {
     log(.navigation, metadata: ["navigating": destination, "type": type])
 
@@ -130,6 +133,7 @@ public extension Router {
   /// 4. Navigates to the final destination route with the specified presentation type.
   ///
   /// - Parameter deeplink: The `DeeplinkRoute` containing the navigation path and target route.
+  @MainActor
   func handle(deeplink: DeeplinkRoute<some Route>) {
     // Dismiss all presented child routers
     parent?.closeChildren()
@@ -151,6 +155,7 @@ public extension Router {
 
 public extension Router {
   /// Clears the entire navigation path, returning to the root.
+  @MainActor
   func popToRoot() {
     path.popToRoot()
     log(.action, message: "popToRoot")
@@ -158,6 +163,7 @@ public extension Router {
 
   /// Closes the navigation stack.
   /// > **Warning:** This function is only available if the stack is presented.
+  @MainActor
   func close() {
     if type.isPresented {
       triggerClose = true
@@ -166,12 +172,14 @@ public extension Router {
   }
 
   /// Removes the last element from the navigation path, navigating back one step.
+  @MainActor
   func back() {
     path.removeLast()
     log(.action, message: "back")
   }
 
   /// Closes all child routers presented from the parent router.
+  @MainActor
   func closeChildren() {
     for router in children.values.compactMap(\.value) where router.present {
       router.sheet = nil

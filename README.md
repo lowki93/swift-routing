@@ -8,7 +8,7 @@ SwiftRouting provides a simple navigation layer based on `NavigationStack`.
 -   Simple and decoupled navigation using `Route`
 -   Deep linking handled separately from navigation
  
-This framework is entirely written in Swift and SwiftUI, using `Observable`, and supports iOS 17 and later.
+This framework is entirely written in Swift and SwiftUI and supports iOS 17 and later.
 
 
 ## How It Works
