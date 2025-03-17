@@ -15,6 +15,8 @@ public struct HideTabBarModifier: ViewModifier {
     if router.hideTabBar {
       content
         .toolbar(.hidden, for: .tabBar)
+    } else {
+      content
     }
   }
 }
