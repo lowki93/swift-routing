@@ -33,6 +33,9 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   @Published internal var sheet: AnyRoute?
   @Published internal var cover: AnyRoute?
   @Published internal var triggerClose: Bool = false
+  public var isPresented: Bool {
+    type.isPresented
+  }
   internal var present: Bool {
     sheet != nil || cover != nil
   }
@@ -181,9 +184,9 @@ public extension Router {
   /// Closes all child routers presented from the parent router.
   @MainActor
   func closeChildren() {
-    for router in children.values.compactMap(\.value) where router.present {
-      router.sheet = nil
-      router.cover = nil
+    for router in children.values.compactMap(\.value) where router.isPresented {
+      sheet = nil
+      cover = nil
       log(.action, message: "closeChildren", metadata: ["router": router.type])
     }
   }
