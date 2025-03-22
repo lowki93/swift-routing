@@ -25,6 +25,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   static let defaultRouter: Router = Router(configuration: .default)
 
   // MARK: Navigation
+  public var rootID: UUID = UUID()
   @Published internal var root: AnyRoute?
   @Published internal var path = NavigationPath()
   @Published internal var sheet: AnyRoute?
@@ -53,17 +54,9 @@ public final class Router: BaseRouter, @unchecked Sendable {
     log(.routerLifecycle, message: "init")
   }
 
-  init(root: AnyRoute?, type: RouterType, parent: Router) {
+  init(root: AnyRoute?, type: RouterType, parent: BaseRouter) {
     self.root = root
     self.type = type
-    super.init(configuration: parent.configuration, parent: parent)
-    parent.addChild(self)
-    log(.routerLifecycle, message: "init", metadata: ["from": parent])
-  }
-
-  init(root: AnyRoute?, tab: some TabRoute, parent: TabRouter) {
-    self.root = root
-    self.type = tab.type
     super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
     log(.routerLifecycle, message: "init", metadata: ["from": parent])
@@ -72,28 +65,20 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
 // MARK: - Navigation
 
-<<<<<<< HEAD
 extension Router: @preconcurrency RouterModel {
-  @MainActor
-=======
-extension Router: RouterModel {
->>>>>>> 1ae75fe (add missing doc)
-  public func update(root destination: some Route) {
+  @MainActor public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }
 
-  @MainActor
-  public func push(_ destination: some Route) {
+  @MainActor public func push(_ destination: some Route) {
     route(to: destination, type: .push)
   }
 
-  @MainActor
-  public func present(_ destination: some Route) {
+  @MainActor public func present(_ destination: some Route) {
     route(to: destination, type: .sheet)
   }
 
-  @MainActor
-  public func cover(_ destination: some Route) {
+  @MainActor public func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
 
@@ -128,8 +113,7 @@ extension Router: RouterModel {
 }
 
 private extension Router  {
-  @MainActor
-  func route(to destination: some Route, type: RoutingType) {
+  @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation, metadata: ["navigating": destination, "type": type])
 
     switch type {
@@ -150,35 +134,36 @@ private extension Router  {
 
 public extension Router {
   /// Clears the entire navigation path, returning to the root.
-  func popToRoot() {
+  @MainActor func popToRoot() {
     path.popToRoot()
     log(.action, message: "popToRoot")
   }
 
   /// Closes the navigation stack.
   /// > **Warning:** This function is only available if the stack is presented.
-  func close() {
-    if type.isPresented {
+  @MainActor func close() {
+    if isPresented {
       triggerClose = true
       log(.action, message: "close")
     }
   }
 
   /// Removes the last element from the navigation path, navigating back one step.
-  func back() {
+  @MainActor func back() {
     path.removeLast()
     log(.action, message: "back")
   }
 
   /// Closes all child routers presented from the parent router.
-  func closeChildren() {
-    for router in children.values.compactMap({ $0.value as? Router }) where router.present {
-      router.sheet = nil
-      router.cover = nil
+  @MainActor func closeChildren() {
+    for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
+      sheet = nil
+      cover = nil
       log(.action, message: "closeChildren", metadata: ["router": router.type])
     }
   }
 }
+
 
 // MARK: - Deeplink
 
@@ -192,8 +177,7 @@ public extension Router {
   /// 4. Navigates to the final destination route with the specified presentation type.
   ///
   /// - Parameter deeplink: The `DeeplinkRoute` containing the navigation path and target route.
-  @MainActor
-  func handle(deeplink: DeeplinkRoute<some Route>) {
+  @MainActor func handle(deeplink: DeeplinkRoute<some Route>) {
     // Dismiss all presented child routers
     closeChildren()
 
@@ -245,41 +229,3 @@ extension Router {
         metadata: metadata
       )
     )
-=======
-// MARK: - Action
-
-public extension Router {
-  /// Clears the entire navigation path, returning to the root.
-  @MainActor
-  func popToRoot() {
-    path.popToRoot()
-    log(.action, message: "popToRoot")
-  }
-
-  /// Closes the navigation stack.
-  /// > **Warning:** This function is only available if the stack is presented.
-  @MainActor
-  func close() {
-    if type.isPresented {
-      triggerClose = true
-      log(.action, message: "close")
-    }
-  }
-
-  /// Removes the last element from the navigation path, navigating back one step.
-  @MainActor
-  func back() {
-    path.removeLast()
-    log(.action, message: "back")
-  }
-
-  /// Closes all child routers presented from the parent router.
-  @MainActor
-  func closeChildren() {
-    for router in children.values.compactMap(\.value) where router.isPresented {
-      sheet = nil
-      cover = nil
-      log(.action, message: "closeChildren", metadata: ["router": router.type])
-    }
-  }
-}

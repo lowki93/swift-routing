@@ -23,18 +23,17 @@ import Observation
 /// ```swift
 /// @Environment(\.tabRouter) var tabRouter
 /// ```
-@Observable
 public final class TabRouter: BaseRouter, @unchecked Sendable {
 
   /// The currently active tab.
-  var tab: AnyTabRoute
+  @Published var tab: AnyTabRoute
 
   /// Initializes a `TabRouter` for a given tab.
   ///
   /// - Parameters:
   ///   - tab: The tab associated with this router.
   ///   - parent: The parent `Router` managing this tab.
-  init(tab: some TabRoute, parent: Router) {
+  init(tab: some TabRoute, parent: BaseRouter) {
     self.tab = AnyTabRoute(wrapped: tab)
     super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
@@ -49,7 +48,7 @@ extension TabRouter {
   /// Changes the currently active tab.
   ///
   /// - Parameter tab: The tab to switch to.
-  public func change(tab: some TabRoute) {
+  @MainActor public func change(tab: some TabRoute) {
     self.tab = AnyTabRoute(wrapped: tab)
     log(.action, message: "changeTab", metadata: ["tab": tab.name])
   }
@@ -59,7 +58,7 @@ extension TabRouter {
   /// - Parameters:
   ///   - destination: The new root `Route` for the tab.
   ///   - tab: The `TabRoute` to update.
-  public func update(root destination: some Route, in tab: some TabRoute) {
+  @MainActor public func update(root destination: some Route, in tab: some TabRoute) {
     change(tab: tab)
     find(tab: tab)?.update(root: destination)
   }
@@ -69,7 +68,7 @@ extension TabRouter {
   /// - Parameters:
   ///   - destination: The `Route` to push onto the stack.
   ///   - tab: The `TabRoute` where the route should be pushed.
-  public func push(_ destination: some Route, in tab: some TabRoute) {
+  @MainActor public func push(_ destination: some Route, in tab: some TabRoute) {
     change(tab: tab)
     find(tab: tab)?.push(destination)
   }
@@ -79,7 +78,7 @@ extension TabRouter {
   /// - Parameters:
   ///   - destination: The `Route` to present.
   ///   - tab: The `TabRoute` where the modal should be displayed.
-  public func present(_ destination: some Route, in tab: some TabRoute) {
+  @MainActor public func present(_ destination: some Route, in tab: some TabRoute) {
     change(tab: tab)
     find(tab: tab)?.present(destination)
   }
@@ -89,7 +88,7 @@ extension TabRouter {
   /// - Parameters:
   ///   - destination: The `Route` to present as a cover.
   ///   - tab: The `TabRoute` where the cover should be displayed.
-  public func cover(_ destination: some Route, in tab: some TabRoute) {
+  @MainActor public func cover(_ destination: some Route, in tab: some TabRoute) {
     change(tab: tab)
     find(tab: tab)?.cover(destination)
   }
@@ -102,7 +101,7 @@ public extension TabRouter {
   /// Handles a deep link by changing the active tab and navigating accordingly.
   ///
   /// - Parameter tabDeeplink: A `TabDeeplink` instance containing the target tab and an optional deep link.
-  func handle(tabDeeplink: TabDeeplink<some TabRoute, some Route>) {
+  @MainActor func handle(tabDeeplink: TabDeeplink<some TabRoute, some Route>) {
     change(tab: tabDeeplink.tab)
 
     guard let deeplink = tabDeeplink.deeplink else { return }

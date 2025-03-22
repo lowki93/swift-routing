@@ -42,11 +42,18 @@ import SwiftUI
 @MainActor
 public struct RoutingNavigationStack<Destination: RouteDestination, Content: View>: View {
 
-  @Environment(\.router) private var parent
+  @Environment(\.router) private var router
+  @Environment(\.tabRouter) private var tabRouter
   private let type: RouterType
   private let destination: Destination.Type
   private let root: Destination.R?
   private let content: Content?
+  private var parent: BaseRouter {
+    if case .tab = type {
+      return tabRouter ?? router
+    }
+    return router
+  }
 
   init(type: RouterType, destination: Destination.Type, root: Destination.R?, content: (() -> Content)?) {
     self.type = type
