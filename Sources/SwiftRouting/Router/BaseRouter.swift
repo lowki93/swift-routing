@@ -29,7 +29,7 @@ public class BaseRouter: ObservableObject, Identifiable {
   ///
   /// - Parameters:
   ///   - configuration: The configuration settings to be used by the router.
-  ///   - parent: The parent router, if applicable.
+  ///   - parent: The parent `Router`, if applicable.
   init(configuration: Configuration, parent: BaseRouter? = nil) {
     self.configuration = configuration
     self.parent = parent
@@ -83,7 +83,7 @@ public extension BaseRouter {
   ///
   /// - Parameter tab: The `TabRoute` to search for.
   /// - Returns: The `Router` managing the specified tab, if found.
-  @discardableResult func find(tab: some TabRoute) -> Router? {
+  @MainActor @discardableResult func find(tab: some TabRoute) -> Router? {
     children.values.compactMap({ $0.value as? Router }).first(where: { $0.type == tab.type })
   }
 }
@@ -96,7 +96,7 @@ public extension BaseRouter {
   ///
   /// - Parameter tabRoute: The `TabRoute` for which to find the corresponding `TabRouter`.
   /// - Returns: The `TabRouter` associated with the given tab, or `nil` if not found.
-  func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
+  @MainActor func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
     let tabRouters = children.compactMap { $0.value.value as? TabRouter }
 
     return tabRouters.first { type(of: $0.tab.wrapped) == type(of: tabRoute) }
