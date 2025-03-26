@@ -139,7 +139,7 @@ public extension Router {
   @MainActor
   func handle(deeplink: DeeplinkRoute<some Route>) {
     // Dismiss all presented child routers
-    parent?.closeChildren()
+    closeChildren()
 
     // Clear the current navigation path
     popToRoot()
