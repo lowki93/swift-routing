@@ -103,6 +103,35 @@ extension Router: @preconcurrency RouterModel {
   public func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
+
+  @MainActor
+  public func popToRoot() {
+    path.popToRoot()
+    log(.action, message: "popToRoot")
+  }
+
+  @MainActor
+  public func close() {
+    if type.isPresented {
+      triggerClose = true
+      log(.action, message: "close")
+    }
+  }
+
+  @MainActor
+  public func back() {
+    path.removeLast()
+    log(.action, message: "back")
+  }
+
+  @MainActor
+  public func closeChildren() {
+    for router in children.values.compactMap(\.value) where router.isPresented {
+      sheet = nil
+      cover = nil
+      log(.action, message: "closeChildren", metadata: ["router": router.type])
+    }
+  }
 }
 
 private extension Router  {
@@ -151,44 +180,6 @@ public extension Router {
 
     // Navigate to the target route with the specified presentation type
     route(to: deeplink.route, type: deeplink.type)
-  }
-}
-
-// MARK: - Action
-
-public extension Router {
-  /// Clears the entire navigation path, returning to the root.
-  @MainActor
-  func popToRoot() {
-    path.popToRoot()
-    log(.action, message: "popToRoot")
-  }
-
-  /// Closes the navigation stack.
-  /// > **Warning:** This function is only available if the stack is presented.
-  @MainActor
-  func close() {
-    if type.isPresented {
-      triggerClose = true
-      log(.action, message: "close")
-    }
-  }
-
-  /// Removes the last element from the navigation path, navigating back one step.
-  @MainActor
-  func back() {
-    path.removeLast()
-    log(.action, message: "back")
-  }
-
-  /// Closes all child routers presented from the parent router.
-  @MainActor
-  func closeChildren() {
-    for router in children.values.compactMap(\.value) where router.isPresented {
-      sheet = nil
-      cover = nil
-      log(.action, message: "closeChildren", metadata: ["router": router.type])
-    }
   }
 }
 

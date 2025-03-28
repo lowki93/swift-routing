@@ -59,4 +59,17 @@ public protocol RouterModel: ObservableObject {
   /// This method presents the specified route as a cover, taking over the entire screen.
   /// - Parameter destination: The `Route` to be presented as a cover.
   func cover(_ destination: some Route)
+
+  /// Clears the entire navigation path, returning to the root.
+  func popToRoot()
+
+  /// Closes the navigation stack.
+  /// > **Warning:** This function is only available if the stack is presented.
+  func close()
+
+  /// Removes the last element from the navigation path, navigating back one step.
+  func back()
+
+  /// Closes all child routers presented from the parent router.
+  func closeChildren()
 }
