@@ -82,29 +82,25 @@ extension Router: @preconcurrency RouterModel {
     route(to: destination, type: .cover)
   }
 
-  @MainActor
-  public func popToRoot() {
+  @MainActor public func popToRoot() {
     path.popToRoot()
     log(.action, message: "popToRoot")
   }
 
-  @MainActor
-  public func close() {
+  @MainActor public func close() {
     if type.isPresented {
       triggerClose = true
       log(.action, message: "close")
     }
   }
 
-  @MainActor
-  public func back() {
+  @MainActor public func back() {
     path.removeLast()
     log(.action, message: "back")
   }
 
-  @MainActor
-  public func closeChildren() {
-    for router in children.values.compactMap(\.value) where router.isPresented {
+  @MainActor public func closeChildren() {
+    for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
       sheet = nil
       cover = nil
       log(.action, message: "closeChildren", metadata: ["router": router.type])
@@ -129,41 +125,6 @@ private extension Router  {
     }
   }
 }
-
-// MARK: - Action
-
-public extension Router {
-  /// Clears the entire navigation path, returning to the root.
-  @MainActor func popToRoot() {
-    path.popToRoot()
-    log(.action, message: "popToRoot")
-  }
-
-  /// Closes the navigation stack.
-  /// > **Warning:** This function is only available if the stack is presented.
-  @MainActor func close() {
-    if isPresented {
-      triggerClose = true
-      log(.action, message: "close")
-    }
-  }
-
-  /// Removes the last element from the navigation path, navigating back one step.
-  @MainActor func back() {
-    path.removeLast()
-    log(.action, message: "back")
-  }
-
-  /// Closes all child routers presented from the parent router.
-  @MainActor func closeChildren() {
-    for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
-      sheet = nil
-      cover = nil
-      log(.action, message: "closeChildren", metadata: ["router": router.type])
-    }
-  }
-}
-
 
 // MARK: - Deeplink
 
@@ -193,39 +154,3 @@ public extension Router {
     route(to: deeplink.route, type: deeplink.type)
   }
 }
-
-public extension Router {
-  /// Finds the corresponding router for a given tab.
-  ///
-  /// This method searches among the child routers to find the one associated with the specified tab.
-  ///
-  /// - Parameter tab: The `TabRoute` to search for.
-  @discardableResult func find(tab: some TabRoute) -> Router? {
-    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
-  }
-}
-
-// MARK: - Child
-
-internal extension Router {
-  func addChild(_ child: Router) {
-    children[child.id] = WeakContainer(value: child)
-  }
-
-  func removeChild(_ child: Router) {
-    children.removeValue(forKey: child.id)
-  }
-}
-
-// MARK: - Log
-
-extension Router {
-  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
-    configuration.logger?(
-      LoggerConfiguration(
-        type: type,
-        router: self,
-        message: message,
-        metadata: metadata
-      )
-    )
