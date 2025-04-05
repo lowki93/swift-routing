@@ -1,26 +1,37 @@
+
 # SwiftRouting
-Framework for navigation in SwiftUI
 
-## Introduction
-SwiftRouting provides a simple navigation layer based on `NavigationStack`.
+&#x20;
 
-### Main Features:
--   Simple and decoupled navigation using `Route`
--   Deep linking handled separately from navigation
- 
-This framework is entirely written in Swift and SwiftUI and supports iOS 17 and later.
+A lightweight, flexible navigation framework built on top of `NavigationStack` for SwiftUI.
 
+## 🚀 Overview
 
-## How It Works
+SwiftRouting simplifies navigation in SwiftUI by introducing a decoupled routing system based on enums and deep links.
 
-### Define a Route
-A `Route` is an enumeration listing all possible navigation destinations.
+### ✨ Features
+
+- Declarative navigation using simple `Route` enums
+- Seamless integration with SwiftUI’s `NavigationStack`
+- Deep linking support
+- Full control over tab-based navigation
+- Clean separation between routes and views
+- Compatible with iOS 17+
+
+---
+
+## 🛍️ How It Works
+
+### 1. Define a Route
+
+Create an enum conforming to `Route` that represents all navigation paths:
+
 ```swift
 enum HomeRoute: Route {
   case page1
   case page2(Int)
   case page3(String)
-  
+
   public var name: String {
     switch self {
     case .page1: "page1"
@@ -30,7 +41,9 @@ enum HomeRoute: Route {
   }
 }
 ```
-Next, associate each `Route` with a view:
+
+Then, associate each route with a view:
+
 ```swift
 extension HomeRoute: @retroactive RouteDestination {
   public static func view(for route: HomeRoute) -> some View {
@@ -43,66 +56,75 @@ extension HomeRoute: @retroactive RouteDestination {
 }
 ```
 
-By keeping `Route` and `RouteDestination` separate, navigation is more flexible, allowing different frameworks to remain independent without knowing each other.
+> 💡 Keep your views and routing logic decoupled for better modularity and reuse.
 
- **Note**: For views requiring environment values or dependency injection, see **"Advanced Destination"**.
+---
 
+### 2. Use a Router
 
-### Instantiate a Router
-A `Router` is automatically created whenever a `RoutingNavigationStack` is instantiated.
+A `Router` is automatically created by `RoutingNavigationStack`.
+
 ```swift
 RoutingNavigationStack(stack: "Page", destination: HomeRoute.self, route: .page1)
 ```
-This `RoutingNavigationStack` creates a `Router` of type `.stack("Page")`, enabling navigation to all routes defined in `HomeRoute`.
 
+This creates a `.stack("Page")` router that manages navigation for the `HomeRoute` enum.
 
-### Navigation
-All `Router` instances are available in the SwiftUI `Environment`. Choose between `push`, `present`, or `cover` to navigate:
+---
+
+### 3. Perform Navigation
+
+All routers are available via the SwiftUI `Environment`.
+
 ```swift
 @Environment(\.router) private var router
 
-// Push route in the stack
-router.push(HomeRouter.page2(2))
-// Present route as a sheet
-router.present(HomeRouter.page2(2))
-// Present route as a full-screen cover
-router.cover(HomeRouter.page2(2))
+// Push a view in the stack
+router.push(HomeRoute.page2(2))
+
+// Present a view as a modal sheet
+router.present(HomeRoute.page2(2))
+
+// Present as a full-screen cover
+router.cover(HomeRoute.page2(2))
 ```
 
+---
 
-### Deep Linking Support
-`Router` handles deep linking using the `DeeplinkRoute<Route>` object.
+### 4. Deep Linking
 
-A `DeeplinkRoute` specifies the navigation path and final destination. It can include an optional sequence of intermediate routes before reaching the target.
+Use `DeeplinkRoute<Route>` to handle complex deep links.
 
-The `DeeplinkHandler` protocol helps convert a `Route` into a `DeeplinkRoute`:
-
- `DeeplinkHandler` protocol can help you to convert a `Route` to a `Route` use by `RouteDestination`.
 ```swift
 struct HomeDeeplink: DeeplinkHandler {
   func deeplink(route: SubRoute) -> DeeplinkRoute<HomeRoute>? {
-    // Convert the incoming route to a DeeplinkRoute<HomeRoute>
     ...
   }
 }
 ```
-Next, pass the result to the `Router`:
+
+Trigger navigation via:
+
 ```swift
 @Environment(\.router) private var router
-private let homeDeeplink = HomeDeeplink()
 
-let result = homeDeeplink.deeplink(..)
-route.handle(deeplink: result)
+let result = HomeDeeplink().deeplink(...)
+router.handle(deeplink: result)
 ```
- `Router.handle(deeplink:)` Execution
-- Closes all currently presented child routers.
-- Clears the current navigation stack.
-- Pushes intermediate routes defined in the deeplink.
-- Navigates to the final destination..
 
+This will:
 
-### Advanced Destination
-If your view requires environment objects or dependency injection, you can create a separate view:
+- Dismiss any modals
+- Reset the navigation stack
+- Navigate through intermediate routes
+- Reach the target destination
+
+---
+
+## 🧪 Advanced Use: Dependency Injection
+
+For views needing `@Environment` or injected dependencies:
+
 ```swift
 extension HomeRoute: @retroactive RouteDestination {
   public static func view(for route: HomeRoute) -> some View {
@@ -110,30 +132,31 @@ extension HomeRoute: @retroactive RouteDestination {
   }
 }
 
-struct HomeRouteDestination {
+struct HomeRouteDestination: View {
   @Environment(\.router) private var router
   let route: HomeRoute
 
   var body: some View {
-    switch route:
+    switch route {
     case .page1: Page1View()
     case let .page2(value): Page2View(value: value, router: router)
     case let .page3(value): Page3View(value: value)
+    }
   }
 }
 ```
 
+---
 
-### TabView and Tab-Based Navigation
-SwiftRouting supports tab navigation using `TabRoute`.
-Define the tabs:
+## 🛍️ Tab Navigation
+
+Define your tabs with `TabRoute`:
+
 ```swift
-public enum HomeTab: TabRoute {
-  case tab1
-  case tab2
-  case tab3
-  
-  public var name: String {
+enum HomeTab: TabRoute {
+  case tab1, tab2, tab3
+
+  var name: String {
     switch self {
     case .tab1: "Tab 1"
     case .tab2: "Tab 2"
@@ -142,56 +165,94 @@ public enum HomeTab: TabRoute {
   }
 }
 ```
-Use with native `TabView`:
-```swift
-struct HomeScreen: View {
-  @Environment(\.router) private var router
-  @State private var tab: HomeTab = .tab1
 
-  var body: some View {
-    TabView(selection: $tab) {
-      RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
-      RoutingNavigationStack(tab: HomeTab.tab2, destination: HomeRoute.self, root: .page2)
-      RoutingNavigationStack(tab: HomeTab.tab3, destination: HomeRoute.self, root: .page3)
-    }
+### Option 1: Native `TabView`
+
+```swift
+TabView(selection: .tabToRoot(for: $tab, in: router)) {
+  RoutingNavigationStack(tab: .tab1, destination: HomeRoute.self, root: .page1)
+  RoutingNavigationStack(tab: .tab2, destination: HomeRoute.self, root: .page2)
+  RoutingNavigationStack(tab: .tab3, destination: HomeRoute.self, root: .page3)
+}
+```
+
+Use `.tabToRoot` to reset the stack when the selected tab is tapped again.
+
+### Option 2: `RoutingTabView` with `TabRouter`
+
+This gives you programmatic control over tabs:
+
+```swift
+RoutingTabView(tab: $tab, destination: HomeRoute.self) { destination in
+  RoutingNavigationStack(tab: .tab1, destination: destination, root: .page1)
+  RoutingNavigationStack(tab: .tab2, destination: destination, root: .page2)
+  RoutingNavigationStack(tab: .tab3, destination: destination, root: .page3)
+}
+```
+
+Inside the tab views:
+
+```swift
+@Environment(\.tabRouter) private var tabRouter
+
+tabRouter.push(HomeRoute.page1, in: HomeTab.tab2)
+tabRouter.present(HomeRoute.page3, in: HomeTab.tab1)
+tabRouter.update(root: HomeRoute.page2, in: HomeTab.tab3)
+```
+
+Like `DeeplinkRoute`, you can use `TabDeeplink` to trigger deep linking inside a specific tab.
+
+```swift
+struct HomeDeeplink: DeeplinkHandler {
+  func deeplink(route: SubRoute) -> TabDeeplink<HomeTab, HomeRoute>? {
+    // Return a TabDeeplink with the target tab and a DeeplinkRoute
+    ...
   }
 }
 ```
-This creates three child `Router` instances:
-- `.tab(page1)`
--  `.tab(page2)`
--  `.tab(page3)`
-    
-Find the router for a tab:
+
+Trigger the navigation using the `TabRouter`:
+
 ```swift
-router.find(tab: HomeTab.tab1)
-```
-SwiftRouting handles `popToRoot` automatically for a tab. Simply use:
-```swift
-TabView(selection: .tabToRoot(for: $tab, in: router)) {
-  ...
-}
+@Environment(\.tabRouter) private var tabRouter
+
+let result = HomeDeeplink().deeplink(...)
+tabRouter.handle(tabDeeplink: result)
 ```
 
-### Instalation
-SwiftRouting can be installed via **Swift Package Manager**.
-Add the following to your `Package.swift`:
+This will:
+- Switch to the specified tab.
+- Trigger the associated `DeeplinkRoute` within that tab’s navigation stack.
+
+
+---
+
+## 📦 Installation
+
+Install via **Swift Package Manager**:
+
 ```swift
 dependencies: [
-    .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "0.0.1"))
+  .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "0.0.1"))
 ]
 ```
-In your dependencies:
+
+Then include:
+
 ```swift
-.product(name: "SwiftRouting", package: "swift-routing"),
+.product(name: "SwiftRouting", package: "swift-routing")
 ```
 
-## Conclusion
+---
 
-SwiftRouting simplifies navigation in SwiftUI by separating routing from view implementation. It supports: 
-✅ `NavigationStack`-based navigation  
-✅ View presentation (`sheet`, `cover`)  
-✅ Deep linking  
-✅ Advanced tab navigation (`TabRoute`)
+## ✅ Summary
 
-🚀 **Easy to integrate and extend for your iOS 17+ projects!**
+SwiftRouting brings structure, flexibility, and deep linking to SwiftUI apps:
+
+- ✔️ Declarative and modular
+- ✔️ Supports `NavigationStack`, `sheet`, and `cover`
+- ✔️ Tab routing with `TabRouter`
+- ✔️ Deep link handling with `DeeplinkRoute`
+
+> 💡 Ideal for scalable SwiftUI apps targeting iOS 17 and up.
+
