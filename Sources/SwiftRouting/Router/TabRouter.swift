@@ -43,7 +43,7 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
 
 // MARK: - Navigation
 
-extension TabRouter {
+extension TabRouter: @preconcurrency TabRouterModel {
 
   /// Changes the currently active tab.
   ///
