@@ -17,4 +17,14 @@ extension EnvironmentValues {
   ///
   /// This provides access to the current router within the navigation stack.
   @Entry public var router: Router = .defaultRouter
+
+  /// Adds a `TabRouter` instance to the environment values.
+  ///
+  /// This allows access to the tabRouter from anywhere in the app using:
+  /// ```swift
+  /// @Environment(\.tabRouter) var tabRouter
+  /// ```
+  ///
+  /// This provides access to the current router within the navigation stack.
+  @Entry public var tabRouter: TabRouter?
 }

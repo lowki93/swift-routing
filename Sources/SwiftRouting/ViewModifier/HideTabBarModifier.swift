@@ -7,12 +7,11 @@
 
 import SwiftUI
 
-public struct HideTabBarModifier: ViewModifier {
+struct HideTabBarModifier: ViewModifier {
   @Environment(\.router) private var router
 
-  public func body(content: Content) -> some View {
-    // TODO: [TabBarRouter] check if TabBarRouter has router ihas a child
-    if router.hideTabBar {
+  func body(content: Content) -> some View {
+    if case let .tab(_, hideTabBarOnPush) = router.type, hideTabBarOnPush {
       content
         .toolbar(.hidden, for: .tabBar)
     } else {

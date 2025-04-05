@@ -18,8 +18,7 @@ public extension Binding where Value: TabRoute {
   ///   - tab: A binding to the current tab.
   ///   - router: The router managing the tabview.
   /// - Returns: A binding that updates the tab and clears its navigation stack when reselected.
-  @MainActor
-  static func tabToRoot(for tab: Binding<Value>, in router: Router) -> Binding<Value> {
+  @MainActor static func tabToRoot(for tab: Binding<Value>, in router: BaseRouter) -> Binding<Value> {
     Binding(
       get: { tab.wrappedValue },
       set: {
@@ -27,6 +26,9 @@ public extension Binding where Value: TabRoute {
           router.find(tab: $0)?.popToRoot()
         } else {
           tab.wrappedValue = $0
+          if let tabRouter = router as? TabRouter {
+            tabRouter.change(tab: $0)
+          }
         }
       }
     )

@@ -9,6 +9,7 @@ import SwiftRouting
 import SwiftUI
 
 struct SettingsScreen: View {
+  @AppStorage("example") private var example: Example?
   @Environment(\.router) private var router
 
   var body: some View {
@@ -17,15 +18,13 @@ struct SettingsScreen: View {
         .imageScale(.large)
         .foregroundStyle(.tint)
       Text("Hello, world!")
-      Button("User") {
-        router.push(AppRoute.user(name: "Lowki"))
-      }
+      Button("User") { router.push(AppRoute.user(name: "Lowki")) }
+      Button("Back to choiseScreen") { example = nil }
     }
+    .navigationTitle("Settings")
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
-        Button("Dismiss") {
-          router.close()
-        }
+        Button("Dismiss") { router.close() }
       }
     }
   }

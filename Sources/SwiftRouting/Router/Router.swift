@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-/// Every `RoutingNavigationStack`has his own router
+/// Every `RoutingNavigationStack` has his own router
 ///
-///Router enable progamatic control of their navigation stacks
+/// Router enable progamatic control of their navigation stacks
 /// ```swift
 /// Button("To page2") {
 ///   router.push(HomeRoute.page2(10))
@@ -20,14 +20,12 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-public class Router: ObservableObject, Identifiable, @unchecked Sendable {
+public final class Router: BaseRouter, @unchecked Sendable {
 
-  internal static let defaultRouter: Router = Router(configuration: .default)
-
-  public let id: UUID = UUID()
-  internal var rootID: UUID = UUID()
+  static let defaultRouter: Router = Router(configuration: .default)
 
   // MARK: Navigation
+  public var rootID: UUID = UUID()
   @Published internal var root: AnyRoute?
   @Published internal var path = NavigationPath()
   @Published internal var sheet: AnyRoute?
@@ -41,13 +39,7 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   }
 
   // MARK: Configuration
-  internal let type: RouterType
-  internal let configuration: Configuration
-  // TODO: [TabBarRouter] Not expose parent -> Create a TabRouter accessible in the Environment
-  public var hideTabBar: Bool
-  public weak var parent: Router?
-
-  internal var children: [UUID: WeakContainer<Router>] = [:]
+  let type: RouterType
 
   // MARK: Initialization
   /// Initializes a `Router` with a custom configuration.
@@ -58,75 +50,57 @@ public class Router: ObservableObject, Identifiable, @unchecked Sendable {
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
     self.type = .app
-    // TODO: [TabBarRouter] Move in tabarRouter
-    self.hideTabBar = false
-    self.configuration = configuration
+    super.init(configuration: configuration)
     log(.routerLifecycle, message: "init")
   }
 
-  init(root: AnyRoute?, type: RouterType, parent: Router, hideTabBar: Bool) {
+  init(root: AnyRoute?, type: RouterType, parent: BaseRouter) {
     self.root = root
     self.type = type
-    self.configuration = parent.configuration
-    self.parent = parent
-    // TODO: [TabBarRouter] Move in tabarRouter
-    self.hideTabBar = hideTabBar
+    super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
-    log(.routerLifecycle, message: "init", metadata: ["from": parent.type])
-  }
-
-  deinit {
-    parent?.removeChild(self)
-    log(.routerLifecycle, message: "deinit")
+    log(.routerLifecycle, message: "init", metadata: ["from": parent])
   }
 }
 
 // MARK: - Navigation
 
 extension Router: @preconcurrency RouterModel {
-  @MainActor
-  public func update(root destination: some Route) {
+  @MainActor public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }
 
-  @MainActor
-  public func push(_ destination: some Route) {
+  @MainActor public func push(_ destination: some Route) {
     route(to: destination, type: .push)
   }
 
-  @MainActor
-  public func present(_ destination: some Route) {
+  @MainActor public func present(_ destination: some Route) {
     route(to: destination, type: .sheet)
   }
 
-  @MainActor
-  public func cover(_ destination: some Route) {
+  @MainActor public func cover(_ destination: some Route) {
     route(to: destination, type: .cover)
   }
 
-  @MainActor
-  public func popToRoot() {
+  @MainActor public func popToRoot() {
     path.popToRoot()
     log(.action, message: "popToRoot")
   }
 
-  @MainActor
-  public func close() {
+  @MainActor public func close() {
     if type.isPresented {
       triggerClose = true
       log(.action, message: "close")
     }
   }
 
-  @MainActor
-  public func back() {
+  @MainActor public func back() {
     path.removeLast()
     log(.action, message: "back")
   }
 
-  @MainActor
-  public func closeChildren() {
-    for router in children.values.compactMap(\.value) where router.isPresented {
+  @MainActor public func closeChildren() {
+    for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
       sheet = nil
       cover = nil
       log(.action, message: "closeChildren", metadata: ["router": router.type])
@@ -135,8 +109,7 @@ extension Router: @preconcurrency RouterModel {
 }
 
 private extension Router  {
-  @MainActor
-  func route(to destination: some Route, type: RoutingType) {
+  @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation, metadata: ["navigating": destination, "type": type])
 
     switch type {
@@ -165,8 +138,7 @@ public extension Router {
   /// 4. Navigates to the final destination route with the specified presentation type.
   ///
   /// - Parameter deeplink: The `DeeplinkRoute` containing the navigation path and target route.
-  @MainActor
-  func handle(deeplink: DeeplinkRoute<some Route>) {
+  @MainActor func handle(deeplink: DeeplinkRoute<some Route>) {
     // Dismiss all presented child routers
     closeChildren()
 
@@ -180,43 +152,5 @@ public extension Router {
 
     // Navigate to the target route with the specified presentation type
     route(to: deeplink.route, type: deeplink.type)
-  }
-}
-
-public extension Router {
-  /// Finds the corresponding router for a given tab.
-  ///
-  /// This method searches among the child routers to find the one associated with the specified tab.
-  ///
-  /// - Parameter tab: The `TabRoute` to search for.
-  @discardableResult func find(tab: some TabRoute) -> Router? {
-    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
-  }
-}
-
-// MARK: - Child
-
-internal extension Router {
-  func addChild(_ child: Router) {
-    children[child.id] = WeakContainer(value: child)
-  }
-
-  func removeChild(_ child: Router) {
-    children.removeValue(forKey: child.id)
-  }
-}
-
-// MARK: - Log
-
-extension Router {
-  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
-    configuration.logger?(
-      LoggerConfiguration(
-        type: type,
-        router: self,
-        message: message,
-        metadata: metadata
-      )
-    )
   }
 }

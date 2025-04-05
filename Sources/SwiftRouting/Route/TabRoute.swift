@@ -35,8 +35,21 @@ import Foundation
 /// ```swift
 /// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, route: .page1)
 /// ```
-public typealias TabRoute = Route
+public protocol TabRoute: Route {
+  var hideTabBarOnPush: Bool { get}
+}
 
 extension TabRoute {
-  var type: RouterType { .tab(name) }
+  var type: RouterType { .tab(name, hideTabBarOnPush: hideTabBarOnPush) }
+
+  public var hideTabBarOnPush: Bool { false }
+}
+
+public struct AnyTabRoute: Identifiable, Equatable {
+  public var id: Int { wrapped.hashValue }
+  var wrapped: any TabRoute
+
+  public static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.id == rhs.id
+  }
 }

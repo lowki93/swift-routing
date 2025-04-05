@@ -14,19 +14,13 @@ struct HomeScreen: View {
 
   var body: some View {
     VStack {
-      Button("User: lowki") {
-        router.push(AppRoute.user(name: "Lowki"))
-      }
-      NavigationLink(value: AppRoute.user(name: "Alexia")) {
-        Text("User: alexia")
-      }
+      Button("User: lowki") { router.push(AppRoute.user(name: "Lowki")) }
+      Button("User: alexia") { router.push(AppRoute.user(name: "Alexia")) }
     }
     .navigationTitle("Home")
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
-        Button("Settings") {
-          router.present(AppRoute.settings)
-        }
+        Button("Settings") { router.present(AppRoute.settings) }
       }
     }
   }
