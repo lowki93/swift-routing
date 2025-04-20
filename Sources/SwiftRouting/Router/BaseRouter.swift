@@ -19,8 +19,11 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// The configuration settings for the router, including logging behavior.
   let configuration: Configuration
 
-  // The parent router, if any. Used for hierarchical navigation structures.
+  /// The parent router, if any. Used for hierarchical navigation structures.
   var parent: BaseRouter?
+
+  
+  var onTerminate: ((any TerminationRoute, Router) -> Void)?
 
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.
   var children: [UUID: WeakContainer<BaseRouter>] = [:]
@@ -61,10 +64,16 @@ public class BaseRouter: ObservableObject, Identifiable {
   ///   - type: The type of action being logged.
   ///   - message: An optional message providing more details.
   ///   - metadata: Optional metadata associated with the action.
-  func log(_ type: LoggerAction, message: String? = nil, metadata: [String: Any]? = nil) {
+  func log(
+    _ type: LoggerAction,
+    verbosity: LogVerbosity = .debug,
+    message: String? = nil,
+    metadata: [String: Any]? = nil
+  ) {
     configuration.logger?(
       LoggerConfiguration(
         type: type,
+        verbosity: verbosity,
         router: self,
         message: message,
         metadata: metadata

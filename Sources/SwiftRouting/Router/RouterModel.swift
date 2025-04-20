@@ -70,6 +70,8 @@ public protocol RouterModel: ObservableObject {
   /// Removes the last element from the navigation path, navigating back one step.
   func back()
 
+  func back(to index: Int)
+
   /// Closes all child routers presented from the parent router.
   func closeChildren()
 

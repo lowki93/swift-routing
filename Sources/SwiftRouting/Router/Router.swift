@@ -37,12 +37,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
   internal var present: Bool {
     sheet != nil || cover != nil
   }
-  internal var isPresented: Bool {
-    type.isPresented
-  }
-
-  // MARK: Termination
-  internal var onTerminate: ((any TerminationRoute, Router) -> Void)?
 
   // MARK: Configuration
   let type: RouterType
@@ -89,7 +83,7 @@ extension Router: @preconcurrency RouterModel {
   }
 
   // TODO: Terminate pass type (Close modal or back) how handle both
-  public func terminate(_ value: some TerminationRoute) {
+  @MainActor public func terminate(_ value: some TerminationRoute) {
     if isPresented {
       terminateOrClose(value)
     } else {
@@ -112,6 +106,12 @@ extension Router: @preconcurrency RouterModel {
   @MainActor public func back() {
     path.removeLast()
     log(.action, message: "back")
+  }
+
+  @MainActor public func back(to index: Int) {
+    let remove = path.count - index
+    path.removeLast(remove)
+    log(.action, message: "back", metadata: ["clear": remove])
   }
 
   @MainActor public func closeChildren() {
@@ -143,9 +143,9 @@ private extension Router  {
     return RouterContext(router: self, pathCount: pathCount)
   }
 
-  func terminateOrClose(_ value: some TerminationRoute) {
+  @MainActor func terminateOrClose(_ value: some TerminationRoute) {
     if let terminate = parent?.onTerminate, let parent {
-      log(.terminate, verbosity: .debug, message: "terminate", metadata: ["from": parent.type])
+      log(.terminate, verbosity: .debug, message: "terminate", metadata: ["from": parent])
       terminate(value, self)
       parent.onTerminate = nil
     } else {
@@ -153,7 +153,7 @@ private extension Router  {
     }
   }
 
-  func terminateOrBack(_ value: some TerminationRoute) {
+  @MainActor func terminateOrBack(_ value: some TerminationRoute) {
     if let action = onTerminate {
       log(.terminate, verbosity: .debug, message: "terminate")
       action(value, self)

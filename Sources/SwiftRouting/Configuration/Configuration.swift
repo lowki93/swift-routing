@@ -42,7 +42,7 @@ extension Configuration {
 
         Logger.default.log(
           level: OSLogType(from: loggerConfiguration.verbosity),
-          "Router: \(loggerConfiguration.router.type) | \(messageString)\(metadataString)"
+          "Router: \(loggerConfiguration.router) | \(messageString)\(metadataString)"
         )
       }
     )

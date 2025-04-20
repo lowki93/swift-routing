@@ -9,7 +9,7 @@ public struct RouterContext {
   let router: Router
   let pathCount: Int
 
-  public func onTerminate<R: TerminationRoute>(_ object: R.Type, perform: @escaping (R) -> Void)  {
+  @MainActor public func onTerminate<R: TerminationRoute>(_ object: R.Type, perform: @escaping (R) -> Void)  {
     router.onTerminate = { value, router in
       guard let value = value as? R else {
         self.router
