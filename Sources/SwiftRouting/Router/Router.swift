@@ -37,12 +37,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
   internal var present: Bool {
     sheet != nil || cover != nil
   }
-  internal var isPresented: Bool {
-    type.isPresented
-  }
-
-  // MARK: Termination
-  internal var onTerminate: ((any TerminationRoute, Router) -> Void)?
 
   // MARK: Configuration
   let type: RouterType
@@ -71,53 +65,28 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
 // MARK: - Navigation
 
-<<<<<< HEAD
 extension Router: @preconcurrency RouterModel {
   @MainActor public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }
 
-  @MainActor public func push(_ destination: some Route) {
-=======
-extension Router: RouterModel {
   @discardableResult
-<<<<<<< HEAD
-  public func push(_ destination: some Route) -> NavigationContext {
->>>>>>> 9f30bed (valid concept)
-=======
-  public func push(_ destination: some Route) -> RouterContext {
->>>>>>> 126296a (clear + add log)
+  @MainActor public func push(_ destination: some Route) -> RouterContext {
     route(to: destination, type: .push)
   }
 
-<<<<<<< HEAD
-  @MainActor public func present(_ destination: some Route) {
-=======
   @discardableResult
-<<<<<<< HEAD
-  public func present(_ destination: some Route) -> NavigationContext {
->>>>>>> 9f30bed (valid concept)
-=======
-  public func present(_ destination: some Route) -> RouterContext {
->>>>>>> 126296a (clear + add log)
+  @MainActor public func present(_ destination: some Route) -> RouterContext {
     route(to: destination, type: .sheet)
   }
 
-<<<<<<< HEAD
-  @MainActor public func cover(_ destination: some Route) {
-=======
   @discardableResult
-<<<<<<< HEAD
-  public func cover(_ destination: some Route) -> NavigationContext {
->>>>>>> 9f30bed (valid concept)
-=======
-  public func cover(_ destination: some Route) -> RouterContext {
->>>>>>> 126296a (clear + add log)
+  @MainActor public func cover(_ destination: some Route) -> RouterContext {
     route(to: destination, type: .cover)
   }
 
   // TODO: Terminate pass type (Close modal or back) how handle both
-  public func terminate(_ value: some TerminationRoute) {
+  @MainActor public func terminate(_ value: some TerminationRoute) {
     if isPresented {
       terminateOrClose(value)
     } else {
@@ -142,6 +111,12 @@ extension Router: RouterModel {
     log(.action, message: "back")
   }
 
+  @MainActor public func back(to index: Int) {
+    let remove = path.count - index
+    path.removeLast(remove)
+    log(.action, message: "back", metadata: ["clear": remove])
+  }
+
   @MainActor public func closeChildren() {
     for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
       sheet = nil
@@ -152,12 +127,9 @@ extension Router: RouterModel {
 }
 
 private extension Router  {
-<<<<<<< HEAD
-  @MainActor func route(to destination: some Route, type: RoutingType) {
-=======
+
   @discardableResult
-  func route(to destination: some Route, type: RoutingType) -> RouterContext {
->>>>>>> 126296a (clear + add log)
+  @MainActor func route(to destination: some Route, type: RoutingType) -> RouterContext {
     log(.navigation, metadata: ["navigating": destination, "type": type])
     let pathCount = path.count
 
@@ -176,9 +148,9 @@ private extension Router  {
     return RouterContext(router: self, pathCount: pathCount)
   }
 
-  func terminateOrClose(_ value: some TerminationRoute) {
+  @MainActor func terminateOrClose(_ value: some TerminationRoute) {
     if let terminate = parent?.onTerminate, let parent {
-      log(.terminate, verbosity: .debug, message: "terminate", metadata: ["from": parent.type])
+      log(.terminate, verbosity: .debug, message: "terminate", metadata: ["from": parent])
       terminate(value, self)
       parent.onTerminate = nil
     } else {
@@ -186,7 +158,7 @@ private extension Router  {
     }
   }
 
-  func terminateOrBack(_ value: some TerminationRoute) {
+  @MainActor func terminateOrBack(_ value: some TerminationRoute) {
     if let action = onTerminate {
       log(.terminate, verbosity: .debug, message: "terminate")
       action(value, self)
@@ -225,106 +197,3 @@ public extension Router {
     route(to: deeplink.route, type: deeplink.type)
   }
 }
-<<<<<<< HEAD
-=======
-
-// MARK: - Action
-
-public extension Router {
-  /// Clears the entire navigation path, returning to the root.
-  func popToRoot() {
-    path.popToRoot()
-    log(.action, message: "popToRoot")
-  }
-
-  /// Closes the navigation stack.
-  /// > **Warning:** This function is only available if the stack is presented.
-  func close() {
-    if type.isPresented {
-      triggerClose = true
-      log(.action, message: "close")
-    }
-  }
-
-  /// Removes the last element from the navigation path, navigating back one step.
-  func back() {
-    path.removeLast()
-    log(.action, message: "back")
-  }
-
-  func back(to index: Int) {
-    let remove = path.count - index
-    path.removeLast(remove)
-    log(.action, message: "back", metadata: ["clear": remove])
-  }
-
-  /// Closes all child routers presented from the parent router.
-  func closeChildren() {
-    for router in children.values.compactMap(\.value) where router.present {
-      router.sheet = nil
-      router.cover = nil
-      log(.action, message: "closeChildren", metadata: ["router": router.type])
-    }
-  }
-}
-
-public extension Router {
-  /// Finds the corresponding router for a given tab.
-  ///
-  /// This method searches among the child routers to find the one associated with the specified tab.
-  ///
-  /// - Parameter tab: The `TabRoute` to search for.
-  @discardableResult func find(tab: some TabRoute) -> Router? {
-    children.values.compactMap(\.value).first(where: { $0.type == tab.type })
-  }
-}
-
-// MARK: - Child
-
-internal extension Router {
-  func addChild(_ child: Router) {
-    children[child.id] = WeakContainer(value: child)
-  }
-
-  func removeChild(_ child: Router) {
-    children.removeValue(forKey: child.id)
-  }
-}
-
-// MARK: - Log
-
-extension Router {
-  func log(
-    _ type: LoggerAction,
-    verbosity: LogVerbosity = .debug,
-    message: String? = nil,
-    metadata: [String: Any]? = nil
-  ) {
-    configuration.logger?(
-      LoggerConfiguration(
-        type: type,
-        verbosity: verbosity,
-        router: self,
-        message: message,
-        metadata: metadata
-      )
-    )
-  }
-}
-<<<<<<< HEAD
-
-public typealias TerminationRoute = Hashable & Sendable
-
-public struct NavigationContext {
-  let router: Router
-
-  public func onTerminate<R: TerminationRoute>(_ type: R.Type, perform: @escaping (R) -> Void)  {
-    router.onTerminate = {
-      guard let value = $0 as? R else { print("--- ERROR"); return }
-      perform(value)
-    }
- }
-}
->>>>>>> 9f30bed (valid concept)
-=======
->>>>>>> 126296a (clear + add log)
