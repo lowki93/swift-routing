@@ -15,9 +15,10 @@ struct HomeScreen: View {
   var body: some View {
     VStack {
       Button("User: lowki") {
-        router.push(AppRoute.user(name: "Lowki")).onTerminate(String.self) {
-          print($0)
-        }
+        router.push(AppRoute.user(name: "Lowki"))
+          .onTerminate(String.self) {
+            print($0)
+          }
       }
       NavigationLink(value: AppRoute.user(name: "Alexia")) {
         Text("User: alexia")
@@ -33,5 +34,12 @@ struct HomeScreen: View {
         }
       }
     }
+    .routerContext(String.self) {
+      print("========", $0)
+    }
+    .routerContext(Int.self) {
+      print("========", $0)
+    }
+
   }
 }
