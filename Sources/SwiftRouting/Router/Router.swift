@@ -31,6 +31,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var sheet: AnyRoute?
   @Published internal var cover: AnyRoute?
   @Published internal var triggerClose: Bool = false
+  internal var lastRoute: AnyRoute?
   public var isPresented: Bool {
     type.isPresented
   }
@@ -56,6 +57,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
   init(root: AnyRoute?, type: RouterType, parent: BaseRouter) {
     self.root = root
+    self.lastRoute = root
     self.type = type
     super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
@@ -126,6 +128,7 @@ extension Router: @preconcurrency RouterModel {
 private extension Router  {
   @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation, metadata: ["navigating": destination, "type": type])
+    lastRoute = AnyRoute(wrapped: destination)
     let pathCount = path.count
 
     switch type {
@@ -154,11 +157,23 @@ private extension Router  {
   }
 
   @MainActor func terminateOrBack(_ value: some TerminationRoute) {
+    var hasTerminate: Bool = false
+
     if let action = onTerminate {
       log(.terminate, verbosity: .debug, message: "terminate")
       action(value, self)
       onTerminate = nil
-    } else {
+      hasTerminate = true
+    }
+
+    if let context = contexts.first(for: Swift.type(of: value)) {
+      log(.terminate, verbosity: .debug, message: "terminate")
+      context.onTerminate(value, self)
+      hasTerminate = true
+      contexts.remove(context)
+    }
+
+    if !hasTerminate {
       back()
     }
   }

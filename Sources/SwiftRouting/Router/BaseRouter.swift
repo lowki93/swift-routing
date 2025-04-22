@@ -24,6 +24,7 @@ public class BaseRouter: ObservableObject, Identifiable {
 
   
   var onTerminate: ((any TerminationRoute, Router) -> Void)?
+  var contexts: Set<RouterContext2> = []
 
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.
   var children: [UUID: WeakContainer<BaseRouter>] = [:]
