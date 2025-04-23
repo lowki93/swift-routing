@@ -17,9 +17,6 @@ struct HomeScreen: View {
       Button("Search") { router.present(AppRoute.search, withStack: false) }
       Button("User: lowki") {
         router.push(AppRoute.user(name: "Lowki"))
-          .onTerminate(String.self) {
-            print($0)
-          }
       }
       NavigationLink(value: AppRoute.user(name: "Alexia")) {
         Text("User: alexia")
@@ -29,18 +26,15 @@ struct HomeScreen: View {
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
         Button("Settings") {
-          router.present(AppRoute.settings).onTerminate(Success.self) {
-            print($0.value)
-          }
+          router.present(AppRoute.settings)
         }
       }
     }
     .routerContext(String.self) {
-      print("========", $0)
+      print("=== String", $0)
     }
-    .routerContext(Int.self) {
-      print("========", $0)
+    .routerContext(Success.self) {
+      print("=== Success", $0)
     }
-
   }
 }

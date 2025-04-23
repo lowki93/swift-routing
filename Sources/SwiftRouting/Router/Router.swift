@@ -84,36 +84,32 @@ extension Router: @preconcurrency RouterModel {
     route(to: destination, type: .cover)
   }
 
-  // TODO: Terminate pass type (Close modal or back) how handle both
-  @MainActor public func terminate(_ value: some TerminationRoute) {
-    if isPresented {
-      terminateOrClose(value)
-    } else {
-      terminateOrBack(value)
-    }
-  }
-
   @MainActor public func popToRoot() {
     path.popToRoot()
     log(.action, message: "popToRoot")
   }
 
-  @MainActor public func close() {
-    if type.isPresented {
-      triggerClose = true
-      log(.action, message: "close")
+  @MainActor public func close<T: TerminationRoute>(_ value: T? = nil) {
+    guard type.isPresented else { return }
+
+    if let value {
+      parent?.contexts.first(for: Swift.type(of: value))?.exexute(value)
     }
+
+    triggerClose = true
+    log(.action, message: "close")
   }
 
-  @MainActor public func back() {
-    path.removeLast()
-    log(.action, message: "back")
-  }
-
-  @MainActor public func back(to index: Int) {
-    let remove = path.count - index
-    path.removeLast(remove)
-    log(.action, message: "back", metadata: ["clear": remove])
+  @MainActor public func back<T: TerminationRoute>(_ value: T? = nil) {
+    if let value, let context = contexts.first(for: Swift.type(of: value)) {
+      log(.terminate, verbosity: .debug, message: "terminate")
+      context.exexute(value)
+      path.removeLast(path.count - context.pathCount)
+      log(.action, message: "back", metadata: ["clear": remove])
+    } else {
+      path.removeLast()
+      log(.action, message: "back")
+    }
   }
 
   @MainActor public func closeChildren() {
@@ -126,10 +122,10 @@ extension Router: @preconcurrency RouterModel {
 }
 
 private extension Router  {
+
   @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation, metadata: ["navigating": destination, "type": type])
     lastRoute = AnyRoute(wrapped: destination)
-    let pathCount = path.count
 
     switch type {
     case .push:
@@ -141,40 +137,6 @@ private extension Router  {
     case .root:
       root = AnyRoute(wrapped: destination, inStack: true)
       rootID = UUID()
-    }
-
-    return RouterContext(router: self, pathCount: pathCount)
-  }
-
-  @MainActor func terminateOrClose(_ value: some TerminationRoute) {
-    if let terminate = parent?.onTerminate, let parent {
-      log(.terminate, verbosity: .debug, message: "terminate", metadata: ["from": parent])
-      terminate(value, self)
-      parent.onTerminate = nil
-    } else {
-      close()
-    }
-  }
-
-  @MainActor func terminateOrBack(_ value: some TerminationRoute) {
-    var hasTerminate: Bool = false
-
-    if let action = onTerminate {
-      log(.terminate, verbosity: .debug, message: "terminate")
-      action(value, self)
-      onTerminate = nil
-      hasTerminate = true
-    }
-
-    if let context = contexts.first(for: Swift.type(of: value)) {
-      log(.terminate, verbosity: .debug, message: "terminate")
-      context.onTerminate(value, self)
-      hasTerminate = true
-      contexts.remove(context)
-    }
-
-    if !hasTerminate {
-      back()
     }
   }
 }
