@@ -32,4 +32,6 @@ public enum LoggerAction: CaseIterable {
   case action
   /// Logs `onAppear` and `onDisappear` events of views.
   case viewLifecycle
+
+  case terminate
 }
