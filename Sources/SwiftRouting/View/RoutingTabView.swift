@@ -86,8 +86,8 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
 //        }
       }
       .environment(\.tabRouter, tabRouter)
-      .onChange(of: tabRouter.tab) {
-        if let tab = tabRouter.tab.wrapped as? Tab {
+      .onReceive(tabRouter.$tab) {
+        if let tab = $0.wrapped as? Tab {
           self.tab = tab
         }
       }
