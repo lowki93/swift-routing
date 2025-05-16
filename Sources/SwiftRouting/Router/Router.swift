@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Every `RoutingNavigationStack` has his own router
+/// Every `RoutingView` has his own router
 ///
 /// Router enable progamatic control of their navigation stacks
 /// ```swift
@@ -16,7 +16,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// Router are accessible from the environment inside a `RoutingNavigationStack`
+/// Router are accessible from the environment inside a `RoutingView`
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
@@ -74,8 +74,8 @@ extension Router: @preconcurrency RouterModel {
     route(to: destination, type: .push)
   }
 
-  @MainActor public func present(_ destination: some Route) {
-    route(to: destination, type: .sheet)
+  @MainActor public func present(_ destination: some Route, withStack: Bool) {
+    route(to: destination, type: .sheet(withStack: withStack))
   }
 
   @MainActor public func cover(_ destination: some Route) {
@@ -115,12 +115,12 @@ private extension Router  {
     switch type {
     case .push:
       path.append(destination)
-    case .sheet:
-      sheet = AnyRoute(wrapped: destination)
+    case let .sheet(withStack):
+      sheet = AnyRoute(wrapped: destination, inStack: withStack)
     case .cover:
-      cover = AnyRoute(wrapped: destination)
+      cover = AnyRoute(wrapped: destination, inStack: true)
     case .root:
-      root = AnyRoute(wrapped: destination)
+      root = AnyRoute(wrapped: destination, inStack: true)
       rootID = UUID()
     }
   }

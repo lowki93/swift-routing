@@ -18,8 +18,8 @@ import SwiftUI
 /// @State var tab: HomeTab = .home
 ///
 /// RoutingTabView(tab: $tab, destination: HomeRoute.self) { destination in
-///   RoutingNavigationStack(tab: HomeTab.home, destination: destination, root: .page1)
-///   RoutingNavigationStack(tab: HomeTab.user, destination: destination, root: .page2)
+///   RoutingView(tab: HomeTab.home, destination: destination, root: .page1)
+///   RoutingView(tab: HomeTab.user, destination: destination, root: .page2)
 /// }
 /// ```
 ///
@@ -33,8 +33,8 @@ import SwiftUI
 /// @State var tab: HomeTab = .home
 ///
 /// TabView(selection: .tabToRoot(for: $tab, in: router)) {
-///     RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
-///     RoutingNavigationStack(tab: HomeTab.tab2, destination: HomeRoute.self) { Page2View() }
+///     RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
+///     RoutingView(tab: HomeTab.tab2, destination: HomeRoute.self) { Page2View() }
 /// }
 /// ```
 @MainActor
@@ -80,7 +80,7 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
     public var body: some View {
       TabView(selection: .tabToRoot(for: $tab, in: tabRouter)) {
         content(destination)
-        // TODO: Try to had RoutingNavigationStack for each child
+        // TODO: Try to had RoutingView for each child
 //        _VariadicView.Tree(TabViewContainer(currentTab: tab, destination: destination)) {
 //          content(destination)
 //        }
@@ -104,7 +104,7 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
 //  func body(children: _VariadicView.Children) -> some View {
 //    ForEach(children) { child in
 //      if let tab = child.tab(as: Tab.self) {
-//        RoutingNavigationStack(tab: tab, destination: destination) { child }
+//        RoutingView(tab: tab, destination: destination) { child }
 //      }
 //    }
 //  }

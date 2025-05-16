@@ -21,7 +21,7 @@ public extension View {
     onDismiss: (() -> Void)? = nil
   ) -> some View {
     self.sheet(item: route, onDismiss: onDismiss) { route in
-      dismissableContent(route: route, for: destination)
+      dismissableContent(anyRoute: route, for: destination)
     }
   }
 
@@ -31,20 +31,25 @@ public extension View {
     onDismiss: (() -> Void)? = nil
   ) -> some View {
     self.fullScreenCover(item: route, onDismiss: onDismiss) { route in
-      dismissableContent(route: route, for: destination)
+      dismissableContent(anyRoute: route, for: destination)
     }
   }
 
   @ViewBuilder
   private func dismissableContent<D: RouteDestination>(
-    route: AnyRoute,
+    anyRoute: AnyRoute,
     for destination: D.Type
   ) -> some View {
     // TODO: Add condition to fatalError or not
-    if let route = route.wrapped as? D.R {
-      RoutingNavigationStack(type: .presented(route.name), destination: destination, root: route)
+    if let route = anyRoute.wrapped as? D.R {
+      RoutingView(
+        present: route.name,
+        inStack: anyRoute.inStack,
+        destination: destination,
+        root: route
+      )
     } else {
-      Text("Route '\(route)' are not define in '\(D.self)'")
+      Text("Route '\(anyRoute)' are not define in '\(D.self)'")
         .padding()
     }
   }

@@ -16,6 +16,7 @@ struct HomeScreen: View {
     VStack {
       Button("User: lowki") { router.push(AppRoute.user(name: "Lowki")) }
       Button("User: alexia") { router.push(AppRoute.user(name: "Alexia")) }
+      Button("Search") { router.present(AppRoute.search, withStack: false) }
     }
     .navigationTitle("Home")
     .toolbar {

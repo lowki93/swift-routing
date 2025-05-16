@@ -62,10 +62,10 @@ extension HomeRoute: @retroactive RouteDestination {
 
 ### 2. Use a Router
 
-A `Router` is automatically created by `RoutingNavigationStack`.
+A `Router` is automatically created by `RoutingView`.
 
 ```swift
-RoutingNavigationStack(stack: "Page", destination: HomeRoute.self, route: .page1)
+RoutingView(stack: "Page", destination: HomeRoute.self, route: .page1)
 ```
 
 This creates a `.stack("Page")` router that manages navigation for the `HomeRoute` enum.
@@ -170,9 +170,9 @@ enum HomeTab: TabRoute {
 
 ```swift
 TabView(selection: .tabToRoot(for: $tab, in: router)) {
-  RoutingNavigationStack(tab: .tab1, destination: HomeRoute.self, root: .page1)
-  RoutingNavigationStack(tab: .tab2, destination: HomeRoute.self, root: .page2)
-  RoutingNavigationStack(tab: .tab3, destination: HomeRoute.self, root: .page3)
+  RoutingView(tab: .tab1, destination: HomeRoute.self, root: .page1)
+  RoutingView(tab: .tab2, destination: HomeRoute.self, root: .page2)
+  RoutingView(tab: .tab3, destination: HomeRoute.self, root: .page3)
 }
 ```
 
@@ -184,9 +184,9 @@ This gives you programmatic control over tabs:
 
 ```swift
 RoutingTabView(tab: $tab, destination: HomeRoute.self) { destination in
-  RoutingNavigationStack(tab: .tab1, destination: destination, root: .page1)
-  RoutingNavigationStack(tab: .tab2, destination: destination, root: .page2)
-  RoutingNavigationStack(tab: .tab3, destination: destination, root: .page3)
+  RoutingView(tab: .tab1, destination: destination, root: .page1)
+  RoutingView(tab: .tab2, destination: destination, root: .page2)
+  RoutingView(tab: .tab3, destination: destination, root: .page3)
 }
 ```
 

@@ -1,5 +1,5 @@
 //
-//  RoutingNavigationStack.swift
+//  RoutingView.swift
 //  SwiftRouting
 //
 //  Created by Kevin Budain on 25/01/2025.
@@ -9,26 +9,26 @@ import SwiftUI
 
 /// Creates a `NavigationStack` with its own `Router` to manage navigation, sheets, and covers.
 ///
-/// `RoutingNavigationStack` functions like a standard `NavigationStack`, but it automatically manages
+/// `RoutingView` functions like a standard `NavigationStack`, but it automatically manages
 /// the root `Route`, all `RouteDestination` instances, and presentation types such as sheets or covers.
 ///
 /// ## Usage
 /// ```swift
 /// // For a tab-based navigation with a route as root:
-/// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
+/// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
 ///
 /// // For a tab-based navigation with a view as root:
-/// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self) { Page1View() }
+/// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self) { Page1View() }
 ///
 /// // For a stack-based navigation with a route as root:
-/// RoutingNavigationStack(stack: "Page", destination: HomeRoute.self, root: .page1)
+/// RoutingView(stack: "Page", destination: HomeRoute.self, root: .page1)
 ///
 /// // For a stack-based navigation with a view as root:
-/// RoutingNavigationStack(stack: "Page", destination: HomeRoute.self) { Page1View() }
+/// RoutingView(stack: "Page", destination: HomeRoute.self) { Page1View() }
 /// ```
 ///
 /// ## Closable
-/// Any presented `RoutingNavigationStack` instance is automatically closable.
+/// Any presented `RoutingView` instance is automatically closable.
 ///
 /// ## Notes
 /// - This navigation system supports deep linking and maintains navigation state.
@@ -37,14 +37,15 @@ import SwiftUI
 ///
 /// ## Example with Stack Navigation
 /// ```swift
-/// RoutingNavigationStack(stack: "Main", destination: HomeRoute.self, root: .page1)
+/// RoutingView(stack: "Main", destination: HomeRoute.self, root: .page1)
 /// ```
 @MainActor
-public struct RoutingNavigationStack<Destination: RouteDestination, Content: View>: View {
+public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
   @Environment(\.tabRouter) private var tabRouter
   private let type: RouterType
+  private let inStack: Bool
   private let destination: Destination.Type
   private let root: Destination.R?
   private let content: Content?
@@ -55,36 +56,44 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
     return router
   }
 
-  init(type: RouterType, destination: Destination.Type, root: Destination.R?, content: (() -> Content)?) {
+  init(
+    type: RouterType,
+    inStack: Bool,
+    destination: Destination.Type,
+    root: Destination.R?,
+    content: (() -> Content)?
+  ) {
     self.type = type
+    self.inStack = inStack
     self.destination = destination
     self.root = root
     self.content = content?()
   }
 
-  /// Initializes a `RoutingNavigationStack` for tab-based navigation.
+  /// Initializes a `RoutingView` for tab-based navigation.
   ///
   /// - Parameters:
   ///   - tab: The tab associated with the navigation, conforming to `TabRoute`.
   ///   - destination: The type conforming to `RouteDestination`, defining the available routes.
   ///   - content: A `ViewBuilder` closure providing the root view for this tab's navigation stack.
   public init(tab: any TabRoute, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
-    self.init(type: tab.type, destination: destination, root: nil, content: content)
+    self.init(type: tab.type, inStack: true, destination: destination, root: nil, content: content)
   }
 
-  /// Initializes a `RoutingNavigationStack` for tab-based navigation.
+  /// Initializes a `RoutingView` for tab-based navigation.
   ///
   /// - Parameters:
   ///   - tab: The name of the navigation stack.
   ///   - destination: The type conforming to `RouteDestination`, defining the available routes.
   ///   - content: A `ViewBuilder` closure providing the root view for this tab's navigation stack.
   public init(stack name: String, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
-    self.init(type: .stack(name), destination: destination, root: nil, content: content)
+    self.init(type: .stack(name), inStack: true, destination: destination, root: nil, content: content)
   }
 
   public var body: some View {
     WrappedView(
-      router: Router(root: root.flatMap(AnyRoute.init(wrapped:)), type: type, parent: parent),
+      router: Router(root: root.flatMap { AnyRoute(wrapped: $0, inStack: inStack) }, type: type, parent: parent),
+      inStack: inStack,
       destination: destination,
       content: content
     )
@@ -93,14 +102,17 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
   private struct WrappedView: View {
 
     @StateObject var router: Router
+    let inStack: Bool
     let destination: Destination.Type
     let content: Content?
 
     public var body: some View {
-      NavigationStack(path: $router.path) {
-        root
-          .id(router.rootID)
-          .navigationDestination(destination)
+      Group {
+        if inStack {
+          navigationStack
+        } else {
+          root
+        }
       }
       .sheet($router.sheet, for: destination)
       .cover($router.cover, for: destination)
@@ -110,37 +122,51 @@ public struct RoutingNavigationStack<Destination: RouteDestination, Content: Vie
 
     @ViewBuilder
     private var root: some View {
-      if let root = router.root?.wrapped as? Destination.R {
-        Destination[root]
-      } else if let content {
-        content
+      Group {
+        if let root = router.root?.wrapped as? Destination.R {
+          Destination[root]
+        } else if let content {
+          content
+        }
+      }
+      .id(router.rootID)
+    }
+
+    private var navigationStack: some View {
+      NavigationStack(path: $router.path) {
+        root
+          .navigationDestination(destination)
       }
     }
   }
 }
 
-extension RoutingNavigationStack where Content == EmptyView {
-  init(type: RouterType, destination: Destination.Type, root: Destination.R) {
-    self.init(type: type, destination: destination, root: root, content: nil)
+extension RoutingView where Content == EmptyView {
+  init(type: RouterType, inStack: Bool, destination: Destination.Type, root: Destination.R) {
+    self.init(type: type, inStack: inStack, destination: destination, root: root, content: nil)
   }
 
-  /// Initializes a `RoutingNavigationStack` for tab-based navigation.
+  init(present name: String, inStack: Bool, destination: Destination.Type, root: Destination.R) {
+    self.init(type: .presented(name), inStack: inStack, destination: destination, root: root)
+  }
+
+  /// Initializes a `RoutingView` for tab-based navigation.
   ///
   /// - Parameters:
   ///   - tab: The tab associated with the navigation.
   ///   - destination: The destination type conforming to `RouteDestination`.
   ///   - root: The initial route.
   public init(tab: any TabRoute, destination: Destination.Type, root: Destination.R) {
-    self.init(type: tab.type, destination: destination, root: root)
+    self.init(type: tab.type, inStack: true, destination: destination, root: root)
   }
 
-  /// Initializes a `RoutingNavigationStack` for stack-based navigation.
+  /// Initializes a `RoutingView` for stack-based navigation.
   ///
   /// - Parameters:
   ///   - name: The name of the navigation stack.
   ///   - destination: The destination type conforming to `RouteDestination`.
   ///   - root: The initial route.
   public init(stack name: String, destination: Destination.Type, root: Destination.R) {
-    self.init(type: .stack(name), destination: destination, root: root, content: nil)
+    self.init(type: .stack(name), inStack: true, destination: destination, root: root, content: nil)
   }
 }

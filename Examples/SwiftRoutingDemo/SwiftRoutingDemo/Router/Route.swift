@@ -12,6 +12,7 @@ enum AppRoute: Route {
   case home
   case notifications
   case user(name: String)
+  case search
   case settings
 
   var name: String {
@@ -19,6 +20,7 @@ enum AppRoute: Route {
     case .home:  "Home"
     case .notifications: "Notificatons"
     case let .user(name): "User(\(name))"
+    case .search: "search"
     case .settings: "Settings"
     }
   }
@@ -30,6 +32,9 @@ extension AppRoute: RouteDestination {
     case .home: HomeScreen()
     case .notifications: NotificationsScreen()
     case let .user(name): UserScreen(name: name)
+    case .search: Text("Search")
+        .presentationDragIndicator(.visible)
+        .presentationDetents([.medium])
     case .settings: SettingsScreen()
     }
   }

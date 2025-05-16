@@ -66,6 +66,7 @@ public extension Route {
 public struct AnyRoute: Identifiable, Equatable {
   public var id: Int { wrapped.hashValue }
   var wrapped: any Route
+  var inStack: Bool
 
   subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {
     wrapped[keyPath: keyPath]
