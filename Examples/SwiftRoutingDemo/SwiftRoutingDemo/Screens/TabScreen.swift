@@ -41,7 +41,7 @@ struct TabScreen: View {
   }
 
   private func tab(_ tab: HomeTab, destination: AppRoute.Type, root: AppRoute) -> some View {
-    RoutingNavigationStack(tab: tab, destination: destination, root: root)
+    RoutingView(tab: tab, destination: destination, root: root)
       .tabItem { Text(tab.name) }
       .tag(tab)
   }

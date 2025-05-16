@@ -30,10 +30,10 @@ import Foundation
 /// ```
 ///
 /// ## Associating a Tab with a Navigation Stack
-/// To integrate a tab into a navigation system, instantiate a `RoutingNavigationStack`.
+/// To integrate a tab into a navigation system, instantiate a `RoutingView`.
 /// This will also create a router associated with the tab:
 /// ```swift
-/// RoutingNavigationStack(tab: HomeTab.tab1, destination: HomeRoute.self, route: .page1)
+/// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self, route: .page1)
 /// ```
 public protocol TabRoute: Route {
   var hideTabBarOnPush: Bool { get}

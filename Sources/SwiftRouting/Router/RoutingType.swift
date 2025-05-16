@@ -26,7 +26,7 @@ public enum RoutingType: CustomStringConvertible {
   /// Pushes a route onto the navigation stack.
   case push
   /// Presents a route as a sheet.
-  case sheet
+  case sheet(withStack: Bool)
   /// Presents a route as a full-screen cover.
   case cover
 
@@ -34,7 +34,7 @@ public enum RoutingType: CustomStringConvertible {
     switch self {
     case .root: "root"
     case .push: "push"
-    case .sheet: "sheet"
+    case let .sheet(withStack): "sheet(withStack: \(withStack)"
     case .cover: "cover"
     }
   }

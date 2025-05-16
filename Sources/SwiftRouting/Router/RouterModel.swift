@@ -52,7 +52,7 @@ public protocol RouterModel: ObservableObject {
   ///
   /// This method displays the specified route as a sheet, overlaying the current view.
   /// - Parameter destination: The `Route` to be presented as a sheet.
-  func present(_ destination: some Route)
+  func present(_ destination: some Route, withStack: Bool)
 
   /// Presents a route as a full-screen cover.
   ///
@@ -72,4 +72,10 @@ public protocol RouterModel: ObservableObject {
 
   /// Closes all child routers presented from the parent router.
   func closeChildren()
+}
+
+public extension RouterModel {
+  func present(_ destination: some Route) {
+    present(destination, withStack: true)
+  }
 }
