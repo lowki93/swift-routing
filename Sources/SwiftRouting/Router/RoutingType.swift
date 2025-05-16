@@ -26,7 +26,7 @@ public enum RoutingType: CustomStringConvertible {
   /// Pushes a route onto the navigation stack.
   case push
   /// Presents a route as a sheet.
-  case sheet(withStack: Bool)
+  case sheet(withStack: Bool = true)
   /// Presents a route as a full-screen cover.
   case cover
 
