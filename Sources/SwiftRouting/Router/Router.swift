@@ -89,21 +89,21 @@ extension Router: @preconcurrency RouterModel {
     log(.action, message: "popToRoot")
   }
 
-  @MainActor public func close<T: TerminationRoute>(_ value: T? = nil) {
+  @MainActor public func close<T: RouteTermination>(_ value: T? = nil) {
     guard type.isPresented else { return }
 
     if let value {
-      parent?.contexts.first(for: Swift.type(of: value))?.exexute(value)
+      parent?.contexts.first(for: Swift.type(of: value))?.execute(value)
     }
 
     triggerClose = true
     log(.action, message: "close")
   }
 
-  @MainActor public func back<T: TerminationRoute>(_ value: T? = nil) {
+  @MainActor public func back<T: RouteTermination>(_ value: T? = nil) {
     if let value, let context = contexts.first(for: Swift.type(of: value)) {
       log(.terminate, verbosity: .debug, message: "terminate")
-      context.exexute(value)
+      context.execute(value)
       path.removeLast(path.count - context.pathCount)
       log(.action, message: "back", metadata: ["clear": remove])
     } else {
