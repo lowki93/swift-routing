@@ -89,25 +89,33 @@ extension Router: @preconcurrency RouterModel {
     log(.action, message: "popToRoot")
   }
 
-  @MainActor public func close<T: RouteTermination>(_ value: T? = nil) {
+  @MainActor public func close() {
     guard type.isPresented else { return }
-
-    if let value {
-      parent?.contexts.first(for: Swift.type(of: value))?.execute(value)
-    }
 
     triggerClose = true
     log(.action, message: "close")
   }
 
-  @MainActor public func back<T: RouteTermination>(_ value: T? = nil) {
-    if let value, let context = contexts.first(for: Swift.type(of: value)) {
+  @MainActor public func back() {
+    path.removeLast()
+    log(.action, message: "back")
+  }
+
+  @MainActor public func close(_ value: some RouteTermination) {
+    guard type.isPresented else { return }
+
+    parent?.contexts.first(for: Swift.type(of: value))?.execute(value)
+
+    close()
+  }
+
+  @MainActor public func back(_ value: some RouteTermination) {
+    if let context = contexts.first(for: Swift.type(of: value)) {
       context.execute(value)
       path.removeLast(path.count - context.pathCount)
       log(.action, message: "back", metadata: ["clear": remove])
     } else {
-      path.removeLast()
-      log(.action, message: "back")
+      back()
     }
   }
 
