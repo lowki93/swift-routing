@@ -65,10 +65,10 @@ public protocol RouterModel: ObservableObject {
 
   /// Closes the navigation stack.
   /// > **Warning:** This function is only available if the stack is presented.
-  func close()
+  func close<T: RouteTermination>(_ value: T?)
 
   /// Removes the last element from the navigation path, navigating back one step.
-  func back()
+  func back<T: RouteTermination>(_ value: T?)
 
   /// Closes all child routers presented from the parent router.
   func closeChildren()

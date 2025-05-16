@@ -31,6 +31,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var sheet: AnyRoute?
   @Published internal var cover: AnyRoute?
   @Published internal var triggerClose: Bool = false
+  internal var lastRoute: AnyRoute?
   public var isPresented: Bool {
     type.isPresented
   }
@@ -56,6 +57,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
   init(root: AnyRoute?, type: RouterType, parent: BaseRouter) {
     self.root = root
+    self.lastRoute = root
     self.type = type
     super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
@@ -87,16 +89,26 @@ extension Router: @preconcurrency RouterModel {
     log(.action, message: "popToRoot")
   }
 
-  @MainActor public func close() {
-    if type.isPresented {
-      triggerClose = true
-      log(.action, message: "close")
+  @MainActor public func close<T: RouteTermination>(_ value: T? = nil) {
+    guard type.isPresented else { return }
+
+    if let value {
+      parent?.contexts.first(for: Swift.type(of: value))?.execute(value)
     }
+
+    triggerClose = true
+    log(.action, message: "close")
   }
 
-  @MainActor public func back() {
-    path.removeLast()
-    log(.action, message: "back")
+  @MainActor public func back<T: RouteTermination>(_ value: T? = nil) {
+    if let value, let context = contexts.first(for: Swift.type(of: value)) {
+      context.execute(value)
+      path.removeLast(path.count - context.pathCount)
+      log(.action, message: "back", metadata: ["clear": remove])
+    } else {
+      path.removeLast()
+      log(.action, message: "back")
+    }
   }
 
   @MainActor public func closeChildren() {
@@ -109,8 +121,10 @@ extension Router: @preconcurrency RouterModel {
 }
 
 private extension Router  {
+
   @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation, metadata: ["navigating": destination, "type": type])
+    lastRoute = AnyRoute(wrapped: destination)
 
     switch type {
     case .push:
@@ -118,9 +132,9 @@ private extension Router  {
     case let .sheet(withStack):
       sheet = AnyRoute(wrapped: destination, inStack: withStack)
     case .cover:
-      cover = AnyRoute(wrapped: destination, inStack: true)
+      cover = AnyRoute(wrapped: destination)
     case .root:
-      root = AnyRoute(wrapped: destination, inStack: true)
+      root = AnyRoute(wrapped: destination)
       rootID = UUID()
     }
   }

@@ -39,3 +39,7 @@ extension AppRoute: RouteDestination {
     }
   }
 }
+
+struct Success: Hashable & Sendable {
+  let value: Int
+}

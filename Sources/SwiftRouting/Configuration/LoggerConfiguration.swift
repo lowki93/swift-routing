@@ -21,6 +21,8 @@ public struct LoggerConfiguration {
   /// The type of action performed by the router.
   let type: LoggerAction
 
+  let verbosity: LogVerbosity
+
   /// The router instance that performed the action.
   let router: BaseRouter
 
