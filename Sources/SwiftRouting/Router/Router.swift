@@ -72,12 +72,12 @@ extension Router: @preconcurrency RouterModel {
     route(to: destination, type: .root)
   }
 
-  @MainActor public func present(_ destination: some Route, withStack: Bool) {
-    route(to: destination, type: .sheet(withStack: withStack))
-  }
-
   @MainActor public func push(_ destination: some Route) {
     route(to: destination, type: .push)
+  }
+
+  @MainActor public func present(_ destination: some Route, withStack: Bool) {
+    route(to: destination, type: .sheet(withStack: withStack))
   }
 
   @MainActor public func cover(_ destination: some Route) {
@@ -133,9 +133,9 @@ private extension Router  {
     case let .sheet(withStack):
       sheet = AnyRoute(wrapped: destination, inStack: withStack)
     case .cover:
-      cover = AnyRoute(wrapped: destination, inStack: true)
+      cover = AnyRoute(wrapped: destination)
     case .root:
-      root = AnyRoute(wrapped: destination, inStack: true)
+      root = AnyRoute(wrapped: destination)
       rootID = UUID()
     }
   }
