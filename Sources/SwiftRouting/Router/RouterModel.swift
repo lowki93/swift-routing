@@ -78,4 +78,12 @@ public extension RouterModel {
   func present(_ destination: some Route) {
     present(destination, withStack: true)
   }
+
+  func close<T: RouteTermination>(_ value: T? = nil) {
+    close(value)
+  }
+
+  func back<T: RouteTermination>(_ value: T? = nil) {
+    back(value)
+  }
 }
