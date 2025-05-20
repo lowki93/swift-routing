@@ -17,7 +17,7 @@ struct RouterContext: Hashable {
     routeTermination: any RouteTermination.Type,
     termination: @escaping (any RouteTermination) -> Void
   ) {
-    guard let route = router.lastRoute else { return nil }
+    guard let route = router.currentRoute else { return nil }
     self.router = router
     self.route = route.wrapped
     self.pathCount = router.path.count
@@ -44,5 +44,9 @@ struct RouterContext: Hashable {
 extension Set where Element == RouterContext {
   func first<T: RouteTermination>(for termination: T.Type) -> Self.Element? {
     first(where: { $0.routeTermination == termination })
+  }
+
+  func all<T: RouteTermination>(for termination: T.Type) -> Self {
+    filter { $0.routeTermination == termination }
   }
 }

@@ -31,7 +31,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var sheet: AnyRoute?
   @Published internal var cover: AnyRoute?
   @Published internal var triggerClose: Bool = false
-  internal var lastRoute: AnyRoute?
+  internal var currentRoute: AnyRoute?
   public var isPresented: Bool {
     type.isPresented
   }
@@ -57,7 +57,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
   init(root: AnyRoute?, type: RouterType, parent: BaseRouter) {
     self.root = root
-    self.lastRoute = root
+    self.currentRoute = root
     self.type = type
     super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
@@ -104,7 +104,7 @@ extension Router: @preconcurrency RouterModel {
   @MainActor public func close(_ value: some RouteTermination) {
     guard type.isPresented else { return }
 
-    parent?.contexts.first(for: Swift.type(of: value))?.execute(value)
+    parent?.contexts.all(for: Swift.type(of: value)).forEach { $0.execute(value) }
 
     close()
   }
@@ -132,17 +132,18 @@ private extension Router  {
 
   @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation, metadata: ["navigating": destination, "type": type])
-    lastRoute = AnyRoute(wrapped: destination)
 
     switch type {
     case .push:
       path.append(destination)
+      currentRoute = AnyRoute(wrapped: destination)
     case let .sheet(withStack):
       sheet = AnyRoute(wrapped: destination, inStack: withStack)
     case .cover:
       cover = AnyRoute(wrapped: destination)
     case .root:
       root = AnyRoute(wrapped: destination)
+      currentRoute = root
       rootID = UUID()
     }
   }
