@@ -101,7 +101,7 @@ extension Router: @preconcurrency RouterModel {
     log(.action, message: "back")
   }
 
-  @MainActor public func close(_ value: some RouteTermination) {
+  @MainActor public func close(_ value: some RouteContext) {
     guard type.isPresented else { return }
 
     parent?.contexts.all(for: Swift.type(of: value)).forEach { $0.execute(value) }
@@ -109,7 +109,7 @@ extension Router: @preconcurrency RouterModel {
     close()
   }
 
-  @MainActor public func back(_ value: some RouteTermination) {
+  @MainActor public func back(_ value: some RouteContext) {
     if let context = contexts.first(for: Swift.type(of: value)) {
       context.execute(value)
       path.removeLast(path.count - context.pathCount)
@@ -117,6 +117,12 @@ extension Router: @preconcurrency RouterModel {
     } else {
       back()
     }
+  }
+
+  @MainActor public func context(_ value: some RouteContext) {
+    let termination = Swift.type(of: value)
+    parent?.contexts.all(for: termination).forEach { $0.execute(value) }
+    contexts.all(for: termination).forEach { $0.execute(value) }
   }
 
   @MainActor public func closeChildren() {

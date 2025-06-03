@@ -40,6 +40,6 @@ extension AppRoute: RouteDestination {
   }
 }
 
-struct Success: Hashable & Sendable {
+struct Success: RouteContext {
   let value: Int
 }
