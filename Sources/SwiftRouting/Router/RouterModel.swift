@@ -70,6 +70,8 @@ public protocol RouterModel: ObservableObject {
   /// Removes the last element from the navigation path, navigating back one step.
   func back()
 
+  func context(_ value: some RouteTermination)
+
   func close(_ value: some RouteTermination)
 
   func back(_ value: some RouteTermination)

@@ -119,6 +119,12 @@ extension Router: @preconcurrency RouterModel {
     }
   }
 
+  @MainActor public func context(_ value: some RouteTermination) {
+    let termination = Swift.type(of: value)
+    parent?.contexts.all(for: termination).forEach { $0.execute(value) }
+    contexts.all(for: termination).forEach { $0.execute(value) }
+  }
+
   @MainActor public func closeChildren() {
     for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
       sheet = nil
