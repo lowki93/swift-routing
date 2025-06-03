@@ -9,29 +9,29 @@ struct RouterContext: Hashable {
   private let router: Router
   private let route: any Route
   let pathCount: Int
-  let routeTermination: any RouteTermination.Type
-  private let termination: (any RouteTermination) -> Void
+  let routerContext: any RouteContext.Type
+  private let termination: (any RouteContext) -> Void
 
   init?(
     router: Router,
-    routeTermination: any RouteTermination.Type,
-    termination: @escaping (any RouteTermination) -> Void
+    routerContext: any RouteContext.Type,
+    termination: @escaping (any RouteContext) -> Void
   ) {
     guard let route = router.currentRoute else { return nil }
     self.router = router
     self.route = route.wrapped
     self.pathCount = router.path.count
-    self.routeTermination = routeTermination
+    self.routerContext = routerContext
     self.termination = termination
   }
 
   func hash(into hasher: inout Hasher) {
     hasher.combine(router.id)
     hasher.combine(route.hashValue)
-    hasher.combine("\(routeTermination)")
+    hasher.combine("\(routerContext)")
   }
 
-  @MainActor func execute(_ object: some RouteTermination) {
+  @MainActor func execute(_ object: some RouteContext) {
     termination(object)
     router.log(.terminate, verbosity: .debug, message: "termination")
   }
@@ -42,11 +42,11 @@ struct RouterContext: Hashable {
 }
 
 extension Set where Element == RouterContext {
-  func first<T: RouteTermination>(for termination: T.Type) -> Self.Element? {
-    first(where: { $0.routeTermination == termination })
+  func first<T: RouteContext>(for termination: T.Type) -> Self.Element? {
+    first(where: { $0.routerContext == termination })
   }
 
-  func all<T: RouteTermination>(for termination: T.Type) -> Self {
-    filter { $0.routeTermination == termination }
+  func all<T: RouteContext>(for termination: T.Type) -> Self {
+    filter { $0.routerContext == termination }
   }
 }

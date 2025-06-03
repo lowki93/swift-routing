@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public struct RouterContextModifier<R: RouteTermination>: ViewModifier {
+public struct RouterContextModifier<R: RouteContext>: ViewModifier {
 
   @Environment(\.router) private var router
   let object: R.Type
@@ -18,7 +18,7 @@ public struct RouterContextModifier<R: RouteTermination>: ViewModifier {
       .onAppear {
         guard let context = RouterContext(
           router: router,
-          routeTermination: object,
+          routerContext: object,
           termination: {
             guard let value = $0 as? R else { return }
             perform(value)
@@ -30,7 +30,7 @@ public struct RouterContextModifier<R: RouteTermination>: ViewModifier {
 }
 
 public extension View {
-  func routerContext<R: RouteTermination>(_ object: R.Type, perform: @escaping (R) -> Void) -> some View {
+  func routerContext<R: RouteContext>(_ object: R.Type, perform: @escaping (R) -> Void) -> some View {
     self.modifier(RouterContextModifier(object: object, perform: perform))
   }
 }
