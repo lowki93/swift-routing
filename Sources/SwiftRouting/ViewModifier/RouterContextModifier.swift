@@ -19,7 +19,7 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
         guard let context = RouterContext(
           router: router,
           routerContext: object,
-          termination: {
+          action: { [perform] in
             guard let value = $0 as? R else { return }
             perform(value)
           }
