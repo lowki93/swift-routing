@@ -22,8 +22,6 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// The parent router, if any. Used for hierarchical navigation structures.
   var parent: BaseRouter?
 
-  
-  var onTerminate: ((any RouteContext, Router) -> Void)?
   var contexts: Set<RouterContext> = []
 
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.

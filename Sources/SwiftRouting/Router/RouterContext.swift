@@ -5,35 +5,38 @@
 //  Created by Kévin Budain on 3/3/25.
 //
 
+import Foundation
+
 struct RouterContext: Hashable {
-  private let router: Router
+  private weak var router: Router?
+  private let id: UUID
   private let route: any Route
   let pathCount: Int
   let routerContext: any RouteContext.Type
-  private let termination: (any RouteContext) -> Void
+  private let action: (any RouteContext) -> Void
 
   init?(
     router: Router,
     routerContext: any RouteContext.Type,
-    termination: @escaping (any RouteContext) -> Void
+    action: @escaping (any RouteContext) -> Void
   ) {
     guard let route = router.currentRoute else { return nil }
-    self.router = router
+    self.id = router.id
     self.route = route.wrapped
     self.pathCount = router.path.count
     self.routerContext = routerContext
-    self.termination = termination
+    self.action = action
   }
 
   func hash(into hasher: inout Hasher) {
-    hasher.combine(router.id)
+    hasher.combine(id)
     hasher.combine(route.hashValue)
     hasher.combine("\(routerContext)")
   }
 
   @MainActor func execute(_ object: some RouteContext) {
-    termination(object)
-    router.log(.terminate, verbosity: .debug, message: "termination")
+    action(object)
+    router?.log(.context, verbosity: .debug, message: "context")
   }
 
   static func == (lhs: RouterContext, rhs: RouterContext) -> Bool {
