@@ -26,6 +26,7 @@ struct RouterContext: Hashable {
     self.pathCount = router.path.count
     self.routerContext = routerContext
     self.action = action
+    self.router = router
   }
 
   func hash(into hasher: inout Hasher) {
