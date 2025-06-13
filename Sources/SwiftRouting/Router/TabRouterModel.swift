@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public protocol TabRouterModel: ObservableObject{
+public protocol TabRouterModel: BaseRouterModel {
   /// Changes the currently active tab.
   ///
   /// - Parameter tab: The tab to switch to.
