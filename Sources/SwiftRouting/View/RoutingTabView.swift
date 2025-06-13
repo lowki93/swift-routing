@@ -63,8 +63,8 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
 
   public var body: some View {
     Wrapped(
-      tabRouter: TabRouter(tab: _tab.wrappedValue, parent: parent),
-      tab: $tab,
+      tabRouter: TabRouter(tab: tab, parent: parent),
+      currentTab: $tab,
       destination: destination,
       content: content
     )
@@ -73,12 +73,12 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
   private struct Wrapped: View {
 
     @StateObject var tabRouter: TabRouter
-    @Binding var tab: Tab
+    @Binding var currentTab: Tab
     let destination: Destination.Type
     let content: (Destination.Type) -> Content
 
     public var body: some View {
-      TabView(selection: .tabToRoot(for: $tab, in: tabRouter)) {
+      TabView(selection: .tabToRoot(for: $currentTab, in: tabRouter)) {
         content(destination)
         // TODO: Try to had RoutingView for each child
 //        _VariadicView.Tree(TabViewContainer(currentTab: tab, destination: destination)) {
@@ -86,9 +86,9 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
 //        }
       }
       .environment(\.tabRouter, tabRouter)
-      .onReceive(tabRouter.$tab) {
+      .onReceive(tabRouter.$tab) { [$currentTab] in
         if let tab = $0.wrapped as? Tab {
-          self.tab = tab
+          $currentTab.wrappedValue = tab
         }
       }
     }

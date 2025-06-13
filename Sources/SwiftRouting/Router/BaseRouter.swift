@@ -20,7 +20,7 @@ public class BaseRouter: ObservableObject, Identifiable {
   let configuration: Configuration
 
   /// The parent router, if any. Used for hierarchical navigation structures.
-  var parent: BaseRouter?
+  weak var parent: BaseRouter?
 
   var contexts: Set<RouterContext> = []
 
@@ -55,6 +55,10 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// - Parameter child: The child `BaseRouter` to be removed.
   func removeChild(_ child: BaseRouter) {
     children.removeValue(forKey: child.id)
+  }
+
+  @MainActor public func clearChildren() {
+    children.removeAll()
   }
 
   /// Logs an event related to the router lifecycle or navigation actions.
