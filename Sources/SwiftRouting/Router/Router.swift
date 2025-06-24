@@ -113,7 +113,7 @@ extension Router: @preconcurrency RouterModel {
   @MainActor public func back(_ value: some RouteContext) {
     if let context = contexts.first(for: Swift.type(of: value)) {
       context.execute(value)
-      guard path.count - context.pathCount <= path.count else { return }
+      guard path.count - context.pathCount >= 0 else { return }
       path.removeLast(path.count - context.pathCount)
       log(.action, message: "back", metadata: ["clear": remove])
     } else {
