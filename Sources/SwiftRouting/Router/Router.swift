@@ -37,7 +37,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   }
   /// current number of routes
   public var routeCount: Int {
-    path.count
+    path.count + (root != nil ? 1 : 0)
   }
   internal var present: Bool {
     sheet != nil || cover != nil
