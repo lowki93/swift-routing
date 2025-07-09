@@ -35,6 +35,10 @@ public final class Router: BaseRouter, @unchecked Sendable {
   public var isPresented: Bool {
     type.isPresented
   }
+  /// current number of routes
+  public var routeCount: Int {
+    path.count
+  }
   internal var present: Bool {
     sheet != nil || cover != nil
   }
