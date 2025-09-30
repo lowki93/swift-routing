@@ -53,10 +53,20 @@ import Foundation
 public protocol Route: Hashable, Sendable, CustomStringConvertible {
   /// `Name` of your route
   var name: String { get }
+
+  /// The navigation style used when presenting this route.
+  /// Determines how the router should navigate: via push, sheet, cover, root, etc.
+  /// Default is `.push`, but you can override in your Route type.
+  var routingType: RoutingType { get }
+
   var description: String { get }
 }
 
 public extension Route {
+  var routingType: RoutingType {
+    .push
+  }
+
   var description: String {
     name
   }
