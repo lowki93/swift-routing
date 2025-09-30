@@ -73,6 +73,10 @@ public final class Router: BaseRouter, @unchecked Sendable {
 // MARK: - Navigation
 
 extension Router: @preconcurrency RouterModel {
+  @MainActor public func route(_ destination: some Route) {
+    route(to: destination, type: destination.routingType)
+  }
+
   @MainActor public func update(root destination: some Route) {
     route(to: destination, type: .root)
   }

@@ -36,6 +36,12 @@ import SwiftUI
 ///   let viewModel = ViewModel(router: router)
 /// ```
 public protocol RouterModel: BaseRouterModel {
+  /// Navigates to the given destination using its associated routingType.
+  ///
+  /// This method examines the `routingType` property of the route and performs the appropriate navigation action (push, sheet, cover, root, etc).
+  /// - Parameter destination: The `Route` to navigate to. Its `routingType` determines how the navigation is performed.
+  func route(_ destination: some Route)
+
   /// Updates the current root of the navigation stack.
   ///
   /// This method replaces the existing root with a new destination, effectively resetting navigation.
