@@ -12,6 +12,9 @@
 /// before reaching the target destination.
 public struct DeeplinkRoute<R: Route> {
 
+  /// The root to override
+  let root: R?
+
   /// The presentation type that determines how the final route should be displayed.
   let type: RoutingType
 
@@ -25,11 +28,13 @@ public struct DeeplinkRoute<R: Route> {
   /// Creates a new deeplink route definition.
   ///
   /// - Parameters:
+  ///   - root: The root route to display
   ///   - type: The presentation style (e.g., push, sheet, cover, root).
   ///   - route: The final route to be displayed.
   ///   - path: An optional sequence of intermediate routes leading to the final destination.
-  public init(type: RoutingType, route: R, path: [R] = []) {
+  public init(root: R? = nil, type: RoutingType, route: R, path: [R] = []) {
     self.type = type
+    self.root = root
     self.path = path
     self.route = route
   }
