@@ -185,6 +185,11 @@ public extension Router {
     // Clear the current navigation path
     popToRoot()
 
+    // Override the root route
+    if let root = deeplink.root {
+      route(to: root, type: .root)
+    }
+
     // Add intermediate routes to the navigation path
     for route in deeplink.path {
       push(route)
