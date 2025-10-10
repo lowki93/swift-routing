@@ -20,9 +20,8 @@ struct RouterContext: Hashable {
     routerContext: any RouteContext.Type,
     action: @escaping (any RouteContext) -> Void
   ) {
-    let route = router.currentRoute
     self.id = router.id
-    self.route = route.wrapped
+    self.route = router.currentRoute.wrapped
     self.pathCount = router.path.count
     self.routerContext = routerContext
     self.action = action
