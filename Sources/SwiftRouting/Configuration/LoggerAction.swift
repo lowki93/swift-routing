@@ -14,7 +14,7 @@ import Foundation
 ///
 /// ## Cases
 /// - `routerLifecycle`: Logs the initialization and deallocation of a router.
-/// - `navigation`: Logs when a route is displayed in the navigation stack.
+/// - `navigation`: Logs when a route is displayed.
 /// - `action`: Logs actions related to navigation, dismissals, and back actions.
 /// - `viewLifecycle`: Logs `onAppear` and `onDisappear` events of views.
 ///
@@ -23,11 +23,11 @@ import Foundation
 /// let logAction: LoggerAction = .navigation
 /// print("Logging action: \(logAction)")
 /// ```
-public enum LoggerAction: CaseIterable {
+public enum LoggerAction {
   /// Logs the initialization (`init`) and deallocation (`deinit`) of a router.
   case routerLifecycle
-  /// Logs when a route is displayed in the navigation stack.
-  case navigation
+  /// Logs when a route is displayed.
+  case navigation(from: any Route, to: any Route, type: RoutingType)
   /// Logs actions related to navigation events, dismissals, and back navigation.
   case action
   /// Logs `onAppear` and `onDisappear` events of views.

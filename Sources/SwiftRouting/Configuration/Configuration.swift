@@ -37,8 +37,17 @@ extension Configuration {
   static var `default`: Configuration {
     Configuration(
       logger: { loggerConfiguration in
-        let messageString = if let message = loggerConfiguration.message { message + " " } else { "" }
-        let metadataString = loggerConfiguration.metadata?.map { "\($0): '\($1)'" }.joined(separator: ", ") ?? ""
+        let messageString: String
+        let metadataString: String
+
+        switch loggerConfiguration.type {
+        case let .navigation(from, to, type):
+          messageString = "from: '\(from)' to: '\(to)' type: \(type)"
+          metadataString = ""
+        default:
+          messageString = if let message = loggerConfiguration.message { message + " " } else { "" }
+          metadataString = loggerConfiguration.metadata?.map { "\($0): '\($1)'" }.joined(separator: ", ") ?? ""
+        }
 
         Logger.default.log(
           level: OSLogType(from: loggerConfiguration.verbosity),
