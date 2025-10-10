@@ -19,7 +19,7 @@
 /// This struct is useful for debugging and analytics purposes within the `swift-routing` framework.
 public struct LoggerConfiguration {
   /// The type of action performed by the router.
-  let type: LoggerAction
+  let type: LoggerMessage
 
   let verbosity: LogVerbosity
 

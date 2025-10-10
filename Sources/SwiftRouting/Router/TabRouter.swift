@@ -41,7 +41,6 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
       parent.removeChild(tabRouter)
     }
     parent.addChild(self)
-    log(.routerLifecycle, message: "init", metadata: ["from": parent])
   }
 }
 
@@ -54,7 +53,7 @@ extension TabRouter: @preconcurrency TabRouterModel {
   /// - Parameter tab: The tab to switch to.
   @MainActor public func change(tab: some TabRoute) {
     self.tab = AnyTabRoute(wrapped: tab)
-    log(.action, message: "changeTab", metadata: ["tab": tab.name])
+    log(.action(.changeTab(tab)))
   }
 
   /// Updates the root route of a given tab's navigation stack.

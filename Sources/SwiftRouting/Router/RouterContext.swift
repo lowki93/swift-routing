@@ -36,8 +36,8 @@ struct RouterContext: Hashable {
   }
 
   @MainActor func execute(_ object: some RouteContext) {
+    router?.log(.context(object, from: route), verbosity: .debug)
     action(object)
-    router?.log(.context, verbosity: .debug, message: "context")
   }
 
   static func == (lhs: RouterContext, rhs: RouterContext) -> Bool {

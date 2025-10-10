@@ -11,11 +11,10 @@ struct LifecycleModifier: ViewModifier {
 
   @Environment(\.router) private var router
   let route: any Route
-  let logAction: LoggerAction = .viewLifecycle
 
   func body(content: Content) -> some View {
     content
-      .onAppear { router.log(logAction, metadata: ["OnAppear": route]) }
-      .onDisappear { router.log(logAction, metadata: ["Disappear": route]) }
+      .onAppear { router.log(.onAppear(route)) }
+      .onDisappear { router.log(.onDisappear(route)) }
   }
 }
