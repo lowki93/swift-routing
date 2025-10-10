@@ -65,24 +65,9 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// Logs an event related to the router lifecycle or navigation actions.
   ///
   /// - Parameters:
-  ///   - type: The type of action being logged.
-  ///   - message: An optional message providing more details.
-  ///   - metadata: Optional metadata associated with the action.
-  func log(
-    _ type: LoggerMessage,
-    verbosity: LogVerbosity = .debug,
-    message: String? = nil,
-    metadata: [String: Any]? = nil
-  ) {
-    configuration.logger?(
-      LoggerConfiguration(
-        type: type,
-        verbosity: verbosity,
-        router: self,
-        message: message,
-        metadata: metadata
-      )
-    )
+  ///   - message: The type of message being logged.
+  func log(_ message: LoggerMessage) {
+    configuration.logger?(LoggerConfiguration(message: message, router: self))
   }
 }
 

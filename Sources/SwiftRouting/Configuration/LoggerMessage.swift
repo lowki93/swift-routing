@@ -41,7 +41,7 @@ public enum LoggerMessage {
 }
 
 public extension LoggerMessage {
-  public  enum Action {
+  enum Action {
     case popToRoot
     case close
     case back(count: Int? = nil)

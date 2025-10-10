@@ -49,7 +49,7 @@ public extension View {
         root: route
       )
     } else {
-      Text("Route '\(anyRoute)' are not define in '\(D.self)'")
+      Text("Route '\(anyRoute.description)' are not define in '\(String(describing: D.self))'")
         .padding()
     }
   }
