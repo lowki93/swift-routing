@@ -55,7 +55,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   ///
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
-    let defaultRoute = AnyRoute(wrapped: DefaultRoute.none)
+    let defaultRoute = AnyRoute(wrapped: DefaultRoute.main)
     self.type = .app
     self.root = defaultRoute
     self.currentRoute = defaultRoute

@@ -86,9 +86,3 @@ public struct AnyRoute: Identifiable, Equatable {
     lhs.id == rhs.id
   }
 }
-
-enum DefaultRoute: Route {
-  case none
-
-  var name: String { "none" }
-}
