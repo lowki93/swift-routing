@@ -7,45 +7,39 @@
 
 import Foundation
 
-/// Represents the type of action logged by the router.
 ///
-/// `LoggerMessage` defines various categories of events that can be tracked within the navigation system.
-/// It provides insight into lifecycle events, navigation changes, and user interactions.
+/// `LoggerMessage` defines the types of loggable events within the routing/navigation system.
 ///
-/// ## Cases
-/// - `routerLifecycle`: Logs the initialization and deallocation of a router.
-/// - `navigation`: Logs when a route is displayed.
-/// - `action`: Logs actions related to navigation, dismissals, and back actions.
-/// - `viewLifecycle`: Logs `onAppear` and `onDisappear` events of views.
-///
-/// ## Usage
-/// ```swift
-/// let logAction: LoggerMessage = .navigation
-/// print("Logging action: \(logAction)")
-/// ```
+/// Use this enum to track lifecycle events, navigation actions, view appearances, and route context transmissions for analytics or debugging.
 public enum LoggerMessage {
-  /// Log the `initialization` of a router
+  /// Logs the initialization (creation) of a router instance.
   case create(from: BaseRouter?)
-  /// Log deallocation `deinit` of a router.
+  /// Logs the deallocation (destruction) of a router instance.
   case delete
-  /// Log when a new route is displayed.
+  /// Logs a navigation action, including the source and destination routes and the type of navigation.
   case navigation(from: any Route, to: any Route, type: RoutingType)
-  /// Log actions related to navigation events, dismissals, and back navigation.
+  /// Logs a navigation-related user action (see `Action` enum for details).
   case action(Action)
-  /// Log `onAppear` route.
+  /// Logs when a route/view appears (onAppear event).
   case onAppear(any Route)
-  /// Log `onDisappear` route
+  /// Logs when a route/view disappears (onDisappear event).
   case onDisappear(any Route)
-  /// Log `context` send from which `Route`
+  /// Logs that context has been sent from a specific route.
   case context(any RouteContext, from: any Route)
 }
 
 public extension LoggerMessage {
+  /// Represents navigation-related user actions that can be logged.
   enum Action {
+    /// Logs an action to pop navigation to the root route.
     case popToRoot
+    /// Logs an action to close the current view or route.
     case close
+    /// Logs a back navigation action (optionally multiple steps if count is provided).
     case back(count: Int? = nil)
+    /// Logs the closure of all child routes associated with a specific router.
     case closeChildren(BaseRouter)
+    /// Logs a tab change action to a specified tab route.
     case changeTab(any TabRoute)
   }
 }
