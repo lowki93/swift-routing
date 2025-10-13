@@ -43,7 +43,7 @@ public extension View {
     // TODO: Add condition to fatalError or not
     if let route = anyRoute.wrapped as? D.R {
       RoutingView(
-        present: route.name,
+        type: .presented(route.name),
         inStack: anyRoute.inStack,
         destination: destination,
         root: route
