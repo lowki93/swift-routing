@@ -135,6 +135,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
       Group {
         if let content {
           content
+            .modifier(LifecycleModifier(route: router.root.wrapped))
         } else if let root = router.root.wrapped as? Destination.R {
           Destination[root]
         }
