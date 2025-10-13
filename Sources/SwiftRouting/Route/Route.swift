@@ -59,6 +59,8 @@ public protocol Route: Hashable, Sendable, CustomStringConvertible {
   /// Default is `.push`, but you can override in your Route type.
   var routingType: RoutingType { get }
 
+  /// A human-readable description of the route, typically used for debugging, logging, or displaying route information.
+  /// By default, returns the route's name. You can override to provide more context if needed.
   var description: String { get }
 }
 
