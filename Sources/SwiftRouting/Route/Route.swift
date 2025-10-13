@@ -77,7 +77,7 @@ public extension Route {
 @dynamicMemberLookup
 public struct AnyRoute: Identifiable, Equatable {
   public var id: Int { wrapped.hashValue }
-  var wrapped: any Route
+  public var wrapped: any Route
   var inStack: Bool = true
 
   subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {

@@ -31,7 +31,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var sheet: AnyRoute?
   @Published internal var cover: AnyRoute?
   @Published internal var triggerClose: Bool = false
-  internal var currentRoute: AnyRoute
+  public var currentRoute: AnyRoute
   public var isPresented: Bool {
     type.isPresented
   }

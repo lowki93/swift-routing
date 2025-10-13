@@ -41,7 +41,7 @@ extension Configuration {
         case .create(.none): "init"
         case let .create(from: .some(from)): "init from: '\(from)'"
         case .delete: "deninit"
-        case let .navigation(from, to, type): "from: '\(from)' to: '\(to)' type: \(type)"
+        case let .navigation(from, to, type): "navigate from: '\(from)' to: '\(to)' type: \(type)"
         case let .onAppear(route): "'\(route)' appear"
         case let .onDisappear(route): "'\(route)' disappear"
         case let .context(context, route): "send '\(context)' from: '\(route)'"
