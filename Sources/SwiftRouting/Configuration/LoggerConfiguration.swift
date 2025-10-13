@@ -17,8 +17,8 @@
 /// This struct is useful for debugging and analytics purposes within the `swift-routing` framework.
 public struct LoggerConfiguration {
   /// The type of messageperformed by the router.
-  let message: LoggerMessage
+  public let message: LoggerMessage
 
   /// The router instance that performed the action.
-  let router: BaseRouter
+  public let router: BaseRouter
 }
