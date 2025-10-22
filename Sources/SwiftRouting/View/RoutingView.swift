@@ -47,7 +47,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
   private let type: RouterType
   private let inStack: Bool
   private let destination: Destination.Type
-  private let root: Destination.R?
+  private let root: Destination.R
   private let content: Content?
   private var parent: BaseRouter {
     if case .tab = type {
@@ -60,7 +60,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     type: RouterType,
     inStack: Bool,
     destination: Destination.Type,
-    root: Destination.R?,
+    root: Destination.R,
     content: (() -> Content)?
   ) {
     self.type = type
@@ -75,24 +75,34 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
   /// - Parameters:
   ///   - tab: The tab associated with the navigation, conforming to `TabRoute`.
   ///   - destination: The type conforming to `RouteDestination`, defining the available routes.
+  ///   - root: The initial route.
   ///   - content: A `ViewBuilder` closure providing the root view for this tab's navigation stack.
-  public init(tab: any TabRoute, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
-    self.init(type: tab.type, inStack: true, destination: destination, root: nil, content: content)
+  public init(
+    tab: some TabRoute,
+    destination: Destination.Type,
+    root: Destination.R,
+    @ViewBuilder content: @escaping () -> Content
+  ) {
+    self.init(type: tab.type, inStack: true, destination: destination, root: root, content: content)
   }
 
   /// Initializes a `RoutingView` for tab-based navigation.
   ///
   /// - Parameters:
-  ///   - tab: The name of the navigation stack.
   ///   - destination: The type conforming to `RouteDestination`, defining the available routes.
+  ///   - root: The initial route.
   ///   - content: A `ViewBuilder` closure providing the root view for this tab's navigation stack.
-  public init(stack name: String, destination: Destination.Type, @ViewBuilder content: @escaping () -> Content) {
-    self.init(type: .stack(name), inStack: true, destination: destination, root: nil, content: content)
+  public init(
+    destination: Destination.Type,
+    root: Destination.R,
+    @ViewBuilder content: @escaping () -> Content
+  ) {
+    self.init(type: .stack(root.name), inStack: true, destination: destination, root: root, content: content)
   }
 
   public var body: some View {
     WrappedView(
-      router: Router(root: root.flatMap { AnyRoute(wrapped: $0, inStack: inStack) }, type: type, parent: parent),
+      router: Router(root: AnyRoute(wrapped: root, inStack: inStack), type: type, parent: parent),
       inStack: inStack,
       destination: destination,
       content: content
@@ -123,10 +133,11 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     @ViewBuilder
     private var root: some View {
       Group {
-        if let root = router.root?.wrapped as? Destination.R {
-          Destination[root]
-        } else if let content {
+        if let content {
           content
+            .modifier(LifecycleModifier(route: router.root.wrapped))
+        } else if let root = router.root.wrapped as? Destination.R {
+          Destination[root]
         }
       }
       .id(router.rootID)
@@ -142,12 +153,9 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 }
 
 extension RoutingView where Content == EmptyView {
+
   init(type: RouterType, inStack: Bool, destination: Destination.Type, root: Destination.R) {
     self.init(type: type, inStack: inStack, destination: destination, root: root, content: nil)
-  }
-
-  init(present name: String, inStack: Bool, destination: Destination.Type, root: Destination.R) {
-    self.init(type: .presented(name), inStack: inStack, destination: destination, root: root)
   }
 
   /// Initializes a `RoutingView` for tab-based navigation.
@@ -156,17 +164,16 @@ extension RoutingView where Content == EmptyView {
   ///   - tab: The tab associated with the navigation.
   ///   - destination: The destination type conforming to `RouteDestination`.
   ///   - root: The initial route.
-  public init(tab: any TabRoute, destination: Destination.Type, root: Destination.R) {
-    self.init(type: tab.type, inStack: true, destination: destination, root: root)
+  public init(tab: some TabRoute, destination: Destination.Type, root: Destination.R) {
+    self.init(type: tab.type, inStack: true, destination: destination, root: root, content: nil)
   }
 
   /// Initializes a `RoutingView` for stack-based navigation.
   ///
   /// - Parameters:
-  ///   - name: The name of the navigation stack.
   ///   - destination: The destination type conforming to `RouteDestination`.
   ///   - root: The initial route.
-  public init(stack name: String, destination: Destination.Type, root: Destination.R) {
-    self.init(type: .stack(name), inStack: true, destination: destination, root: root, content: nil)
+  public init(destination: Destination.Type, root: Destination.R) {
+    self.init(type: .stack(root.name), inStack: true, destination: destination, root: root, content: nil)
   }
 }

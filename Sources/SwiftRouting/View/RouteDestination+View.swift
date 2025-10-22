@@ -43,13 +43,13 @@ public extension View {
     // TODO: Add condition to fatalError or not
     if let route = anyRoute.wrapped as? D.R {
       RoutingView(
-        present: route.name,
+        type: .presented(route.name),
         inStack: anyRoute.inStack,
         destination: destination,
         root: route
       )
     } else {
-      Text("Route '\(anyRoute)' are not define in '\(D.self)'")
+      Text("Route '\(anyRoute.description)' are not define in '\(String(describing: D.self))'")
         .padding()
     }
   }

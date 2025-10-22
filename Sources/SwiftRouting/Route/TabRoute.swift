@@ -36,7 +36,7 @@ import Foundation
 /// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self, route: .page1)
 /// ```
 public protocol TabRoute: Route {
-  var hideTabBarOnPush: Bool { get}
+  var hideTabBarOnPush: Bool { get }
 }
 
 extension TabRoute {

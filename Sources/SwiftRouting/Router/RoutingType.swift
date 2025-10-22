@@ -34,7 +34,7 @@ public enum RoutingType: CustomStringConvertible {
     switch self {
     case .root: "root"
     case .push: "push"
-    case let .sheet(withStack): "sheet(withStack: \(withStack)"
+    case let .sheet(withStack): "sheet(withStack: \(withStack))"
     case .cover: "cover"
     }
   }

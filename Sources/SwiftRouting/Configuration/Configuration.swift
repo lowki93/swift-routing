@@ -37,12 +37,25 @@ extension Configuration {
   static var `default`: Configuration {
     Configuration(
       logger: { loggerConfiguration in
-        let messageString = if let message = loggerConfiguration.message { message + " " } else { "" }
-        let metadataString = loggerConfiguration.metadata?.map { "\($0): '\($1)'" }.joined(separator: ", ") ?? ""
+        let message = switch loggerConfiguration.message {
+        case .create(.none): "init"
+        case let .create(from: .some(from)): "init from: '\(from)'"
+        case .delete: "deninit"
+        case let .navigation(from, to, type): "navigate from: '\(from)' to: '\(to)' type: \(type)"
+        case let .onAppear(route): "'\(route)' appear"
+        case let .onDisappear(route): "'\(route)' disappear"
+        case let .context(context, route): "send '\(context)' from: '\(route)'"
+        case .action(.popToRoot): "popToRoot"
+        case .action(.close): "close"
+        case .action(.back(count: .none)): "back"
+        case let .action(.back(count: .some(count))): "back, count: \(count)"
+        case let .action(.closeChildren(router)): "closeChildren for: '\(router)'"
+        case let .action(.changeTab(tab)): "changeTab to: '\(tab)'"
+        }
 
         Logger.default.log(
-          level: OSLogType(from: loggerConfiguration.verbosity),
-          "Router: \(loggerConfiguration.router) | \(messageString)\(metadataString)"
+          level: OSLogType(from: .info),
+          "Router: \(loggerConfiguration.router) | \(message)"
         )
       }
     )

@@ -35,12 +35,13 @@ public class BaseRouter: ObservableObject, Identifiable {
   init(configuration: Configuration, parent: BaseRouter? = nil) {
     self.configuration = configuration
     self.parent = parent
+    log(.create(from: parent))
   }
 
   /// Deinitializer that removes the router from its parent's children and logs its destruction.
   deinit {
     parent?.removeChild(self)
-    log(.routerLifecycle, message: "deinit")
+    log(.delete)
   }
 
   /// Adds a child router to the current router.
@@ -64,24 +65,9 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// Logs an event related to the router lifecycle or navigation actions.
   ///
   /// - Parameters:
-  ///   - type: The type of action being logged.
-  ///   - message: An optional message providing more details.
-  ///   - metadata: Optional metadata associated with the action.
-  func log(
-    _ type: LoggerAction,
-    verbosity: LogVerbosity = .debug,
-    message: String? = nil,
-    metadata: [String: Any]? = nil
-  ) {
-    configuration.logger?(
-      LoggerConfiguration(
-        type: type,
-        verbosity: verbosity,
-        router: self,
-        message: message,
-        metadata: metadata
-      )
-    )
+  ///   - message: The type of message being logged.
+  func log(_ message: LoggerMessage) {
+    configuration.logger?(LoggerConfiguration(message: message, router: self))
   }
 }
 

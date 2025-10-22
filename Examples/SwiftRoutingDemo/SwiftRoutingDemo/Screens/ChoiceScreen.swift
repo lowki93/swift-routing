@@ -14,7 +14,7 @@ struct ChoiceScreen: View {
   var body: some View {
       switch example {
       case .none: choiceView
-      case .navigationStack: RoutingView(stack: "Home", destination: AppRoute.self, root: .home)
+      case .navigationStack: RoutingView(destination: AppRoute.self, root: .home)
       case .tabView: TabScreen(type: .tabView)
       case .routingTabView: TabScreen(type: .routingTabView)
     }

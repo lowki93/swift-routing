@@ -20,9 +20,8 @@ struct RouterContext: Hashable {
     routerContext: any RouteContext.Type,
     action: @escaping (any RouteContext) -> Void
   ) {
-    guard let route = router.currentRoute else { return nil }
     self.id = router.id
-    self.route = route.wrapped
+    self.route = router.currentRoute.wrapped
     self.pathCount = router.path.count
     self.routerContext = routerContext
     self.action = action
@@ -36,8 +35,8 @@ struct RouterContext: Hashable {
   }
 
   @MainActor func execute(_ object: some RouteContext) {
+    router?.log(.context(object, from: route))
     action(object)
-    router?.log(.context, verbosity: .debug, message: "context")
   }
 
   static func == (lhs: RouterContext, rhs: RouterContext) -> Bool {

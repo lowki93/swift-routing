@@ -26,12 +26,12 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
   // MARK: Navigation
   public var rootID: UUID = UUID()
-  @Published internal var root: AnyRoute?
+  @Published internal var root: AnyRoute
   @Published internal var path = NavigationPath()
   @Published internal var sheet: AnyRoute?
   @Published internal var cover: AnyRoute?
   @Published internal var triggerClose: Bool = false
-  internal var currentRoute: AnyRoute?
+  public var currentRoute: AnyRoute
   public var isPresented: Bool {
     type.isPresented
   }
@@ -55,18 +55,19 @@ public final class Router: BaseRouter, @unchecked Sendable {
   ///
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
+    let defaultRoute = AnyRoute(wrapped: DefaultRoute.main)
     self.type = .app
+    self.root = defaultRoute
+    self.currentRoute = defaultRoute
     super.init(configuration: configuration)
-    log(.routerLifecycle, message: "init")
   }
 
-  init(root: AnyRoute?, type: RouterType, parent: BaseRouter) {
+  init(root: AnyRoute, type: RouterType, parent: BaseRouter) {
     self.root = root
     self.currentRoute = root
     self.type = type
     super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
-    log(.routerLifecycle, message: "init", metadata: ["from": parent])
   }
 }
 
@@ -95,20 +96,20 @@ extension Router: @preconcurrency RouterModel {
 
   @MainActor public func popToRoot() {
     path.popToRoot()
-    log(.action, message: "popToRoot")
+    log(.action(.popToRoot))
   }
 
   @MainActor public func close() {
     guard type.isPresented else { return }
 
     triggerClose = true
-    log(.action, message: "close")
+    log(.action(.close))
   }
 
   @MainActor public func back() {
     guard !path.isEmpty else { return }
     path.removeLast()
-    log(.action, message: "back")
+    log(.action(.back()))
   }
 
   @MainActor public func close(_ value: some RouteContext) {
@@ -123,8 +124,9 @@ extension Router: @preconcurrency RouterModel {
     if let context = contexts.first(for: Swift.type(of: value)) {
       context.execute(value)
       guard path.count - context.pathCount >= 0 else { return }
-      path.removeLast(path.count - context.pathCount)
-      log(.action, message: "back", metadata: ["clear": remove])
+      let clear = path.count - context.pathCount
+      path.removeLast(clear)
+      log(.action(.back(count: clear)))
     } else {
       back()
     }
@@ -138,9 +140,9 @@ extension Router: @preconcurrency RouterModel {
 
   @MainActor public func closeChildren() {
     for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
+      log(.action(.closeChildren(router)))
       sheet = nil
       cover = nil
-      log(.action, message: "closeChildren", metadata: ["router": router.type])
     }
   }
 }
@@ -148,7 +150,7 @@ extension Router: @preconcurrency RouterModel {
 private extension Router  {
 
   @MainActor func route(to destination: some Route, type: RoutingType) {
-    log(.navigation, metadata: ["navigating": destination, "type": type])
+    log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
 
     switch type {
     case .push:
