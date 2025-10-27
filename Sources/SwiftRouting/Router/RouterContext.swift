@@ -10,7 +10,7 @@ import Foundation
 struct RouterContext: Hashable {
   private weak var router: Router?
   private let id: UUID
-  private let route: any Route
+  let route: any Route
   let pathCount: Int
   let routerContext: any RouteContext.Type
   private let action: (any RouteContext) -> Void
@@ -51,5 +51,12 @@ extension Set where Element == RouterContext {
 
   func all<T: RouteContext>(for termination: T.Type) -> Self {
     filter { $0.routerContext == termination }
+  }
+
+  mutating func remove(from routes: [any Route]){
+    for element in filter { routes.map(\.hashValue).contains($0.route.hashValue) } {
+      print("==== remove element ", element)
+      remove(element)
+    }
   }
 }

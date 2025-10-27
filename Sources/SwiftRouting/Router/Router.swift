@@ -27,7 +27,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   // MARK: Navigation
   public var rootID: UUID = UUID()
   @Published internal var root: AnyRoute
-  @Published internal var path = NavigationPath()
+  @Published internal var path: [AnyRoute] = []
   @Published internal var sheet: AnyRoute? {
     didSet {
       guard oldValue != sheet else { return }
@@ -102,7 +102,7 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func popToRoot() {
-    path.popToRoot()
+    path.removeAll() //.popToRoot()
     log(.action(.popToRoot))
   }
 
@@ -186,7 +186,7 @@ private extension Router  {
 
     switch type {
     case .push:
-      path.append(destination)
+      path.append(AnyRoute(wrapped: destination))
       currentRoute = AnyRoute(wrapped: destination)
     case let .sheet(withStack):
       sheet = AnyRoute(wrapped: destination, inStack: withStack)
@@ -197,6 +197,16 @@ private extension Router  {
       currentRoute = root
       rootID = UUID()
     }
+  }
+
+  func updatePath(old: [AnyRoute], new: [AnyRoute]) {
+    let count = path.count - new.count
+    guard count > 0 else { return }
+
+    contexts.remove(from: path.suffix(count).map(\.wrapped))
+//    if count > 0 {
+//      remove(routes: path.suffix(count))
+//    }
   }
 }
 

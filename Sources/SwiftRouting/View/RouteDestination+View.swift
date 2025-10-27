@@ -9,8 +9,8 @@ import SwiftUI
 
 public extension View {
   func navigationDestination<D: RouteDestination>(_ destination: D.Type)  -> some View{
-    self.navigationDestination(for: D.R.self) {
-      destination[$0]
+    self.navigationDestination(for: AnyRoute.self) {
+      destination[$0.wrapped as! D.R]
         .modifier(HideTabBarModifier())
     }
   }
