@@ -34,8 +34,7 @@ struct RouterContext: Hashable {
     hasher.combine("\(routerContext)")
   }
 
-  @MainActor func execute(_ object: some RouteContext, from route: some Route) {
-    guard self.route.hashValue != route.hashValue else { return }
+  @MainActor func execute(_ object: some RouteContext) {
     router?.log(.context(object, from: route))
     action(object)
   }
