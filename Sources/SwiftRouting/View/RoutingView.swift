@@ -40,7 +40,7 @@ import SwiftUI
 /// RoutingView(stack: "Main", destination: HomeRoute.self, root: .page1)
 /// ```
 @MainActor
-public struct RoutingView<Destination: RouteDestination, Content: View>: View {
+public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
   @Environment(\.tabRouter) private var tabRouter

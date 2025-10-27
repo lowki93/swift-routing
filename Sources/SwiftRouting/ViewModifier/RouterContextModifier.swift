@@ -9,6 +9,7 @@ import SwiftUI
 
 public struct RouterContextModifier<R: RouteContext>: ViewModifier {
 
+  @State private var first = true
   @Environment(\.router) private var router
   let object: R.Type
   let perform: (R) -> Void
@@ -16,6 +17,8 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
   public func body(content: Content) -> some View {
     content
       .onAppear {
+        guard first else { return }
+        first = false
         guard let context = RouterContext(
           router: router,
           routerContext: object,
@@ -24,6 +27,7 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
             perform(value)
           }
         ) else { return }
+        print("Insert ", context)
         router.contexts.insert(context)
       }
   }

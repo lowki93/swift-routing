@@ -28,5 +28,8 @@ struct UserScreen: View {
 //      }
     }
     .padding()
+    .routerContext(String.self) { context in
+      print("=== ", context)
+    }
   }
 }
