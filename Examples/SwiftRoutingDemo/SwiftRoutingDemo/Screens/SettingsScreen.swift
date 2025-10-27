@@ -25,7 +25,7 @@ struct SettingsScreen: View {
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
         Button("Dismiss") {
-          router.close(Success(value: 4))
+          router.terminate(Success(value: 4))
         }
       }
     }

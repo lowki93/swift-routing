@@ -23,7 +23,7 @@ struct UserScreen: View {
       }
 //      if router.canTerminate {
         Button("Go back") {
-          router.back(name)
+          router.terminate(name)
         }
 //      }
     }
