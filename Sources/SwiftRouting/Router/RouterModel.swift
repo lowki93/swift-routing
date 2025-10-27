@@ -76,11 +76,9 @@ public protocol RouterModel: BaseRouterModel {
   /// Removes the last element from the navigation path, navigating back one step.
   func back()
 
+  func terminate( _ value: some RouteContext)
+
   func context(_ value: some RouteContext)
-
-  func close(_ value: some RouteContext)
-
-  func back(_ value: some RouteContext)
 
   /// Closes all child routers presented from the parent router.
   func closeChildren()
@@ -89,13 +87,5 @@ public protocol RouterModel: BaseRouterModel {
 public extension RouterModel {
   func present(_ destination: some Route) {
     present(destination, withStack: true)
-  }
-
-  func close<T: RouteContext>(_ value: T? = nil) {
-    close(value)
-  }
-
-  func back<T: RouteContext>(_ value: T? = nil) {
-    back(value)
   }
 }
