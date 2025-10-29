@@ -113,14 +113,21 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func terminate(_ value: some RouteContext) {
+    /// Execute all termination observers for the given context type (in both parent and child routers).
     context(value)
+
+    /// Remove all routes above the matched context in the navigation path
     if let context = contexts.first(for: Swift.type(of: value)) {
       guard path.count - context.pathCount >= 0 else { return }
       let clear = path.count - context.pathCount
       path.removeLast(clear)
       log(.action(.back(count: clear)))
+    /// If the context is not found and the router is presented (i.e., displayed modally)
     } else if type.isPresented {
       close()
+    /// Otherwise, pops the topmost route from the stack
+    } else {
+      back()
     }
   }
 
