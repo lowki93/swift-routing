@@ -10,12 +10,16 @@ import SwiftUI
 public struct RouterContextModifier<R: RouteContext>: ViewModifier {
 
   @Environment(\.router) private var router
+  @State private var firstTime: Bool = false
   let object: R.Type
   let perform: (R) -> Void
 
   public func body(content: Content) -> some View {
     content
       .onAppear {
+        guard !firstTime else { return }
+        firstTime = true
+
         guard let context = RouterContext(
           router: router,
           routerContext: object,
