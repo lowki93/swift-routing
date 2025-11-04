@@ -9,7 +9,6 @@ import SwiftUI
 
 public struct RouterContextModifier<R: RouteContext>: ViewModifier {
 
-  @State private var first = true
   @Environment(\.router) private var router
   @State private var firstTime: Bool = false
   let object: R.Type
