@@ -10,8 +10,12 @@ import SwiftUI
 public extension View {
   func navigationDestination<D: RouteDestination>(_ destination: D.Type)  -> some View{
     self.navigationDestination(for: AnyRoute.self) {
-      destination[$0.wrapped as! D.R]
-        .modifier(HideTabBarModifier())
+      if let route = $0.wrapped as? D.R {
+        destination[$0.wrapped as! D.R]
+          .modifier(HideTabBarModifier())
+      } else {
+        errorView(route: $0, destination: destination)
+      }
     }
   }
 
@@ -49,8 +53,12 @@ public extension View {
         root: route
       )
     } else {
-      Text("Route '\(anyRoute.description)' are not define in '\(String(describing: D.self))'")
-        .padding()
+      errorView(route: anyRoute, destination: destination)
     }
+  }
+
+  private func errorView(route: AnyRoute, destination: (some RouteDestination).Type) -> some View {
+    Text("Route '\(route.description)' are not define in '\(String(describing: destination.self))'")
+      .padding()
   }
 }
