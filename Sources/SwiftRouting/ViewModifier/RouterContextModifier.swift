@@ -9,7 +9,6 @@ import SwiftUI
 
 public struct RouterContextModifier<R: RouteContext>: ViewModifier {
 
-  @State private var first = true
   @Environment(\.router) private var router
   let object: R.Type
   let perform: (R) -> Void
@@ -17,18 +16,19 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
   public func body(content: Content) -> some View {
     content
       .onAppear {
-        guard first else { return }
-        first = false
-        guard let context = RouterContext(
-          router: router,
-          routerContext: object,
-          action: { [perform] in
-            guard let value = $0 as? R else { return }
-            perform(value)
-          }
-        ) else { return }
-        print("Insert ", context)
-        router.contexts.insert(context)
+        let (inserted, _) = router.contexts.insert(
+          RouterContext(
+            router: router,
+            routerContext: object,
+            action: { [perform] in
+              guard let value = $0 as? R else { return }
+              perform(value)
+            }
+          )
+        )
+        if inserted {
+          router.log(.context(.add(router.currentRoute.wrapped, context: object)))
+        }
       }
   }
 }

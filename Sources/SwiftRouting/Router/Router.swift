@@ -27,13 +27,9 @@ public final class Router: BaseRouter, @unchecked Sendable {
   // MARK: Navigation
   public var rootID: UUID = UUID()
   @Published internal var root: AnyRoute
-  @Published internal var path: [AnyRoute] = [] { //= NavigationPath()
+  @Published internal var path: [AnyRoute] = [] {
     willSet {
       updatePath(old: path, new: newValue)
-//      let count = path.count - newValue.count
-//      if count > 0 {
-//        remove(routes: path.suffix(count))
-//      }
     }
   }
   @Published internal var sheet: AnyRoute?
@@ -168,13 +164,15 @@ private extension Router  {
   }
 
   func updatePath(old: [AnyRoute], new: [AnyRoute]) {
-    let count = path.count - new.count
+    let count = old.count - new.count
     guard count > 0 else { return }
 
-    contexts.remove(from: path.suffix(count).map(\.wrapped))
-//    if count > 0 {
-//      remove(routes: path.suffix(count))
-//    }
+    for element in contexts.all(for: path.suffix(count).map(\.wrapped)) {
+      contexts.remove(element)
+      log(.context(.remove(element.route, context: element.routerContext)))
+    }
+
+    currentRoute = new.last ?? root
   }
 }
 

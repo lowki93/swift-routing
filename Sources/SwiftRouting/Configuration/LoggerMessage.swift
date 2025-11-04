@@ -25,7 +25,7 @@ public enum LoggerMessage {
   /// Logs when a route/view disappears (onDisappear event).
   case onDisappear(any Route)
   /// Logs that context has been sent from a specific route.
-  case context(any RouteContext, from: any Route)
+  case context(Context)
 }
 
 public extension LoggerMessage {
@@ -41,5 +41,13 @@ public extension LoggerMessage {
     case closeChildren(BaseRouter)
     /// Logs a tab change action to a specified tab route.
     case changeTab(any TabRoute)
+  }
+}
+
+public extension LoggerMessage {
+  enum Context {
+    case add(any Route, context: any RouteContext.Type)
+    case execute(any RouteContext, from: any Route)
+    case remove(any Route, context: any RouteContext.Type)
   }
 }
