@@ -41,8 +41,8 @@ struct RouterContext: Hashable {
 }
 
 extension Set where Element == RouterContext {
-  func first<T: RouteContext>(for termination: T.Type) -> Self.Element? {
-    first(where: { $0.routerContext == termination })
+  func first<T: RouteContext>(for termination: T.Type, currentRoute: any Route) -> Self.Element? {
+    first(where: { $0.routerContext == termination && $0.route.hashValue != currentRoute.hashValue })
   }
 
   func all<T: RouteContext>(for termination: T.Type) -> Self {

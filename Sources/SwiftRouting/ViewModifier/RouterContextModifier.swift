@@ -16,7 +16,7 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
   public func body(content: Content) -> some View {
     content
       .onAppear {
-        let (inserted, _) = router.contexts.insert(
+        let (inserted, element) = router.contexts.insert(
           RouterContext(
             router: router,
             routerContext: object,
@@ -27,7 +27,7 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
           )
         )
         if inserted {
-          router.log(.context(.add(router.currentRoute.wrapped, context: object)))
+          router.log(.context(.add(element.route, context: element.routerContext)))
         }
       }
   }

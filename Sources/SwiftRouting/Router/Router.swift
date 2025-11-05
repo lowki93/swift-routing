@@ -118,7 +118,7 @@ extension Router: @preconcurrency RouterModel {
 
   @MainActor public func terminate(_ value: some RouteContext) {
     context(value)
-    if let context = contexts.first(for: Swift.type(of: value)) {
+    if let context = contexts.first(for: Swift.type(of: value), currentRoute: currentRoute.wrapped) {
       guard path.count - context.pathCount >= 0 else { return }
       let clear = path.count - context.pathCount
       path.removeLast(clear)
