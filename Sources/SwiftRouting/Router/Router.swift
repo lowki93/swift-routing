@@ -140,7 +140,7 @@ extension Router: @preconcurrency RouterModel {
     context(value)
 
     /// Remove all routes above the matched context in the navigation path
-    if let context = contexts.first(for: Swift.type(of: value)) {
+    if let context = contexts.first(for: Swift.type(of: value), currentRoute: currentRoute.wrapped) {
       guard path.count - context.pathCount >= 0 else { return }
       let clear = path.count - context.pathCount
       path.removeLast(clear)
