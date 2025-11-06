@@ -94,10 +94,21 @@ public extension BaseRouter {
   ///
   /// - Parameter tabRoute: The `TabRoute` for which to find the corresponding `TabRouter`.
   /// - Returns: The `TabRouter` associated with the given tab, or `nil` if not found.
-  func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
+  @MainActor func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
     let tabRouters = children.compactMap { $0.value.value as? TabRouter }
 
     return tabRouters.first { type(of: $0.tab.wrapped) == type(of: tabRoute) }
+  }
+
+  /// Finds the `Router` instance managing a specific tab within a `TabRouter`.
+  ///
+  /// This method first locates the `TabRouter` corresponding to the provided `TabRoute`,
+  /// then searches inside it to find the `Router` managing that specific tab.
+  ///
+  /// - Parameter tabRoute: The `TabRoute` representing the tab to search for.
+  /// - Returns: The `Router` instance managing the specified tab, or `nil` if it is not found.
+  @MainActor func findRouterInTabRouter(for tabRoute: some TabRoute) -> Router? {
+    tabRouter(for: tabRoute)?.find(tab: tabRoute)
   }
 }
 
