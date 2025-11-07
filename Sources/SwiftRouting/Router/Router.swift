@@ -28,9 +28,14 @@ public final class Router: BaseRouter, @unchecked Sendable {
   public var rootID: UUID = UUID()
   @Published internal var root: AnyRoute
   @Published internal var path = NavigationPath()
-  @Published internal var sheet: AnyRoute?
-  @Published internal var cover: AnyRoute?
-  @Published internal var triggerClose: Bool = false
+  @Published internal var sheet: AnyRoute? {
+    didSet { present = sheet != nil }
+  }
+  @Published internal var cover: AnyRoute? {
+    didSet { present = cover != nil }
+  }
+  @Published private(set) var present: Bool = false
+  @Published internal private(set) var triggerClose: Bool = false
   public var currentRoute: AnyRoute
   public var isPresented: Bool {
     type.isPresented
@@ -39,9 +44,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
   public var routeCount: Int {
     // +1 for root view
     path.count + 1
-  }
-  internal var present: Bool {
-    sheet != nil || cover != nil
   }
 
   // MARK: Configuration

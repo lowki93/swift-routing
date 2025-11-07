@@ -99,6 +99,17 @@ public extension BaseRouter {
 
     return tabRouters.first { type(of: $0.tab.wrapped) == type(of: tabRoute) }
   }
+
+  /// Finds the `Router` instance managing a specific tab within a `TabRouter`.
+  ///
+  /// This method first locates the `TabRouter` corresponding to the provided `TabRoute`,
+  /// then searches inside it to find the `Router` managing that specific tab.
+  ///
+  /// - Parameter tabRoute: The `TabRoute` representing the tab to search for.
+  /// - Returns: The `Router` instance managing the specified tab, or `nil` if it is not found.
+  @MainActor func findRouterInTabRouter(for tabRoute: some TabRoute) -> Router? {
+    tabRouter(for: tabRoute)?.find(tab: tabRoute)
+  }
 }
 
 /// Provides a textual representation of a `BaseRouter` instance.
