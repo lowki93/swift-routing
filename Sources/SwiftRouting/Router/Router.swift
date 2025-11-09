@@ -32,14 +32,12 @@ public final class Router: BaseRouter, @unchecked Sendable {
       updatePath(old: path, new: newValue)
     }
   }
-    @Published internal var cover: AnyRoute? {
-      didSet {
-        guard oldValue != cover else { return }
-        present.send((cover != nil, self))
-      }
-    }
-  @Published internal private(set) var triggerClose: Bool = false
-  public var currentRoute: AnyRoute
+  @Published internal var sheet: AnyRoute?
+  @Published internal var cover: AnyRoute?
+  @Published internal var triggerClose: Bool = false
+  public var currentRoute: AnyRoute {
+    path.last ?? root
+  }
   public var isPresented: Bool {
     type.isPresented
   }
@@ -63,13 +61,11 @@ public final class Router: BaseRouter, @unchecked Sendable {
     let defaultRoute = AnyRoute(wrapped: DefaultRoute.main)
     self.type = .app
     self.root = defaultRoute
-    self.currentRoute = defaultRoute
     super.init(configuration: configuration)
   }
 
   init(root: AnyRoute, type: RouterType, parent: BaseRouter) {
     self.root = root
-    self.currentRoute = root
     self.type = type
     super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
@@ -185,14 +181,12 @@ private extension Router  {
     switch type {
     case .push:
       path.append(AnyRoute(wrapped: destination))
-      currentRoute = AnyRoute(wrapped: destination)
     case let .sheet(withStack):
       sheet = AnyRoute(wrapped: destination, inStack: withStack)
     case .cover:
       cover = AnyRoute(wrapped: destination)
     case .root:
       root = AnyRoute(wrapped: destination)
-      currentRoute = root
       rootID = UUID()
     }
   }
@@ -205,8 +199,6 @@ private extension Router  {
       contexts.remove(element)
       log(.context(.remove(element.route, context: element.routerContext)))
     }
-
-    currentRoute = new.last ?? root
   }
 }
 

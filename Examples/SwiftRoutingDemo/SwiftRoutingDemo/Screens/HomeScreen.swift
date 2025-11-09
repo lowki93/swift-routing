@@ -18,7 +18,7 @@ struct HomeScreen: View {
       Button("User: lowki") {
         router.push(AppRoute.user(name: "Lowki"))
       }
-      NavigationLink(value: AppRoute.user(name: "Alexia")) {
+      NavigationLink(route: AppRoute.user(name: "Alexia")) {
         Text("User: alexia")
       }
     }
