@@ -10,11 +10,8 @@ import SwiftUI
 public extension View {
   func navigationDestination<D: RouteDestination>(_ destination: D.Type)  -> some View{
     self.navigationDestination(for: AnyRoute.self) {
-      if let route = $0.wrapped as? D.R {
-        destination[$0.wrapped as! D.R]
-          .modifier(HideTabBarModifier())
-      } else {
-        errorView(route: $0, destination: destination)
+      ErrorView(route: $0, destination: destination) { route, _ in
+        destination[route].modifier(HideTabBarModifier())
       }
     }
   }
@@ -40,25 +37,14 @@ public extension View {
   }
 
   @ViewBuilder
-  private func dismissableContent<D: RouteDestination>(
-    anyRoute: AnyRoute,
-    for destination: D.Type
-  ) -> some View {
-    // TODO: Add condition to fatalError or not
-    if let route = anyRoute.wrapped as? D.R {
+  private func dismissableContent<D: RouteDestination>(anyRoute: AnyRoute, for destination: D.Type) -> some View {
+    ErrorView(route: anyRoute, destination: destination) { route, destination in
       RoutingView(
         type: .presented(route.name),
         inStack: anyRoute.inStack,
         destination: destination,
         root: route
       )
-    } else {
-      errorView(route: anyRoute, destination: destination)
     }
-  }
-
-  private func errorView(route: AnyRoute, destination: (some RouteDestination).Type) -> some View {
-    Text("Route '\(route.description)' are not define in '\(String(describing: destination.self))'")
-      .padding()
   }
 }

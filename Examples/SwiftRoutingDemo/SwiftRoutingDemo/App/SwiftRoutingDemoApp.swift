@@ -13,6 +13,7 @@ struct SwiftRoutingDemoApp: App {
   var body: some Scene {
     WindowGroup {
       ChoiceScreen()
+        .environment(\.router, Router(configuration: Configuration(shouldCrashOnRouteNotFound: true)))
     }
   }
 }

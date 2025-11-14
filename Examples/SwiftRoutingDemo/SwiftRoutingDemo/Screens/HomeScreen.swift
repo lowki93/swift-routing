@@ -15,12 +15,11 @@ struct HomeScreen: View {
   var body: some View {
     VStack {
       Button("Search") { router.present(AppRoute.search, withStack: false) }
-      Button("User: lowki") {
-        router.push(AppRoute.user(name: "Lowki"))
-      }
+      Button("User: lowki") { router.push(AppRoute.user(name: "Lowki")) }
       NavigationLink(route: AppRoute.user(name: "Alexia")) {
         Text("User: alexia")
       }
+      Button("Failed push") { router.push(FailedRoute.failed) }
     }
     .navigationTitle("Home")
     .toolbar {
