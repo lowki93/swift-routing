@@ -35,7 +35,7 @@ extension AppRoute: RouteDestination {
     case .search: Text("Search")
         .presentationDragIndicator(.visible)
         .presentationDetents([.medium])
-    case .settings: SettingsScreen()
+    case .settings: SettingsScreen(model: SettingsScreenModel())
     }
   }
 }
