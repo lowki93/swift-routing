@@ -30,10 +30,8 @@ struct SettingsScreen: View {
         }
       }
     }
-    .routerContext(Int.self) { [model] context in
-      Task {
-        await model.update(int: context)
-      }
+    .routerContext(Int.self) { [weak model] context in
+        model?.update(int: context)
     }
   }
 }
@@ -43,7 +41,7 @@ final class SettingsScreenModel {
 
   init() {}
 
-  func update(int: Int) async {
+  func update(int: Int) {
     print("=====")
   }
 }

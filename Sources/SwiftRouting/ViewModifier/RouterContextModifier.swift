@@ -34,6 +34,15 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
 }
 
 public extension View {
+  /// > **Warning:**
+  /// If you reference a class instance (e.g. a view model) inside the `perform` closure, capture it [weak] or [unowned] to prevent memory leaks.
+  ///
+  /// Example:
+  /// ```swift
+  /// .routerContext(Int.self) { [weak model] context in
+  ///   model?.update(int: context)
+  /// }
+  /// ```
   func routerContext<R: RouteContext>(_ object: R.Type, perform: @escaping (R) -> Void) -> some View {
     self.modifier(RouterContextModifier(object: object, perform: perform))
   }
