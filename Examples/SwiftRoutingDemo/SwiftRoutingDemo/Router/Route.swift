@@ -40,6 +40,16 @@ extension AppRoute: RouteDestination {
   }
 }
 
+enum FailedRoute: Route {
+  case failed
+
+  var name: String {
+    switch self {
+    case .failed: "failed"
+    }
+  }
+}
+
 struct Success: RouteContext {
   let value: Int
 }
