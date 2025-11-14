@@ -11,6 +11,7 @@ import SwiftUI
 struct SettingsScreen: View {
   @AppStorage("example") private var example: Example?
   @Environment(\.router) private var router
+  @State var model: SettingsScreenModel
 
   var body: some View {
     VStack {
@@ -29,5 +30,18 @@ struct SettingsScreen: View {
         }
       }
     }
+    .routerContext(Int.self) { [weak model] context in
+        model?.update(int: context)
+    }
+  }
+}
+
+@Observable @MainActor
+final class SettingsScreenModel {
+
+  init() {}
+
+  func update(int: Int) {
+    print("=====")
   }
 }
