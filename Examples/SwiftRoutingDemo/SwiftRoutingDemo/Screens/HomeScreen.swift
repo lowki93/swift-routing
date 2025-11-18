@@ -36,5 +36,8 @@ struct HomeScreen: View {
     .routerContext(Success.self) {
       print("=== Success", $0)
     }
+    .routerPresent {
+      print("=== HomeScreen : ", $0)
+    }
   }
 }
