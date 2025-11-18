@@ -5,6 +5,7 @@
 //  Created by Kevin Budain on 09/03/2025.
 //
 
+import Combine
 import Foundation
 import Observation
 
@@ -18,6 +19,9 @@ public class BaseRouter: ObservableObject, Identifiable {
 
   /// The configuration settings for the router, including logging behavior.
   let configuration: Configuration
+
+  /// Publisher to know if a router is present or not
+  let present: PassthroughSubject<(Bool, BaseRouter), Never>
 
   /// The parent router, if any. Used for hierarchical navigation structures.
   weak var parent: BaseRouter?
@@ -34,6 +38,7 @@ public class BaseRouter: ObservableObject, Identifiable {
   ///   - parent: The parent `Router`, if applicable.
   init(configuration: Configuration, parent: BaseRouter? = nil) {
     self.configuration = configuration
+    self.present = parent?.present ?? PassthroughSubject()
     self.parent = parent
     log(.create(from: parent))
   }

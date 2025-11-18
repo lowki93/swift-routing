@@ -9,20 +9,16 @@ import SwiftUI
 
 public struct RouterPresentModifier: ViewModifier {
 
-  let router: Router?
-  let perform: (Bool, Router) -> Void
+  @Environment(\.router) private var router: Router
+  let perform: (Bool, BaseRouter) -> Void
 
   public func body(content: Content) -> some View {
-    if let router {
-      content.onReceive(router.$present) { perform($0, router) }
-    } else {
-      content
-    }
+    content.onReceive(router.present, perform: perform)
   }
 }
 
 public extension View {
-  func routerPresent(_ router: Router?, perform: @escaping (Bool, Router) -> Void) -> some View {
-    self.modifier(RouterPresentModifier(router: router, perform: perform))
+  func routerPresent(perform: @escaping (Bool, BaseRouter) -> Void) -> some View {
+    self.modifier(RouterPresentModifier(perform: perform))
   }
 }
