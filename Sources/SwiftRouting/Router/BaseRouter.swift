@@ -20,7 +20,8 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// The configuration settings for the router, including logging behavior.
   let configuration: Configuration
 
-  let presentPublished: PassthroughSubject<Bool, Never>
+  /// Publisher to know if a router is present or not
+  let present: PassthroughSubject<Bool, Never>
 
   /// The parent router, if any. Used for hierarchical navigation structures.
   weak var parent: BaseRouter?
@@ -35,12 +36,9 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// - Parameters:
   ///   - configuration: The configuration settings to be used by the router.
   ///   - parent: The parent `Router`, if applicable.
-  init(
-    configuration: Configuration,
-    parent: BaseRouter? = nil
-  ) {
+  init(configuration: Configuration, parent: BaseRouter? = nil) {
     self.configuration = configuration
-    self.presentPublished = parent?.presentPublished ?? PassthroughSubject()
+    self.present = parent?.present ?? PassthroughSubject()
     self.parent = parent
     log(.create(from: parent))
   }

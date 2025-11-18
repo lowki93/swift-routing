@@ -29,11 +29,17 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var root: AnyRoute
   @Published internal var path = NavigationPath()
   @Published internal var sheet: AnyRoute? {
-    didSet { presentPublished.send(sheet != nil) }
+    didSet {
+      guard oldValue != sheet else { return }
+      present.send(sheet != nil)
+    }
   }
-  @Published internal var cover: AnyRoute? {
-    didSet { presentPublished.send(cover != nil) }
-  }
+    @Published internal var cover: AnyRoute? {
+      didSet {
+        guard oldValue != cover else { return }
+        present.send(cover != nil)
+      }
+    }
   @Published internal private(set) var triggerClose: Bool = false
   public var currentRoute: AnyRoute
   public var isPresented: Bool {

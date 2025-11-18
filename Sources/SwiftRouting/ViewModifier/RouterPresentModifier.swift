@@ -13,7 +13,7 @@ public struct RouterPresentModifier: ViewModifier {
   let perform: (Bool) -> Void
 
   public func body(content: Content) -> some View {
-    content.onReceive(router.presentPublished, perform: perform)
+    content.onReceive(router.present, perform: perform)
   }
 }
 
