@@ -31,13 +31,13 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var sheet: AnyRoute? {
     didSet {
       guard oldValue != sheet else { return }
-      present.send(sheet != nil)
+      present.send((sheet != nil, self))
     }
   }
     @Published internal var cover: AnyRoute? {
       didSet {
         guard oldValue != cover else { return }
-        present.send(cover != nil)
+        present.send((cover != nil, self))
       }
     }
   @Published internal private(set) var triggerClose: Bool = false

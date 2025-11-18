@@ -32,7 +32,7 @@ struct TabScreen: View {
       tab(.notifications, destination: destination, root: .notifications)
     }
     .routerPresent {
-      print("=== TabScreen : ", $0)
+      print("=== TabScreen : ", $0, $1)
     }
   }
 

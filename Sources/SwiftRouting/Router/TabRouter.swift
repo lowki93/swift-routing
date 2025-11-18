@@ -28,6 +28,10 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
   /// The currently active tab.
   @Published var tab: AnyTabRoute
 
+  public var routers: [BaseRouter] {
+    children.map(\.value.value).compactMap { $0 }
+  }
+
   /// Initializes a `TabRouter` for a given tab.
   ///
   /// - Parameters:

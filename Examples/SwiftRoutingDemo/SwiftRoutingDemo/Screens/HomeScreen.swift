@@ -37,7 +37,7 @@ struct HomeScreen: View {
       print("=== Success", $0)
     }
     .routerPresent {
-      print("=== HomeScreen : ", $0)
+      print("=== HomeScreen : ", $0, $1)
     }
   }
 }

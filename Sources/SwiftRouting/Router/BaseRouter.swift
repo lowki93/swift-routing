@@ -21,7 +21,7 @@ public class BaseRouter: ObservableObject, Identifiable {
   let configuration: Configuration
 
   /// Publisher to know if a router is present or not
-  let present: PassthroughSubject<Bool, Never>
+  let present: PassthroughSubject<(Bool, BaseRouter), Never>
 
   /// The parent router, if any. Used for hierarchical navigation structures.
   weak var parent: BaseRouter?

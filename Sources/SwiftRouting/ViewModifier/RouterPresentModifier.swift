@@ -10,7 +10,7 @@ import SwiftUI
 public struct RouterPresentModifier: ViewModifier {
 
   @Environment(\.router) private var router: Router
-  let perform: (Bool) -> Void
+  let perform: (Bool, BaseRouter) -> Void
 
   public func body(content: Content) -> some View {
     content.onReceive(router.present, perform: perform)
@@ -18,7 +18,7 @@ public struct RouterPresentModifier: ViewModifier {
 }
 
 public extension View {
-  func routerPresent(perform: @escaping (Bool) -> Void) -> some View {
+  func routerPresent(perform: @escaping (Bool, BaseRouter) -> Void) -> some View {
     self.modifier(RouterPresentModifier(perform: perform))
   }
 }
