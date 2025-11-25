@@ -133,11 +133,14 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     @ViewBuilder
     private var root: some View {
       Group {
-        if let content {
-          content
-            .modifier(LifecycleModifier(route: router.root.wrapped))
-        } else if let root = router.root.wrapped as? Destination.R {
-          Destination[root]
+        VStack(spacing: 0) {
+          Text(router.rootID.uuidString)
+          if let content {
+            content
+              .modifier(LifecycleModifier(route: router.root.wrapped))
+          } else if let root = router.root.wrapped as? Destination.R {
+            Destination[root]
+          }
         }
       }
       .id(router.rootID)

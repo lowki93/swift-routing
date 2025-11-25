@@ -66,8 +66,8 @@ extension TabRouter: @preconcurrency TabRouterModel {
   ///   - destination: The new root `Route` for the tab.
   ///   - tab: The `TabRoute` to update.
   @MainActor public func update(root destination: some Route, in tab: some TabRoute) {
-    change(tab: tab)
     find(tab: tab)?.update(root: destination)
+    change(tab: tab)
   }
 
   /// Pushes a new route onto the navigation stack in a specified tab.
