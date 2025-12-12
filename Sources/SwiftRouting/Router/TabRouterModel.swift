@@ -25,19 +25,34 @@ public protocol TabRouterModel: BaseRouterModel {
   /// - Parameters:
   ///   - destination: The `Route` to push onto the stack.
   ///   - tab: The `TabRoute` where the route should be pushed.
-  func push(_ destination: some Route, in tab: some TabRoute)
+  func push(_ destination: some Route, in tab: (any TabRoute)?)
 
   /// Presents a route as a modal sheet within a given tab.
   ///
   /// - Parameters:
   ///   - destination: The `Route` to present.
   ///   - tab: The `TabRoute` where the modal should be displayed.
-  func present(_ destination: some Route, in tab: some TabRoute)
+  func present(_ destination: some Route, in tab: (any TabRoute)?)
 
   /// Presents a route as a full-screen cover within a given tab.
   ///
   /// - Parameters:
   ///   - destination: The `Route` to present as a cover.
   ///   - tab: The `TabRoute` where the cover should be displayed.
-  func cover(_ destination: some Route, in tab: some TabRoute)
+  func cover(_ destination: some Route, in tab: (any TabRoute)?)
+}
+
+public extension TabRouterModel {
+
+  func push(_ destination: some Route) {
+    push(destination, in: nil)
+  }
+
+  func present(_ destination: some Route) {
+    present(destination, in: nil)
+  }
+
+  func cover(_ destination: some Route, in tab: (any TabRoute)?) {
+    cover(destination, in: nil)
+  }
 }

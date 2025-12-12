@@ -75,9 +75,11 @@ extension TabRouter: @preconcurrency TabRouterModel {
   /// - Parameters:
   ///   - destination: The `Route` to push onto the stack.
   ///   - tab: The `TabRoute` where the route should be pushed.
-  @MainActor public func push(_ destination: some Route, in tab: some TabRoute) {
-    change(tab: tab)
-    find(tab: tab)?.push(destination)
+  @MainActor public func push(_ destination: some Route, in tab: (any TabRoute)?) {
+    if let tab {
+      change(tab: tab)
+    }
+    find(tab: tab ?? self.tab.wrapped)?.push(destination)
   }
 
   /// Presents a route as a modal sheet within a given tab.
@@ -85,9 +87,11 @@ extension TabRouter: @preconcurrency TabRouterModel {
   /// - Parameters:
   ///   - destination: The `Route` to present.
   ///   - tab: The `TabRoute` where the modal should be displayed.
-  @MainActor public func present(_ destination: some Route, in tab: some TabRoute) {
-    change(tab: tab)
-    find(tab: tab)?.present(destination)
+  @MainActor public func present(_ destination: some Route, in tab: (any TabRoute)?) {
+    if let tab {
+      change(tab: tab)
+    }
+    find(tab: tab ?? self.tab.wrapped)?.present(destination)
   }
 
   /// Presents a route as a full-screen cover within a given tab.
@@ -95,9 +99,11 @@ extension TabRouter: @preconcurrency TabRouterModel {
   /// - Parameters:
   ///   - destination: The `Route` to present as a cover.
   ///   - tab: The `TabRoute` where the cover should be displayed.
-  @MainActor public func cover(_ destination: some Route, in tab: some TabRoute) {
-    change(tab: tab)
-    find(tab: tab)?.cover(destination)
+  @MainActor public func cover(_ destination: some Route, in tab: (any TabRoute)?) {
+    if let tab {
+      change(tab: tab)
+    }
+    find(tab: tab ?? self.tab.wrapped)?.cover(destination)
   }
 }
 
