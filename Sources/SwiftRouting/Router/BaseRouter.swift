@@ -86,7 +86,7 @@ public extension BaseRouter {
   ///
   /// - Parameter tab: The `TabRoute` to search for.
   /// - Returns: The `Router` managing the specified tab, if found.
-  @MainActor @discardableResult func find(tab: some TabRoute) -> Router? {
+  @MainActor @discardableResult func find(tab: any TabRoute) -> Router? {
     children.values.compactMap({ $0.value as? Router }).first(where: { $0.type == tab.type })
   }
 }
@@ -94,6 +94,13 @@ public extension BaseRouter {
 // MARK: - TabRouter
 
 public extension BaseRouter {
+
+  /// Finds and returns a `TabRouter` if there is only one `TabRouter` in children
+  var tabRouter: TabRouter? {
+    let tabRouters = children.compactMap { $0.value.value as? TabRouter }
+
+    return tabRouters.count == 1 ? tabRouters.first : nil
+  }
 
   /// Finds and returns a `TabRouter` instance associated with the given `TabRoute` type.
   ///
