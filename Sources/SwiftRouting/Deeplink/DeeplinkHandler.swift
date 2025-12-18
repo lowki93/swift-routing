@@ -31,5 +31,21 @@ public protocol DeeplinkHandler {
   ///
   /// - Parameter route: The incoming route to process.
   /// - Returns: A `DeeplinkRoute` that defines how the navigation should be handled, or `nil` if the route is not supported.
+  func deeplink(to route: R) -> DeeplinkRoute<D>?
+
+  /// Converts a given route into a `DeeplinkRoute` that can be handled by the `Router`.
+  ///
+  /// - Parameter route: The incoming route to process.
+  /// - Returns: A `DeeplinkRoute` that defines how the navigation should be handled, or `nil` if the route is not supported.
   func deeplink(to route: R) async -> DeeplinkRoute<D>?
+}
+
+public extension DeeplinkHandler {
+  func deeplink(to route: R) -> DeeplinkRoute<D>? {
+    return nil
+  }
+
+  func deeplink(to route: R) async -> DeeplinkRoute<D>? {
+    return nil
+  }
 }
