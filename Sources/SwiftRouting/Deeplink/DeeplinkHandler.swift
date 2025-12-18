@@ -14,7 +14,7 @@
 /// ## Example
 /// ```swift
 /// struct HomeDeeplink: DeeplinkHandler {
-///   func deeplink(route: SubRoute) -> DeeplinkRoute<HomeRoute>? {
+///   func deeplink(route: DeeplinkRoute) -> DeeplinkRoute<HomeRoute>? {
 ///     // Convert the incoming route to a DeeplinkRoute<HomeRoute>
 ///     ...
 ///   }
@@ -22,7 +22,7 @@
 /// ```
 public protocol DeeplinkHandler {
   /// The type of route that will be processed.
-  associatedtype R: Route
+  associatedtype R: Hashable & Sendable
 
   /// The type of route that will be returned in the deeplink structure.
   associatedtype D: Route
