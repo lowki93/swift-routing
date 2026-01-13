@@ -80,8 +80,12 @@ public protocol RouterModel: BaseRouterModel {
   /// - Parameter value: `RouteContext` to execute before the back or close operation.
   func terminate( _ value: some RouteContext)
 
-  /// Executes a navigation context action.
-  /// - Parameter value: `RouteContext` to execute.
+  /// Executes a navigation context action across the entire router hierarchy.
+  ///
+  /// This method searches for matching context observers in all parent routers (from root to direct parent)
+  /// and in the current router, then executes them with the provided value.
+  ///
+  /// - Parameter value: The `RouteContext` to execute across the router hierarchy.
   func context(_ value: some RouteContext)
 
   /// Closes all child routers presented from the parent router.

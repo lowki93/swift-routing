@@ -105,6 +105,10 @@ extension TabRouter: @preconcurrency TabRouterModel {
     }
     find(tab: tab ?? self.tab.wrapped)?.cover(destination)
   }
+
+  @MainActor public func popToRoot(in tab: (any TabRoute)?) {
+    find(tab: tab ?? self.tab.wrapped)?.popToRoot()
+  }
 }
 
 // MARK: - Deeplink

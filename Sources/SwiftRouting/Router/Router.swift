@@ -140,7 +140,15 @@ extension Router: @preconcurrency RouterModel {
 
   @MainActor public func context(_ value: some RouteContext) {
     let termination = Swift.type(of: value)
-    parent?.contexts.all(for: termination).forEach { $0.execute(value) }
+
+    // Execute context in all parent routers (from root to direct parent)
+    var current = parent
+    while let router = current {
+      router.contexts.all(for: termination).forEach { $0.execute(value) }
+      current = router.parent
+    }
+
+    // Execute context in current router
     contexts.all(for: termination).forEach { $0.execute(value) }
   }
 

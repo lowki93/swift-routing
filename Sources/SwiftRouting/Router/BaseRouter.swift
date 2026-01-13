@@ -96,7 +96,7 @@ public extension BaseRouter {
 public extension BaseRouter {
 
   /// Finds and returns a `TabRouter` if there is only one `TabRouter` in children
-  var tabRouter: TabRouter? {
+  @MainActor var tabRouter: TabRouter? {
     let tabRouters = children.compactMap { $0.value.value as? TabRouter }
 
     return tabRouters.count == 1 ? tabRouters.first : nil
@@ -106,7 +106,7 @@ public extension BaseRouter {
   ///
   /// - Parameter tabRoute: The `TabRoute` for which to find the corresponding `TabRouter`.
   /// - Returns: The `TabRouter` associated with the given tab, or `nil` if not found.
-  func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
+  @MainActor  func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
     let tabRouters = children.compactMap { $0.value.value as? TabRouter }
 
     return tabRouters.first { type(of: $0.tab.wrapped) == type(of: tabRoute) }
