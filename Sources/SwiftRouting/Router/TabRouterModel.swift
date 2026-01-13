@@ -7,6 +7,33 @@
 
 import SwiftUI
 
+/// Defines navigation capabilities for tab-based navigation within a `ViewModel` or other components.
+///
+/// `TabRouterModel` provides methods to manage navigation across multiple tabs,
+/// allowing programmatic control over tab switching and navigation within each tab's stack.
+///
+/// ## Example Usage
+/// ```swift
+/// class ViewModel {
+///    private let tabRouter: TabRouterModel
+///
+///    init(tabRouter: TabRouterModel) {
+///       self.tabRouter = tabRouter
+///    }
+///
+///    func navigateToSettings() {
+///       tabRouter.change(tab: HomeTab.settings)
+///       tabRouter.push(SettingsRoute.profile, in: HomeTab.settings)
+///    }
+/// }
+/// ```
+///
+/// You can retrieve the tab router from the environment and inject it into the `ViewModel`:
+/// ```swift
+///   @Environment(\.tabRouter) private var tabRouter
+///
+///   let viewModel = ViewModel(tabRouter: tabRouter)
+/// ```
 public protocol TabRouterModel: BaseRouterModel {
   /// Changes the currently active tab.
   ///
@@ -15,6 +42,8 @@ public protocol TabRouterModel: BaseRouterModel {
 
   /// Updates the root route of a given tab's navigation stack.
   ///
+  /// This method switches to the specified tab and replaces its root route.
+  ///
   /// - Parameters:
   ///   - destination: The new root `Route` for the tab.
   ///   - tab: The `TabRoute` to update.
@@ -22,24 +51,41 @@ public protocol TabRouterModel: BaseRouterModel {
 
   /// Pushes a new route onto the navigation stack in a specified tab.
   ///
+  /// If a tab is provided, it switches to that tab before pushing.
+  /// If `nil`, the route is pushed in the currently active tab.
+  ///
   /// - Parameters:
   ///   - destination: The `Route` to push onto the stack.
-  ///   - tab: The `TabRoute` where the route should be pushed.
+  ///   - tab: The `TabRoute` where the route should be pushed, or `nil` for the current tab.
   func push(_ destination: some Route, in tab: (any TabRoute)?)
 
   /// Presents a route as a modal sheet within a given tab.
   ///
+  /// If a tab is provided, it switches to that tab before presenting.
+  /// If `nil`, the sheet is presented from the currently active tab.
+  ///
   /// - Parameters:
   ///   - destination: The `Route` to present.
-  ///   - tab: The `TabRoute` where the modal should be displayed.
+  ///   - tab: The `TabRoute` where the modal should be displayed, or `nil` for the current tab.
   func present(_ destination: some Route, in tab: (any TabRoute)?)
 
   /// Presents a route as a full-screen cover within a given tab.
   ///
+  /// If a tab is provided, it switches to that tab before presenting.
+  /// If `nil`, the cover is presented from the currently active tab.
+  ///
   /// - Parameters:
   ///   - destination: The `Route` to present as a cover.
-  ///   - tab: The `TabRoute` where the cover should be displayed.
+  ///   - tab: The `TabRoute` where the cover should be displayed, or `nil` for the current tab.
   func cover(_ destination: some Route, in tab: (any TabRoute)?)
+
+  /// Clears the entire navigation path in a specified tab, returning to its root.
+  ///
+  /// If a tab is provided, it pops to root in that tab.
+  /// If `nil`, it pops to root in the currently active tab.
+  ///
+  /// - Parameter tab: The `TabRoute` to pop to root, or `nil` for the current tab.
+  func popToRoot(in tab: (any TabRoute)?)
 }
 
 public extension TabRouterModel {
