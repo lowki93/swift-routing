@@ -20,15 +20,7 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
         guard !firstTime else { return }
         firstTime = true
 
-        guard let context = RouterContext(
-          router: router,
-          routerContext: object,
-          action: { [perform] in
-            guard let value = $0 as? R else { return }
-            perform(value)
-          }
-        ) else { return }
-        router.contexts.insert(context)
+        router.add(context: object, perform: perform)
       }
   }
 }

@@ -119,6 +119,24 @@ extension Router: @preconcurrency RouterModel {
     log(.action(.back()))
   }
 
+  public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
+    guard let context = RouterContext(
+      router: self,
+      routerContext: object,
+      action: { [perform] in
+        guard let value = $0 as? R else { return }
+        perform(value)
+      }
+    ) else { return }
+    contexts.insert(context)
+  }
+
+  public func remove<R: RouteContext>(context object: R.Type) {
+    for element in contexts.all(for: object) {
+      contexts.remove(element)
+    }
+  }
+
   @MainActor public func terminate(_ value: some RouteContext) {
     /// Execute all termination observers for the given context type (in both parent and child routers).
     context(value)
