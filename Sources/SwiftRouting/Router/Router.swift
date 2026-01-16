@@ -119,7 +119,7 @@ extension Router: @preconcurrency RouterModel {
     log(.action(.back()))
   }
 
-  public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
+  @MainActor public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
     guard let context = RouterContext(
       router: self,
       routerContext: object,
@@ -131,7 +131,7 @@ extension Router: @preconcurrency RouterModel {
     contexts.insert(context)
   }
 
-  public func remove<R: RouteContext>(context object: R.Type) {
+  @MainActor public func remove<R: RouteContext>(context object: R.Type) {
     for element in contexts.all(for: object) {
       contexts.remove(element)
     }
