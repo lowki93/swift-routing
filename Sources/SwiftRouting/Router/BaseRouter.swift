@@ -91,12 +91,12 @@ public extension BaseRouter {
   }
 }
 
-// MARK: - TabRouter
+// MARK: - BaseRouterModel
 
-public extension BaseRouter {
+extension BaseRouter: @preconcurrency BaseRouterModel {
 
   /// Finds and returns a `TabRouter` if there is only one `TabRouter` in children
-  var tabRouter: TabRouter? {
+  public var tabRouter: TabRouter? {
     let tabRouters = children.compactMap { $0.value.value as? TabRouter }
 
     return tabRouters.count == 1 ? tabRouters.first : nil
@@ -106,7 +106,7 @@ public extension BaseRouter {
   ///
   /// - Parameter tabRoute: The `TabRoute` for which to find the corresponding `TabRouter`.
   /// - Returns: The `TabRouter` associated with the given tab, or `nil` if not found.
-  func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
+  public func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
     let tabRouters = children.compactMap { $0.value.value as? TabRouter }
 
     return tabRouters.first { type(of: $0.tab.wrapped) == type(of: tabRoute) }
@@ -119,7 +119,7 @@ public extension BaseRouter {
   ///
   /// - Parameter tabRoute: The `TabRoute` representing the tab to search for.
   /// - Returns: The `Router` instance managing the specified tab, or `nil` if it is not found.
-  @MainActor func findRouterInTabRouter(for tabRoute: some TabRoute) -> Router? {
+  @MainActor public func findRouterInTabRouter(for tabRoute: some TabRoute) -> Router? {
     tabRouter(for: tabRoute)?.find(tab: tabRoute)
   }
 }
