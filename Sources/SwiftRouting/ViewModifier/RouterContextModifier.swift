@@ -17,7 +17,6 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
   public func body(content: Content) -> some View {
     content
       .onAppear {
-
         router.add(context: object, perform: perform)
       }
   }

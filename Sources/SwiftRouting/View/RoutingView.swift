@@ -140,7 +140,7 @@ public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
           Destination[root]
         }
       }
-      .id(router.rootID)
+      .id(router.root.id)
     }
 
     private var navigationStack: some View {

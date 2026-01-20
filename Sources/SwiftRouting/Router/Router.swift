@@ -25,7 +25,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
   static let defaultRouter: Router = Router(configuration: .default)
 
   // MARK: Navigation
-  public var rootID: UUID = UUID()
   @Published internal var root: AnyRoute
   @Published internal var path: [AnyRoute] = [] {
     willSet {
@@ -96,7 +95,7 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func popToRoot() {
-    path.removeAll() //.popToRoot()
+    path.removeAll()
     log(.action(.popToRoot))
   }
 
@@ -114,20 +113,25 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
-    guard let context = RouterContext(
-      router: self,
-      routerContext: object,
-      action: { [perform] in
-        guard let value = $0 as? R else { return }
-        perform(value)
-      }
-    ) else { return }
-    contexts.insert(context)
+    let (inserted, element) = contexts.insert(
+      RouterContext(
+        router: self,
+        routerContext: object,
+        action: { [perform] in
+          guard let value = $0 as? R else { return }
+          perform(value)
+        }
+      )
+    )
+    if inserted {
+      log(.context(.add(element.route, context: element.routerContext)))
+    }
   }
 
   @MainActor public func remove<R: RouteContext>(context object: R.Type) {
     for element in contexts.all(for: object) {
       contexts.remove(element)
+      log(.context(.remove(element.route, context: element.routerContext)))
     }
   }
 
@@ -187,7 +191,6 @@ private extension Router  {
       cover = AnyRoute(wrapped: destination)
     case .root:
       root = AnyRoute(wrapped: destination)
-      rootID = UUID()
     }
   }
 
