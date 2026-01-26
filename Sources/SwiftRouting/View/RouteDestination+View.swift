@@ -19,7 +19,7 @@ public extension View {
   func sheet<D: RouteDestination>(
     _ route: Binding<AnyRoute?>,
     for destination: D.Type,
-    onDismiss: (() -> Void)? = nil
+    onDismiss: @escaping () -> Void
   ) -> some View {
     self.sheet(item: route, onDismiss: onDismiss) { route in
       dismissableContent(anyRoute: route, for: destination)
@@ -29,7 +29,7 @@ public extension View {
   func cover<D: RouteDestination>(
     _ route: Binding<AnyRoute?>,
     for destination: D.Type,
-    onDismiss: (() -> Void)? = nil
+    onDismiss: @escaping () -> Void
   ) -> some View {
     self.fullScreenCover(item: route, onDismiss: onDismiss) { route in
       dismissableContent(anyRoute: route, for: destination)

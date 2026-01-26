@@ -15,6 +15,6 @@ struct LifecycleModifier: ViewModifier {
   func body(content: Content) -> some View {
     content
       .onAppear { router.log(.onAppear(route)) }
-      .onDisappear { router.log(.onDisappear(route)) }
+//      .onDisappear { router.log(.onDisappear(route)) }
   }
 }

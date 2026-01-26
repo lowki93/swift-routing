@@ -124,8 +124,8 @@ public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
           root
         }
       }
-      .sheet($router.sheet, for: destination)
-      .cover($router.cover, for: destination)
+      .sheet($router.sheet, for: destination, onDismiss: dismiss)
+      .cover($router.cover, for: destination, onDismiss: dismiss)
       .modifier(CloseModifier())
       .environment(\.router, router)
     }
@@ -134,8 +134,7 @@ public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
     private var root: some View {
       Group {
         if let content {
-          content
-            .modifier(LifecycleModifier(route: router.root.wrapped))
+          content.modifier(LifecycleModifier(route: router.root.wrapped))
         } else if let root = router.root.wrapped as? Destination.R {
           Destination[root]
         }
@@ -148,6 +147,10 @@ public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
         root
           .navigationDestination(destination)
       }
+    }
+
+    private func dismiss() {
+      router.log(.onAppear(router.currentRoute.wrapped))
     }
   }
 }
