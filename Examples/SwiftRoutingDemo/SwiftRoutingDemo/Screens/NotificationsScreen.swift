@@ -16,6 +16,8 @@ struct NotificationsScreen: View {
     VStack {
       if let tabRouter {
         Button("To home tab") { tabRouter.change(tab: HomeTab.home) }
+        Button("To home tab + update Root") { tabRouter.update(root: AppRoute.home(name: "Joseph"), in: HomeTab.home) }
+        Button("To home tab + push user") { tabRouter.push(AppRoute.user(name: "Joseph"), in: HomeTab.home) }
       }
     }
     .navigationTitle("Notifications")

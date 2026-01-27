@@ -11,6 +11,7 @@ import SwiftUI
 struct HomeScreen: View {
 
   @Environment(\.router) private var router
+  @State var model: HomeScreenModel
 
   var body: some View {
     VStack {
@@ -21,7 +22,7 @@ struct HomeScreen: View {
       }
       Button("Failed push") { router.push(FailedRoute.failed) }
     }
-    .navigationTitle("Home")
+    .navigationTitle("Hello " + model.name)
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
         Button("Settings") {

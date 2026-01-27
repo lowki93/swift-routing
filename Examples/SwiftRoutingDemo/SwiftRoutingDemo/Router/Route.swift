@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftRouting
 
 enum AppRoute: Route {
-  case home
+  case home(name: String)
   case notifications
   case user(name: String)
   case search
@@ -17,7 +17,7 @@ enum AppRoute: Route {
 
   var name: String {
     switch self {
-    case .home:  "Home"
+    case let .home(name):  "Home(\(name))"
     case .notifications: "Notificatons"
     case let .user(name): "User(\(name))"
     case .search: "search"
@@ -29,9 +29,9 @@ enum AppRoute: Route {
 extension AppRoute: RouteDestination {
   static func view(for route: AppRoute) -> some View {
     switch route {
-    case .home: HomeScreen()
+    case let .home(name): HomeScreen(model: HomeScreenModel(name: name))
     case .notifications: NotificationsScreen()
-    case let .user(name): UserScreen(name: name)
+    case let .user(name): UserScreen(model: UserScreenModel(name: name))
     case .search: Text("Search")
         .presentationDragIndicator(.visible)
         .presentationDetents([.medium])
