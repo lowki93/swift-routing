@@ -41,3 +41,12 @@ struct HomeScreen: View {
     }
   }
 }
+
+@Observable
+final class HomeScreenModel {
+  private(set) var name: String
+
+  init(name: String) {
+    self.name = name
+  }
+}
