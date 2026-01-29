@@ -75,7 +75,7 @@ public extension Route {
 }
 
 @dynamicMemberLookup
-public struct AnyRoute: Identifiable, Equatable {
+public struct AnyRoute: Identifiable, Hashable {
   public var id: Int { wrapped.hashValue }
   public var wrapped: any Route
   var inStack: Bool = true
@@ -86,5 +86,9 @@ public struct AnyRoute: Identifiable, Equatable {
 
   public static func == (lhs: Self, rhs: Self) -> Bool {
     lhs.id == rhs.id
+  }
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(wrapped.hashValue)
   }
 }

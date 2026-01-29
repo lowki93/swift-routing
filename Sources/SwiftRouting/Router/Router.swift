@@ -25,23 +25,28 @@ public final class Router: BaseRouter, @unchecked Sendable {
   static let defaultRouter: Router = Router(configuration: .default)
 
   // MARK: Navigation
-  public var rootID: UUID = UUID()
   @Published internal var root: AnyRoute
-  @Published internal var path = NavigationPath()
+  @Published internal var path: [AnyRoute] = [] {
+    willSet {
+      updatePath(old: path, new: newValue)
+    }
+  }
   @Published internal var sheet: AnyRoute? {
     didSet {
       guard oldValue != sheet else { return }
       present.send((sheet != nil, self))
     }
   }
-    @Published internal var cover: AnyRoute? {
-      didSet {
-        guard oldValue != cover else { return }
-        present.send((cover != nil, self))
-      }
+  @Published internal var cover: AnyRoute? {
+    didSet {
+      guard oldValue != cover else { return }
+      present.send((cover != nil, self))
     }
-  @Published internal private(set) var triggerClose: Bool = false
-  public var currentRoute: AnyRoute
+  }
+  @Published internal var triggerClose: Bool = false
+  public var currentRoute: AnyRoute {
+    path.last ?? root
+  }
   public var isPresented: Bool {
     type.isPresented
   }
@@ -65,13 +70,11 @@ public final class Router: BaseRouter, @unchecked Sendable {
     let defaultRoute = AnyRoute(wrapped: DefaultRoute.main)
     self.type = .app
     self.root = defaultRoute
-    self.currentRoute = defaultRoute
     super.init(configuration: configuration)
   }
 
   init(root: AnyRoute, type: RouterType, parent: BaseRouter) {
     self.root = root
-    self.currentRoute = root
     self.type = type
     super.init(configuration: parent.configuration, parent: parent)
     parent.addChild(self)
@@ -102,7 +105,7 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func popToRoot() {
-    path.popToRoot()
+    path.removeAll()
     log(.action(.popToRoot))
   }
 
@@ -120,20 +123,25 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
-    guard let context = RouterContext(
-      router: self,
-      routerContext: object,
-      action: { [perform] in
-        guard let value = $0 as? R else { return }
-        perform(value)
-      }
-    ) else { return }
-    contexts.insert(context)
+    let (inserted, element) = contexts.insert(
+      RouterContext(
+        router: self,
+        routerContext: object,
+        action: { [perform] in
+          guard let value = $0 as? R else { return }
+          perform(value)
+        }
+      )
+    )
+    if inserted {
+      log(.context(.add(element.route, context: element.routerContext)))
+    }
   }
 
   @MainActor public func remove<R: RouteContext>(context object: R.Type) {
     for element in contexts.all(for: object) {
       contexts.remove(element)
+      log(.context(.remove(element.route, context: element.routerContext)))
     }
   }
 
@@ -142,7 +150,7 @@ extension Router: @preconcurrency RouterModel {
     context(value)
 
     /// Remove all routes above the matched context in the navigation path
-    if let context = contexts.first(for: Swift.type(of: value)) {
+    if let context = contexts.first(for: Swift.type(of: value), currentRoute: currentRoute.wrapped) {
       guard path.count - context.pathCount >= 0 else { return }
       let clear = path.count - context.pathCount
       path.removeLast(clear)
@@ -186,16 +194,23 @@ private extension Router  {
 
     switch type {
     case .push:
-      path.append(destination)
-      currentRoute = AnyRoute(wrapped: destination)
+      path.append(AnyRoute(wrapped: destination))
     case let .sheet(withStack):
       sheet = AnyRoute(wrapped: destination, inStack: withStack)
     case .cover:
       cover = AnyRoute(wrapped: destination)
     case .root:
       root = AnyRoute(wrapped: destination)
-      currentRoute = root
-      rootID = UUID()
+    }
+  }
+
+  func updatePath(old: [AnyRoute], new: [AnyRoute]) {
+    let count = old.count - new.count
+    guard count > 0 else { return }
+
+    for element in contexts.all(for: path.suffix(count).map(\.wrapped)) {
+      contexts.remove(element)
+      log(.context(.remove(element.route, context: element.routerContext)))
     }
   }
 }

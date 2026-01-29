@@ -8,18 +8,14 @@
 import Foundation
 
 struct RouterContext: Hashable {
-  private weak var router: Router?
-  private let id: UUID
-  private let route: any Route
+  let route: any Route
   let pathCount: Int
   let routerContext: any RouteContext.Type
+  private weak var router: Router?
+  private let id: UUID
   private let action: (any RouteContext) -> Void
 
-  init?(
-    router: Router,
-    routerContext: any RouteContext.Type,
-    action: @escaping (any RouteContext) -> Void
-  ) {
+  init(router: Router, routerContext: any RouteContext.Type, action: @escaping (any RouteContext) -> Void) {
     self.id = router.id
     self.route = router.currentRoute.wrapped
     self.pathCount = router.path.count
@@ -35,7 +31,7 @@ struct RouterContext: Hashable {
   }
 
   @MainActor func execute(_ object: some RouteContext) {
-    router?.log(.context(object, from: route))
+    router?.log(.context(.execute(object, from: route)))
     action(object)
   }
 
@@ -45,11 +41,15 @@ struct RouterContext: Hashable {
 }
 
 extension Set where Element == RouterContext {
-  func first<T: RouteContext>(for termination: T.Type) -> Self.Element? {
-    first(where: { $0.routerContext == termination })
+  func first<T: RouteContext>(for termination: T.Type, currentRoute: any Route) -> Self.Element? {
+    first(where: { $0.routerContext == termination && $0.route.hashValue != currentRoute.hashValue })
   }
 
   func all<T: RouteContext>(for termination: T.Type) -> Self {
     filter { $0.routerContext == termination }
+  }
+
+  func all(for routes: [any Route]) -> Self {
+    filter { routes.map(\.hashValue).contains($0.route.hashValue) }
   }
 }

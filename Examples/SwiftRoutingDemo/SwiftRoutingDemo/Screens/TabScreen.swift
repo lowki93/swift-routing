@@ -31,9 +31,6 @@ struct TabScreen: View {
       tab(.home, destination: destination, root: .home)
       tab(.notifications, destination: destination, root: .notifications)
     }
-    .routerPresent {
-      print("=== TabScreen : ", $0, $1)
-    }
   }
 
   private var tabView: some View {

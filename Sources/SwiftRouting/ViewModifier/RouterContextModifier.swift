@@ -17,9 +17,6 @@ public struct RouterContextModifier<R: RouteContext>: ViewModifier {
   public func body(content: Content) -> some View {
     content
       .onAppear {
-        guard !firstTime else { return }
-        firstTime = true
-
         router.add(context: object, perform: perform)
       }
   }
