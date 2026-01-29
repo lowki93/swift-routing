@@ -89,6 +89,18 @@ router.present(HomeRoute.page2(2))
 router.cover(HomeRoute.page2(2))
 ```
 
+You can also use `NavigationLink` directly with your routes:
+
+```swift
+// Using a custom label
+NavigationLink(route: HomeRoute.page2(10)) {
+  Text("Go to Page 2")
+}
+
+// Using a string label
+NavigationLink("Go to Page 2", route: HomeRoute.page2(10))
+```
+
 ---
 
 ### 4. Deep Linking
