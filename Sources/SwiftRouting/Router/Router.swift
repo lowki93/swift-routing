@@ -31,8 +31,18 @@ public final class Router: BaseRouter, @unchecked Sendable {
       updatePath(old: path, new: newValue)
     }
   }
-  @Published internal var sheet: AnyRoute?
-  @Published internal var cover: AnyRoute?
+  @Published internal var sheet: AnyRoute? {
+    didSet {
+      guard oldValue != sheet else { return }
+      present.send((sheet != nil, self))
+    }
+  }
+  @Published internal var cover: AnyRoute? {
+    didSet {
+      guard oldValue != cover else { return }
+      present.send((cover != nil, self))
+    }
+  }
   @Published internal var triggerClose: Bool = false
   public var currentRoute: AnyRoute {
     path.last ?? root
