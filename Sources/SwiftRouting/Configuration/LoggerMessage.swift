@@ -13,7 +13,7 @@ import Foundation
 /// Use this enum to track lifecycle events, navigation actions, view appearances, and route context transmissions for analytics or debugging.
 public enum LoggerMessage {
   /// Logs the initialization (creation) of a router instance.
-  case create(from: BaseRouter?)
+  case create(from: BaseRouter?, Configuration?)
   /// Logs the deallocation (destruction) of a router instance.
   case delete
   /// Logs a navigation action, including the source and destination routes and the type of navigation.

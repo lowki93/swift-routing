@@ -47,7 +47,7 @@ public protocol TabRouterModel: BaseRouterModel {
   /// - Parameters:
   ///   - destination: The new root `Route` for the tab.
   ///   - tab: The `TabRoute` to update.
-  func update(root destination: some Route, in tab: some TabRoute)
+  func update(root destination: some Route, in tab: (any TabRoute)?)
 
   /// Pushes a new route onto the navigation stack in a specified tab.
   ///

@@ -51,3 +51,10 @@ extension Configuration {
     )
   }
 }
+
+extension Configuration: CustomStringConvertible {
+
+  public var description: String {
+    "configuration(crashOnRouteNotFound: \(shouldCrashOnRouteNotFound))"
+  }
+}
