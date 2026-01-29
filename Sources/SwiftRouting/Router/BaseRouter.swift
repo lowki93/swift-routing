@@ -14,6 +14,7 @@ import Observation
 /// `BaseRouter` manages parent-child relationships between routers and provides logging capabilities.
 /// It serves as the foundation for navigation management.
 public class BaseRouter: ObservableObject, Identifiable {
+
   /// Unique identifier for the router instance.
   public let id: UUID = UUID()
 
@@ -36,11 +37,11 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// - Parameters:
   ///   - configuration: The configuration settings to be used by the router.
   ///   - parent: The parent `Router`, if applicable.
-  init(configuration: Configuration, parent: BaseRouter? = nil) {
+  init(configuration: Configuration, parent: BaseRouter? = nil, first: Bool = false) {
     self.configuration = configuration
     self.present = parent?.present ?? PassthroughSubject()
     self.parent = parent
-    log(.create(from: parent))
+    log(.create(from: parent, first ? configuration : nil))
   }
 
   /// Deinitializer that removes the router from its parent's children and logs its destruction.

@@ -70,7 +70,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
     let defaultRoute = AnyRoute(wrapped: DefaultRoute.main)
     self.type = .app
     self.root = defaultRoute
-    super.init(configuration: configuration)
+    super.init(configuration: configuration, first: true)
   }
 
   init(root: AnyRoute, type: RouterType, parent: BaseRouter) {

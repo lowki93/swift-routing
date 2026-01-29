@@ -26,7 +26,6 @@ struct LifecycleModifier: ViewModifier {
   }
 
   func shouldLog() -> Bool {
-
     if let last = lastDateLog, Date().timeIntervalSince(last) < 0.05 {
       lastDateLog = Date()
       return false

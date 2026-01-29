@@ -51,7 +51,6 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
 // MARK: - Navigation
 
 extension TabRouter: @preconcurrency TabRouterModel {
-
   /// Changes the currently active tab.
   ///
   /// - Parameter tab: The tab to switch to.
@@ -65,9 +64,11 @@ extension TabRouter: @preconcurrency TabRouterModel {
   /// - Parameters:
   ///   - destination: The new root `Route` for the tab.
   ///   - tab: The `TabRoute` to update.
-  @MainActor public func update(root destination: some Route, in tab: some TabRoute) {
-    change(tab: tab)
-    find(tab: tab)?.update(root: destination)
+  @MainActor public func update(root destination: some Route, in tab: (any TabRoute)?) {
+    if let tab {
+      change(tab: tab)
+    }
+    find(tab: tab ?? self.tab.wrapped)?.update(root: destination)
   }
 
   /// Pushes a new route onto the navigation stack in a specified tab.
