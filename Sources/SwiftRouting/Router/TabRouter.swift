@@ -26,8 +26,21 @@ import Observation
 public final class TabRouter: BaseRouter, @unchecked Sendable {
 
   /// The currently active tab.
+  ///
+  /// This property is updated when the user selects a tab or when
+  /// `change(tab:)` is called programmatically.
   @Published var tab: AnyTabRoute
 
+  /// All child routers managed by this tab router.
+  ///
+  /// Returns an array of `BaseRouter` instances, one for each tab that has been
+  /// initialized. Use this to inspect or iterate over all tab routers.
+  ///
+  /// ```swift
+  /// for router in tabRouter.routers {
+  ///   print("Tab router: \(router)")
+  /// }
+  /// ```
   public var routers: [BaseRouter] {
     children.map(\.value.value).compactMap { $0 }
   }
