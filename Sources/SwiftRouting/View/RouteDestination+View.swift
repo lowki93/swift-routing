@@ -68,19 +68,29 @@ public extension View {
   /// You typically don't call this directly; `RoutingView` applies it automatically
   /// to handle `router.cover(_:)` calls.
   ///
+  /// > Note: On macOS, this falls back to a sheet presentation since `fullScreenCover` is not available.
+  ///
   /// - Parameters:
   ///   - route: A binding to the route to present, or `nil` to dismiss.
   ///   - destination: The `RouteDestination` type that maps routes to views.
   ///   - onDismiss: A closure called when the cover is dismissed.
   /// - Returns: A view that can present full-screen covers for routes.
+  @ViewBuilder
   func cover<D: RouteDestination>(
     _ route: Binding<AnyRoute?>,
     for destination: D.Type,
     onDismiss: @escaping () -> Void
   ) -> some View {
+    #if os(iOS)
     self.fullScreenCover(item: route, onDismiss: onDismiss) { route in
       dismissableContent(anyRoute: route, for: destination)
     }
+    #else
+    // Fallback to sheet on macOS since fullScreenCover is not available
+    self.sheet(item: route, onDismiss: onDismiss) { route in
+      dismissableContent(anyRoute: route, for: destination)
+    }
+    #endif
   }
 
   @ViewBuilder

@@ -30,7 +30,7 @@ extension LoggerConfiguration {
 
   static func `default`(loggerConfiguration: LoggerConfiguration) {
     let message = switch loggerConfiguration.message {
-    case let .create(.none, .none): "init"
+    case .create(.none, .none): "init"
     case let .create(.none, .some(configuration)): "init with \(configuration)"
     case let .create(from: .some(from), .none): "init from: '\(from)'"
     case let .create(from: .some(from), .some(configuration)): "init from: '\(from)' with \(configuration)"

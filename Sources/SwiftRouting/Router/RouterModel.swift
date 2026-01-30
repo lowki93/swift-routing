@@ -57,7 +57,10 @@ public protocol RouterModel: BaseRouterModel {
   /// Presents a route as a modal sheet.
   ///
   /// This method displays the specified route as a sheet, overlaying the current view.
-  /// - Parameter destination: The `Route` to be presented as a sheet.
+  ///
+  /// - Parameters:
+  ///   - destination: The `Route` to be presented as a sheet.
+  ///   - withStack: If `true`, the sheet includes its own navigation stack. If `false`, the route is presented without navigation capabilities.
   func present(_ destination: some Route, withStack: Bool)
 
   /// Presents a route as a full-screen cover.
