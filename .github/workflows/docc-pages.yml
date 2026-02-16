@@ -1,47 +1,92 @@
-name: Deploy DocC to Pages
+name: Deploy DocC (Versioned)
 
 on:
   push:
     tags:
-      - 'v*.*.0'
       - '*.*.0'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: gh-pages
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build-and-publish:
     runs-on: macos-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Build DocC
         run: |
-          rm -rf docs
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          OUTPUT_DIR="build/docc"
+
+          rm -rf "${OUTPUT_DIR}"
           swift package \
-            --allow-writing-to-directory docs \
+            --allow-writing-to-directory "${OUTPUT_DIR}" \
             generate-documentation \
             --target SwiftRouting \
-            --output-path docs \
+            --output-path "${OUTPUT_DIR}" \
             --transform-for-static-hosting \
-            --hosting-base-path swift-routing
+            --hosting-base-path "${REPO_NAME}/${VERSION}"
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
+      - name: Publish to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          OUTPUT_DIR="build/docc"
+          PUBLISH_DIR=".publish"
+          REPO="${GITHUB_REPOSITORY}"
+          REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          rm -rf "${PUBLISH_DIR}"
+          mkdir -p "${PUBLISH_DIR}"
+          cd "${PUBLISH_DIR}"
+
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add origin "${REMOTE}"
+
+          if git fetch origin gh-pages; then
+            git checkout -b gh-pages origin/gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          touch .nojekyll
+
+          rm -rf "${VERSION}"
+          mkdir -p "${VERSION}"
+          cp -R "../${OUTPUT_DIR}/." "${VERSION}/"
+
+          cat > index.html <<EOF
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=./${VERSION}/">
+            <link rel="canonical" href="./${VERSION}/">
+            <title>Redirecting to latest documentation…</title>
+            <script>window.location.replace("./${VERSION}/");</script>
+          </head>
+          <body>
+            <p>Redirecting to <a href="./${VERSION}/">latest documentation</a>…</p>
+          </body>
+          </html>
+          EOF
+
+          git add -A
+          git commit -m "docs: publish ${VERSION}" || echo "No changes to commit"
+          git push origin gh-pages
