@@ -30,6 +30,10 @@ jobs:
           OUTPUT_DIR="build/docc"
 
           rm -rf "${OUTPUT_DIR}"
+          sed "s/{{LATEST_VERSION}}/${VERSION}/g" \
+            Sources/SwiftRouting/SwiftRouting.docc/SwiftRouting.md > /tmp/SwiftRouting.md
+          mv /tmp/SwiftRouting.md Sources/SwiftRouting/SwiftRouting.docc/SwiftRouting.md
+
           swift package \
             --allow-writing-to-directory "${OUTPUT_DIR}" \
             generate-documentation \
@@ -71,18 +75,68 @@ jobs:
           mkdir -p "${VERSION}"
           cp -R "../${OUTPUT_DIR}/." "${VERSION}/"
 
+          LATEST=$(python3 - <<'PY'
+          import json, os, re
+          versions = [
+              d for d in os.listdir(".")
+              if os.path.isdir(d) and re.match(r"^\d+\.\d+\.\d+$", d)
+          ]
+          versions.sort(key=lambda s: [int(x) for x in s.split(".")])
+          latest = versions[-1] if versions else ""
+          with open("versions.json", "w") as f:
+              json.dump({"latest": latest, "versions": versions}, f)
+          print(latest)
+          PY
+          )
+
+          python3 - <<PY
+          import html, json
+          latest = "${LATEST}"
+          with open("versions.json") as f:
+            data = json.load(f)
+          versions = data.get("versions", [])
+          items = "\\n".join(
+            f'<li><a href="./{v}/">DocC {html.escape(v)}</a></li>' for v in versions[::-1]
+          )
+          html_out = f"""<!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>SwiftRouting Docs Versions</title>
+            <style>
+              :root {{ color-scheme: light dark; }}
+              body {{ font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; margin: 48px auto; max-width: 720px; padding: 0 20px; }}
+              h1 {{ font-size: 28px; margin-bottom: 8px; }}
+              .meta {{ color: #666; font-size: 14px; margin-bottom: 20px; }}
+              ul {{ padding-left: 18px; }}
+              a {{ color: #1b6ef3; text-decoration: none; }}
+              a:hover {{ text-decoration: underline; }}
+              .latest {{ font-weight: 600; }}
+            </style>
+          </head>
+          <body>
+            <h1>SwiftRouting Documentation Versions</h1>
+            <div class="meta">Latest: <span class="latest">{html.escape(latest)}</span></div>
+            <ul>{items}</ul>
+          </body>
+          </html>"""
+          with open("versions.html", "w") as f:
+            f.write(html_out)
+          PY
+
           cat > index.html <<EOF
           <!doctype html>
           <html lang="en">
           <head>
             <meta charset="utf-8">
-            <meta http-equiv="refresh" content="0; url=./${VERSION}/">
-            <link rel="canonical" href="./${VERSION}/">
+            <meta http-equiv="refresh" content="0; url=./${LATEST}/">
+            <link rel="canonical" href="./${LATEST}/">
             <title>Redirecting to latest documentation…</title>
-            <script>window.location.replace("./${VERSION}/");</script>
+            <script>window.location.replace("./${LATEST}/");</script>
           </head>
           <body>
-            <p>Redirecting to <a href="./${VERSION}/">latest documentation</a>…</p>
+            <p>Redirecting to <a href="./${LATEST}/">latest documentation</a>…</p>
           </body>
           </html>
           EOF
