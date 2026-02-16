@@ -15,12 +15,26 @@ concurrency:
 
 jobs:
   build-and-publish:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Select Xcode 26.2
+        run: |
+          set -euo pipefail
+          XCODE_APP="/Applications/Xcode_26.2.app"
+          if [ ! -d "${XCODE_APP}" ]; then
+            echo "Xcode 26.2 not found on this runner."
+            echo "Installed Xcode versions:"
+            ls -d /Applications/Xcode*.app || true
+            exit 1
+          fi
+          echo "Using ${XCODE_APP}"
+          sudo xcode-select -s "${XCODE_APP}/Contents/Developer"
+          xcodebuild -version
 
       - name: Build DocC
         run: |
@@ -30,9 +44,7 @@ jobs:
           OUTPUT_DIR="build/docc"
 
           rm -rf "${OUTPUT_DIR}"
-          sed "s/{{LATEST_VERSION}}/${VERSION}/g" \
-            Sources/SwiftRouting/SwiftRouting.docc/SwiftRouting.md > /tmp/SwiftRouting.md
-          mv /tmp/SwiftRouting.md Sources/SwiftRouting/SwiftRouting.docc/SwiftRouting.md
+          mkdir -p "${OUTPUT_DIR}"
 
           swift package \
             --allow-writing-to-directory "${OUTPUT_DIR}" \
@@ -40,7 +52,110 @@ jobs:
             --target SwiftRouting \
             --output-path "${OUTPUT_DIR}" \
             --transform-for-static-hosting \
-            --hosting-base-path "${REPO_NAME}/${VERSION}"
+            --hosting-base-path "swift-routing/${VERSION}"
+
+      - name: Inject version switcher
+        run: |
+          set -euo pipefail
+          OUTPUT_DIR="build/docc"
+          BASE_PATH="/${GITHUB_REPOSITORY##*/}/"
+
+          python3 - <<PY
+          import os
+
+          base_path = "${BASE_PATH}"
+          marker = "docc-version-switcher"
+          css = f"""
+          <style id="{marker}-style">
+            .docc-version-switcher {{
+              position: fixed;
+              top: 14px;
+              right: 18px;
+              z-index: 9999;
+              font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+              font-size: 13px;
+            }}
+            .docc-version-switcher select {{
+              background: rgba(20, 26, 38, 0.9);
+              color: #fff;
+              border: 1px solid rgba(255, 255, 255, 0.12);
+              border-radius: 8px;
+              padding: 6px 10px;
+              min-width: 140px;
+              cursor: pointer;
+            }}
+            .docc-version-switcher .label {{
+              display: inline-block;
+              margin-right: 8px;
+              color: #c8d1e0;
+              font-weight: 600;
+            }}
+          </style>
+          """
+          js = f"""
+          <script id="{marker}">
+          (function() {{
+            const basePath = "{base_path}";
+            const currentPath = window.location.pathname;
+            const parts = currentPath.split("/").filter(Boolean);
+            const repo = basePath.replace(/^\\//, "").replace(/\\/$/, "");
+            const repoIndex = parts.indexOf(repo);
+            let currentVersion = "";
+            if (repoIndex >= 0 && parts.length > repoIndex + 1) {{
+              const candidate = parts[repoIndex + 1];
+              if (/^\\d+\\.\\d+\\.\\d+$/.test(candidate)) {{
+                currentVersion = candidate;
+              }}
+            }}
+
+            const container = document.createElement("div");
+            container.className = "docc-version-switcher";
+            container.innerHTML = '<span class="label">Version</span><select id="docc-version-select"></select>';
+            document.body.appendChild(container);
+
+            fetch(basePath + "versions.json", {{ cache: "no-store" }})
+              .then(r => r.json())
+              .then(data => {{
+                const select = document.getElementById("docc-version-select");
+                const versions = (data.versions || []).slice().reverse();
+                versions.forEach(v => {{
+                  const opt = document.createElement("option");
+                  opt.value = v;
+                  opt.textContent = v + (v === data.latest ? " · latest" : "");
+                  if (v === currentVersion) opt.selected = true;
+                  select.appendChild(opt);
+                }});
+                select.addEventListener("change", () => {{
+                  const v = select.value;
+                  if (!v) return;
+                  if (currentVersion) {{
+                    window.location.href = currentPath.replace("/" + currentVersion + "/", "/" + v + "/");
+                  }} else {{
+                    window.location.href = basePath + v + "/documentation/swiftrouting/";
+                  }}
+                }});
+              }})
+              .catch(() => {{}});
+          }})();
+          </script>
+          """
+
+          for root, _, files in os.walk("${OUTPUT_DIR}"):
+            for name in files:
+              if not name.endswith(".html"):
+                continue
+              path = os.path.join(root, name)
+              with open(path, "r", encoding="utf-8") as f:
+                content = f.read()
+              if marker in content:
+                continue
+              if "</head>" in content:
+                content = content.replace("</head>", css + "\\n</head>")
+              if "</body>" in content:
+                content = content.replace("</body>", js + "\\n</body>")
+              with open(path, "w", encoding="utf-8") as f:
+                f.write(content)
+          PY
 
       - name: Publish to gh-pages
         env:
@@ -96,7 +211,7 @@ jobs:
             data = json.load(f)
           versions = data.get("versions", [])
           items = "\\n".join(
-            f'<li><a href="./{v}/">DocC {html.escape(v)}</a></li>' for v in versions[::-1]
+            f'<li><a href="./{v}/documentation/swiftrouting/">v{html.escape(v)}</a></li>' for v in versions[::-1]
           )
           html_out = f"""<!doctype html>
           <html lang="en">
@@ -130,13 +245,13 @@ jobs:
           <html lang="en">
           <head>
             <meta charset="utf-8">
-            <meta http-equiv="refresh" content="0; url=./${LATEST}/">
-            <link rel="canonical" href="./${LATEST}/">
+            <meta http-equiv="refresh" content="0; url=./${LATEST}/documentation/swiftrouting/">
+            <link rel="canonical" href="./${LATEST}/documentation/swiftrouting/">
             <title>Redirecting to latest documentation…</title>
-            <script>window.location.replace("./${LATEST}/");</script>
+            <script>window.location.replace("./${LATEST}/documentation/swiftrouting/");</script>
           </head>
           <body>
-            <p>Redirecting to <a href="./${LATEST}/">latest documentation</a>…</p>
+            <p>Redirecting to <a href="./${LATEST}/documentation/swiftrouting/">latest documentation</a>…</p>
           </body>
           </html>
           EOF

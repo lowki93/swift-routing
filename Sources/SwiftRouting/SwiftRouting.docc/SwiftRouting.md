@@ -2,8 +2,6 @@
 
 A lightweight, flexible navigation framework built on top of NavigationStack for SwiftUI.
 
-**Latest:** {{LATEST_VERSION}} · [All Versions](../../../versions.html)
-
 ## Overview
 
 SwiftRouting simplifies navigation in SwiftUI by introducing a decoupled routing system based on enums and deep links. It provides a clean separation between routes and views, making your navigation logic more maintainable and testable.
@@ -104,7 +102,3 @@ Button("View Details") {
 
 - ``Configuration``
 - ``LoggerMessage``
-
-### Versions
-
-- [All Versions](../../../versions.html)

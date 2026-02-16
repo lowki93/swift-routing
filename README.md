@@ -2,7 +2,7 @@
 
 A lightweight, flexible navigation framework built on top of `NavigationStack` for SwiftUI.
 
-[![Documentation](https://img.shields.io/badge/Documentation-DocC-blue)](https://lowki93.github.io/swift-routing/documentation/swiftrouting/)
+[![Documentation](https://img.shields.io/badge/Documentation-DocC-blue)](https://lowki93.github.io/swift-routing/)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange)](https://swift.org)
 [![iOS 17+](https://img.shields.io/badge/iOS-17+-lightgrey)](https://developer.apple.com/ios/)
 [![macOS 13+](https://img.shields.io/badge/macOS-13+-lightgrey)](https://developer.apple.com/macos/)
@@ -93,16 +93,16 @@ Then add to your target:
 
 ## Documentation
 
-For comprehensive documentation, tutorials, and API reference, visit the **[full documentation](https://lowki93.github.io/swift-routing/documentation/swiftrouting/)**.
+For comprehensive documentation, tutorials, and API reference, visit the **[full documentation](https://lowki93.github.io/swift-routing/)**.
 
 ### Topics Covered
 
-- [Getting Started](https://lowki93.github.io/swift-routing/documentation/swiftrouting/gettingstarted) - Installation and basic setup
-- [Defining Routes](https://lowki93.github.io/swift-routing/documentation/swiftrouting/definingroutes) - Route customization and routing types
-- [Navigation Basics](https://lowki93.github.io/swift-routing/documentation/swiftrouting/navigationbasics) - Push, present, cover, and more
-- [Tab Navigation](https://lowki93.github.io/swift-routing/documentation/swiftrouting/tabnavigation) - Tab-based navigation with `TabRouter`
-- [Deep Linking](https://lowki93.github.io/swift-routing/documentation/swiftrouting/deeplinks) - Handle deep links in your app
-- [Route Context](https://lowki93.github.io/swift-routing/documentation/swiftrouting/routecontext) - Pass data between routes
+- [Getting Started](https://lowki93.github.io/swift-routing/) - Installation and basic setup
+- [Defining Routes](https://lowki93.github.io/swift-routing/) - Route customization and routing types
+- [Navigation Basics](https://lowki93.github.io/swift-routing/) - Push, present, cover, and more
+- [Tab Navigation](https://lowki93.github.io/swift-routing/) - Tab-based navigation with `TabRouter`
+- [Deep Linking](https://lowki93.github.io/swift-routing/) - Handle deep links in your app
+- [Route Context](https://lowki93.github.io/swift-routing/) - Pass data between routes
 
 ## License
 
