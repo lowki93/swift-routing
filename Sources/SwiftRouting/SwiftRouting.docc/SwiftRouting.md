@@ -90,6 +90,7 @@ Button("View Details") {
 
 - <doc:Deeplinks>
 - ``DeeplinkHandler``
+- ``TabDeeplinkHandler``
 - ``DeeplinkRoute``
 - ``TabDeeplink``
 
