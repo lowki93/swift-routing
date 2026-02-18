@@ -137,11 +137,15 @@ enum HomeTab: TabRoute {
 
 ## Deep Linking with Tabs
 
-Use ``TabDeeplink`` to handle deep links that target specific tabs:
+Use ``TabDeeplinkHandler`` to map incoming identifiers to a ``TabDeeplink``:
 
 ```swift
-struct AppDeeplinkHandler: DeeplinkHandler {
-    func deeplink(from route: DeeplinkRoute) async -> TabDeeplink<HomeTab, HomeRoute>? {
+struct AppDeeplinkHandler: TabDeeplinkHandler {
+    typealias R = DeeplinkIdentifier
+    typealias T = HomeTab
+    typealias D = HomeRoute
+
+    func deeplink(from route: DeeplinkIdentifier) async throws -> TabDeeplink<HomeTab, HomeRoute>? {
         switch route {
         case .userProfile(let userId):
             return TabDeeplink(
@@ -158,7 +162,7 @@ struct AppDeeplinkHandler: DeeplinkHandler {
 Handle the deep link with the TabRouter:
 
 ```swift
-if let tabDeeplink = await handler.deeplink(from: incomingRoute) {
+if let tabDeeplink = try await handler.deeplink(from: incomingRoute) {
     tabRouter?.handle(tabDeeplink: tabDeeplink)
 }
 ```

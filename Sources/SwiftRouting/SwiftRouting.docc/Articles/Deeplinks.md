@@ -4,7 +4,7 @@ Learn how to handle deep links and navigate to specific routes.
 
 ## Overview
 
-SwiftRouting provides a flexible deep linking system through ``DeeplinkHandler``, ``DeeplinkRoute``, and ``TabDeeplink``.
+SwiftRouting provides a flexible deep linking system through ``DeeplinkHandler``, ``TabDeeplinkHandler``, ``DeeplinkRoute``, and ``TabDeeplink``.
 
 ## Creating a Deeplink Handler
 
@@ -113,11 +113,15 @@ func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<Home
 
 ## Tab-Based Deep Links
 
-For apps with tab navigation, use ``TabDeeplink``:
+For apps with tab navigation, implement ``TabDeeplinkHandler`` and return a ``TabDeeplink``:
 
 ```swift
-struct AppDeeplinkHandler {
-    func deeplink(from route: DeeplinkIdentifier) async -> TabDeeplink<HomeTab, HomeRoute>? {
+struct AppTabDeeplinkHandler: TabDeeplinkHandler {
+    typealias R = DeeplinkIdentifier
+    typealias T = HomeTab
+    typealias D = HomeRoute
+
+    func deeplink(from route: DeeplinkIdentifier) async throws -> TabDeeplink<HomeTab, HomeRoute>? {
         switch route {
         case .profile(let userId):
             return TabDeeplink(
@@ -147,9 +151,9 @@ Handle with TabRouter:
 ```swift
 @Environment(\.tabRouter) private var tabRouter
 
-func handleDeeplink(_ url: URL) async {
+func handleDeeplink(_ url: URL) async throws {
     if let identifier = DeeplinkIdentifier(url: url),
-       let tabDeeplink = await handler.deeplink(from: identifier) {
+       let tabDeeplink = try await handler.deeplink(from: identifier) {
         tabRouter?.handle(tabDeeplink: tabDeeplink)
     }
 }
