@@ -15,7 +15,7 @@ struct AppDeeplinkHandler: DeeplinkHandler {
     typealias R = DeeplinkIdentifier  // Your input type
     typealias D = HomeRoute           // Your route type
     
-    func deeplink(to route: DeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRoute>? {
+    func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRoute>? {
         switch route {
         case .home:
             return DeeplinkRoute(type: .push, route: .home)
@@ -69,7 +69,7 @@ struct ContentView: View {
             .onOpenURL { url in
                 Task {
                     if let identifier = DeeplinkIdentifier(url: url),
-                       let deeplink = try await handler.deeplink(to: identifier) {
+                       let deeplink = try await handler.deeplink(from: identifier) {
                         router.handle(deeplink: deeplink)
                     }
                 }
@@ -88,10 +88,10 @@ struct ContentView: View {
 
 ## Async Deep Link Handling
 
-The `deeplink(to:)` method is `async`, allowing you to fetch data before navigation:
+The `deeplink(from:)` method is `async`, allowing you to fetch data before navigation:
 
 ```swift
-func deeplink(to route: DeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRoute>? {
+func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRoute>? {
     switch route {
     case .product(let productId):
         // Fetch product details before navigating
@@ -116,8 +116,8 @@ func deeplink(to route: DeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRo
 For apps with tab navigation, use ``TabDeeplink``:
 
 ```swift
-struct AppDeeplinkHandler: DeeplinkHandler {
-    func deeplink(to route: DeeplinkIdentifier) async -> TabDeeplink<HomeTab, HomeRoute>? {
+struct AppDeeplinkHandler {
+    func deeplink(from route: DeeplinkIdentifier) async -> TabDeeplink<HomeTab, HomeRoute>? {
         switch route {
         case .profile(let userId):
             return TabDeeplink(
@@ -149,7 +149,7 @@ Handle with TabRouter:
 
 func handleDeeplink(_ url: URL) async {
     if let identifier = DeeplinkIdentifier(url: url),
-       let tabDeeplink = await handler.deeplink(to: identifier) {
+       let tabDeeplink = await handler.deeplink(from: identifier) {
         tabRouter?.handle(tabDeeplink: tabDeeplink)
     }
 }
@@ -175,10 +175,10 @@ This ensures the back button works correctly through the entire hierarchy.
 
 ## Error Handling
 
-Return `nil` from `deeplink(to:)` to ignore invalid deep links:
+Return `nil` from `deeplink(from:)` to ignore invalid deep links:
 
 ```swift
-func deeplink(to route: DeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRoute>? {
+func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRoute>? {
     guard isValidRoute(route) else {
         return nil  // Silently ignore
     }

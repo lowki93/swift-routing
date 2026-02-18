@@ -141,7 +141,7 @@ Use ``TabDeeplink`` to handle deep links that target specific tabs:
 
 ```swift
 struct AppDeeplinkHandler: DeeplinkHandler {
-    func deeplink(to route: DeeplinkRoute) async -> TabDeeplink<HomeTab, HomeRoute>? {
+    func deeplink(from route: DeeplinkRoute) async -> TabDeeplink<HomeTab, HomeRoute>? {
         switch route {
         case .userProfile(let userId):
             return TabDeeplink(
@@ -158,7 +158,7 @@ struct AppDeeplinkHandler: DeeplinkHandler {
 Handle the deep link with the TabRouter:
 
 ```swift
-if let tabDeeplink = await handler.deeplink(to: incomingRoute) {
+if let tabDeeplink = await handler.deeplink(from: incomingRoute) {
     tabRouter?.handle(tabDeeplink: tabDeeplink)
 }
 ```
