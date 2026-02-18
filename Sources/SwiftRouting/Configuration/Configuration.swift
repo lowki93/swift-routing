@@ -26,7 +26,9 @@ public struct Configuration {
 
   /// Initializes a new configuration instance.
   ///
-  /// - Parameter logger: A closure that receives `LoggerConfiguration` for logging purposes.
+  /// - Parameters:
+  ///   - logger: A closure that receives `LoggerConfiguration` for logging purposes.
+  ///   - shouldCrashOnRouteNotFound: If `true`, the app will crash when a route cannot be found. Useful for catching routing errors during development.
   public init(logger: ((LoggerConfiguration) -> Void)?, shouldCrashOnRouteNotFound: Bool) {
     self.logger = logger
     self.shouldCrashOnRouteNotFound = shouldCrashOnRouteNotFound

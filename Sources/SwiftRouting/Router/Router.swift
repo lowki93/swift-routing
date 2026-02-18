@@ -44,13 +44,45 @@ public final class Router: BaseRouter, @unchecked Sendable {
     }
   }
   @Published internal var triggerClose: Bool = false
+
+  /// The currently visible route in the navigation stack.
+  ///
+  /// Returns the last route in the navigation path, or the root route if the path is empty.
+  /// Use this property to determine which route is currently displayed.
+  ///
+  /// ```swift
+  /// print("Current route: \(router.currentRoute.name)")
+  /// ```
   public var currentRoute: AnyRoute {
     path.last ?? root
   }
+
+  /// Indicates whether this router is presented as a modal (sheet or cover).
+  ///
+  /// Returns `true` if the router was created via `present(_:)` or `cover(_:)`,
+  /// `false` for routers created via `push(_:)` or as root/tab routers.
+  ///
+  /// Use this property to conditionally show close buttons or handle dismissal:
+  ///
+  /// ```swift
+  /// if router.isPresented {
+  ///   Button("Close") { router.close() }
+  /// }
+  /// ```
   public var isPresented: Bool {
     type.isPresented
   }
-  /// current number of routes
+
+  /// The total number of routes in the navigation stack, including the root.
+  ///
+  /// This count includes the root view plus all pushed routes.
+  /// A value of 1 means only the root is displayed.
+  ///
+  /// ```swift
+  /// if router.routeCount > 1 {
+  ///   // Show back button
+  /// }
+  /// ```
   public var routeCount: Int {
     // +1 for root view
     path.count + 1
