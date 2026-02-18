@@ -257,5 +257,5 @@ jobs:
           EOF
 
           git add -A
-          git commit -m "docs: publish ${VERSION}" || echo "No changes to commit"
+          git commit -m "docs: v{VERSION}" || echo "No changes to commit"
           git push origin gh-pages
