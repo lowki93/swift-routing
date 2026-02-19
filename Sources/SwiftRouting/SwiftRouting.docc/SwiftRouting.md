@@ -65,6 +65,12 @@ Run:
 npx openskills read swift-routing
 ```
 
+If needed, you can also install it globally:
+
+```bash
+openskills install lowki93/swift-routing --global
+```
+
 ## Topics
 
 ### Essentials

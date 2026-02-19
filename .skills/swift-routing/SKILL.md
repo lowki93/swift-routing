@@ -1,3 +1,8 @@
+---
+name: swift-routing
+description: SwiftRouting guidance for routes, routers, tabs, deeplinks, and troubleshooting.
+---
+
 # SwiftRouting
 
 ## Overview
