@@ -36,6 +36,16 @@ NavigationLink(route: HomeRoute.detail(id: 42)) {
 }
 ```
 
+### NavigationLink Behavior
+
+`NavigationLink(route:)` is push-only (stack navigation), because it uses
+`NavigationLink(value:)` with route values.
+
+Important notes:
+- It must be used inside a `RoutingView` configured with a matching `RouteDestination`.
+- It does not perform modal presentation, even if the route has a modal `routingType`.
+- For modal flows, prefer `router.present(...)` or `router.cover(...)`.
+
 ## Modal Presentations
 
 ### Sheet

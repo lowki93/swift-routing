@@ -26,6 +26,13 @@ import SwiftUI
 /// NavigationLink("Details", route: HomeRoute.page3("item"))
 /// ```
 ///
+/// ## Behavior
+/// These initializers use `NavigationLink(value:)` under the hood, so they always
+/// perform stack-based push navigation.
+///
+/// If you need modal presentation (`sheet`/`cover`), use `router.present(...)`
+/// or `router.cover(...)` instead of `NavigationLink`.
+///
 /// > Note: These links work within a `RoutingView` that has the appropriate
 /// > `navigationDestination` configured for your route type.
 public extension NavigationLink where Destination == Never {
