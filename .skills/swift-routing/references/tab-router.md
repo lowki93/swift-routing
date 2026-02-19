@@ -149,6 +149,74 @@ final class ProfileCoordinatorViewModel: ObservableObject {
 }
 ```
 
+## App-Level Convenience Overloads (Optional)
+
+If your app has a main route enum (for example `HomeRoute`) and you want concise calls,
+add overloads on `TabRouterModel`:
+
+```swift
+public extension TabRouterModel {
+  @_disfavoredOverload
+  func push(_ homeRoute: HomeRoute) {
+    push(homeRoute, in: nil)
+  }
+
+  @_disfavoredOverload
+  func update(root homeRoute: HomeRoute) {
+    update(root: homeRoute, in: nil)
+  }
+}
+```
+
+Before:
+
+```swift
+tabRouter.push(HomeRoute.profile, in: nil)
+tabRouter.present(HomeRoute.settings, in: nil)
+tabRouter.update(root: HomeRoute.home, in: nil)
+```
+
+After:
+
+```swift
+tabRouter.push(.profile)
+tabRouter.present(.settings)
+tabRouter.update(root: .home)
+```
+
+Recommendation:
+- add this pattern only for the main app route type to keep overload resolution clear.
+
+You can apply the same pattern for your main tab enum as well:
+
+```swift
+public extension TabRouterModel {
+  @_disfavoredOverload
+  func push(_ homeRoute: HomeRoute, in tab: HomeTab?) {
+    push(homeRoute, in: tab as (any TabRoute)?)
+  }
+
+  @_disfavoredOverload
+  func popToRoot(in tab: HomeTab?) {
+    popToRoot(in: tab as (any TabRoute)?)
+  }
+}
+```
+
+Before:
+
+```swift
+tabRouter.push(HomeRoute.profile, in: HomeTab.profile)
+tabRouter.popToRoot(in: HomeTab.profile)
+```
+
+After:
+
+```swift
+tabRouter.push(.profile, in: .profile)
+tabRouter.popToRoot(in: .profile)
+```
+
 ## Best Practices
 
 - Keep one `RoutingView` per tab.

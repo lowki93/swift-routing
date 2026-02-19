@@ -112,6 +112,42 @@ final class DetailsViewModel: ObservableObject {
 }
 ```
 
+## App-Level Convenience Overloads (Optional)
+
+If your app has one main route enum (for example `HomeRoute`), you can add
+`RouterModel` overloads for shorter call sites:
+
+```swift
+public extension RouterModel {
+  @_disfavoredOverload
+  func push(_ homeRoute: HomeRoute) {
+    push(homeRoute)
+  }
+
+  @_disfavoredOverload
+  func update(root homeRoute: HomeRoute) {
+    update(root: homeRoute)
+  }
+}
+```
+
+Before:
+
+```swift
+router.push(HomeRoute.profile)
+router.update(root: HomeRoute.home)
+```
+
+After:
+
+```swift
+router.push(.profile)
+router.update(root: .home)
+```
+
+Recommendation:
+- apply this only for your main app route type to keep overload resolution predictable.
+
 ## Important Notes
 
 - In SwiftUI views, prefer `@Environment(\.router)` over passing router manually.

@@ -188,6 +188,41 @@ struct DetailView: View {
 }
 ```
 
+## App-Level Convenience Overloads (Optional)
+
+If your app uses one main route enum (for example `HomeRoute`), you can add
+`RouterModel` overloads to improve call-site ergonomics:
+
+```swift
+public extension RouterModel {
+    @_disfavoredOverload
+    func push(_ homeRoute: HomeRoute) {
+        push(homeRoute)
+    }
+
+    @_disfavoredOverload
+    func update(root homeRoute: HomeRoute) {
+        update(root: homeRoute)
+    }
+}
+```
+
+Before:
+
+```swift
+router.push(HomeRoute.profile)
+router.update(root: HomeRoute.home)
+```
+
+After:
+
+```swift
+router.push(.profile)
+router.update(root: .home)
+```
+
+Use this pattern for your main route type only, to keep overload resolution predictable.
+
 ## Closing Child Routers
 
 When handling deep links or resetting navigation, close all presented modals:
