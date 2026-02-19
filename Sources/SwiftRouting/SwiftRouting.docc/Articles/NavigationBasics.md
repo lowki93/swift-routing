@@ -50,6 +50,15 @@ router.present(HomeRoute.settings)
 router.present(HomeRoute.settings, withStack: false)
 ```
 
+Use `withStack: false` when the presented destination needs direct sheet modifiers such as:
+
+```swift
+.presentationDetents([.medium])
+.presentationDragIndicator(.visible)
+```
+
+With `withStack: true` (default), the route is wrapped in a `RoutingView`/`NavigationStack`, which can make these modifiers less predictable on the final destination view.
+
 ### Full-Screen Cover
 
 Present a route as a full-screen cover:
@@ -111,6 +120,12 @@ case .sheet: router.present(route)
 case .cover: router.cover(route)
 case .root: router.update(root: route)
 }
+```
+
+For routes that require sheet presentation customizations (`presentationDetents`, `presentationDragIndicator`), prefer:
+
+```swift
+var routingType: RoutingType { .sheet(withStack: false) }
 ```
 
 ## Router Properties

@@ -42,6 +42,29 @@ router.popToRoot()
 router.update(root: HomeRoute.dashboard)
 ```
 
+## Sheet Customization and withStack
+
+If your presented screen uses direct sheet modifiers like:
+
+```swift
+.presentationDetents([.medium])
+.presentationDragIndicator(.visible)
+```
+
+prefer presenting without an internal stack:
+
+```swift
+router.present(HomeRoute.settings, withStack: false)
+```
+
+or set it at route level:
+
+```swift
+var routingType: RoutingType { .sheet(withStack: false) }
+```
+
+With `withStack: true` (default), the route is wrapped in a `RoutingView`/`NavigationStack`.
+
 ## route(_:) and routingType
 
 `route(_:)` dispatches based on each route's `routingType`:

@@ -62,6 +62,24 @@ public protocol RouteDestination: Hashable, Identifiable {
   ///   }
   /// }
   /// ```
+  ///
+  /// Example for sheet presentation modifiers:
+  /// ```swift
+  /// extension HomeRoute: @retroactive RouteDestination {
+  ///   public static func view(for route: HomeRoute) -> some View {
+  ///     switch route {
+  ///       case .settings:
+  ///         SettingsView()
+  ///           .presentationDetents([.medium])
+  ///           .presentationDragIndicator(.visible)
+  ///       default:
+  ///         HomeView()
+  ///     }
+  ///   }
+  /// }
+  /// ```
+  /// Use this with `router.present(..., withStack: false)` or
+  /// `routingType = .sheet(withStack: false)` so these modifiers apply directly.
   @MainActor @ViewBuilder static func view(for route: R) -> Destination
 }
 

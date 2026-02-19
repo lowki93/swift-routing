@@ -84,6 +84,33 @@ Notes:
 - Passing `router` as an argument is usually only needed for ViewModel injection (`any RouterModel`).
 - Keep ViewModel internals out of this guide; document them in a dedicated skill/reference.
 
+## Where To Put presentationDetents / presentationDragIndicator
+
+Apply sheet modifiers directly on the destination view returned by `RouteDestination`:
+
+```swift
+extension HomeRoute: RouteDestination {
+  static func view(for route: HomeRoute) -> some View {
+    switch route {
+    case .settings:
+      SettingsView()
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    default:
+      HomeView()
+    }
+  }
+}
+```
+
+This requires presenting the sheet with:
+
+```swift
+router.present(HomeRoute.settings, withStack: false)
+// or
+var routingType: RoutingType { .sheet(withStack: false) }
+```
+
 ## Nested Routes
 
 For larger features, you can model subflows with nested route enums and expose them through a parent route.
@@ -171,6 +198,12 @@ If needed, customize route presentation behavior via `routingType`:
 - `.root`
 
 Use this only when a route has a clear default presentation policy.
+
+If a sheet route needs direct presentation modifiers (`presentationDetents`, `presentationDragIndicator`), prefer:
+
+```swift
+var routingType: RoutingType { .sheet(withStack: false) }
+```
 
 ## Best Practices
 
