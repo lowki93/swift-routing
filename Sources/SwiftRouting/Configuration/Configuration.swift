@@ -13,6 +13,23 @@ import Foundation
 /// It provides a closure that receives `LoggerConfiguration` and can be used to log
 /// navigation events.
 ///
+/// ## Where to Apply Configuration
+/// Create and inject a configured root router at app entry point:
+/// ```swift
+/// @main
+/// struct DemoApp: App {
+///   var body: some Scene {
+///     WindowGroup {
+///       RoutingView(destination: HomeRoute.self, root: .home)
+///         .environment(
+///           \.router,
+///           Router(configuration: Configuration(shouldCrashOnRouteNotFound: true))
+///         )
+///     }
+///   }
+/// }
+/// ```
+///
 /// ## Properties
 /// - `logger`: A closure that takes a `LoggerConfiguration` and logs routing actions.
 ///

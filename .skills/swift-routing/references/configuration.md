@@ -8,6 +8,27 @@ Use this guide to configure SwiftRouting runtime behavior.
 - logging output (via `logger` closure)
 - behavior when a route cannot be resolved in `RouteDestination` (`shouldCrashOnRouteNotFound`)
 
+## Where To Set It
+
+Set router configuration at app entry point (`App`) by injecting a configured root router:
+
+```swift
+@main
+struct DemoApp: App {
+  var body: some Scene {
+    WindowGroup {
+      RoutingView(destination: HomeRoute.self, root: .home)
+        .environment(
+          \.router,
+          Router(configuration: Configuration(shouldCrashOnRouteNotFound: true))
+        )
+    }
+  }
+}
+```
+
+This router becomes the parent/root router used by your `RoutingView` hierarchy.
+
 ## shouldCrashOnRouteNotFound
 
 `shouldCrashOnRouteNotFound` defines what happens when a route is not found for the current destination mapping.
