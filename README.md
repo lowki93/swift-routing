@@ -104,6 +104,16 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 - [Deep Linking](https://lowki93.github.io/swift-routing/) - Handle deep links in your app
 - [Route Context](https://lowki93.github.io/swift-routing/) - Pass data between routes
 
+## OpenSkills
+
+This project includes a project-level OpenSkills skill: `swift-routing`.
+
+Use it with:
+
+```bash
+npx openskills read swift-routing
+```
+
 ## License
 
 SwiftRouting is available under the MIT license.

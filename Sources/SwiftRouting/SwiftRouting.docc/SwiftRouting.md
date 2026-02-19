@@ -55,6 +55,16 @@ Button("View Details") {
 }
 ```
 
+## OpenSkills
+
+This project includes a project-level OpenSkills skill named `swift-routing` for AI-assisted guidance.
+
+Run:
+
+```bash
+npx openskills read swift-routing
+```
+
 ## Topics
 
 ### Essentials
