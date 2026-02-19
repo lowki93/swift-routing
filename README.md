@@ -114,6 +114,12 @@ Use it with:
 npx openskills read swift-routing
 ```
 
+If needed, you can also install it globally:
+
+```bash
+npx openskills install lowki93/swift-routing --global
+```
+
 ## License
 
 SwiftRouting is available under the MIT license.
