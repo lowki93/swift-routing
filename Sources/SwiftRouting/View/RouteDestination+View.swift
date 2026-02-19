@@ -39,6 +39,13 @@ public extension View {
   /// The presented route gets its own `RoutingView` with a `.presented` router type,
   /// allowing full navigation capabilities within the sheet.
   ///
+  /// > Note:
+  /// > If your sheet content relies on direct presentation modifiers like
+  /// > `.presentationDetents(...)` or `.presentationDragIndicator(...)`,
+  /// > present the route with `withStack: false` (for example via
+  /// > `router.present(route, withStack: false)` or `routingType = .sheet(withStack: false)`).
+  /// > With `withStack: true`, the destination is wrapped in a `RoutingView`/`NavigationStack`.
+  ///
   /// You typically don't call this directly; `RoutingView` applies it automatically
   /// to handle `router.present(_:)` calls.
   ///

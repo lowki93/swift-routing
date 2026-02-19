@@ -42,7 +42,9 @@ public protocol TabRouterModel: BaseRouterModel {
 
   /// Updates the root route of a given tab's navigation stack.
   ///
-  /// This method switches to the specified tab and replaces its root route.
+  /// If `tab` is provided, this method first calls `change(tab:)`, then updates
+  /// the root route in that tab's router.
+  /// If `tab` is `nil`, it updates the root route in the currently active tab.
   ///
   /// - Parameters:
   ///   - destination: The new root `Route` for the tab.
@@ -51,7 +53,7 @@ public protocol TabRouterModel: BaseRouterModel {
 
   /// Pushes a new route onto the navigation stack in a specified tab.
   ///
-  /// If a tab is provided, it switches to that tab before pushing.
+  /// If a tab is provided, it first calls `change(tab:)`, then pushes in that tab.
   /// If `nil`, the route is pushed in the currently active tab.
   ///
   /// - Parameters:
@@ -61,7 +63,7 @@ public protocol TabRouterModel: BaseRouterModel {
 
   /// Presents a route as a modal sheet within a given tab.
   ///
-  /// If a tab is provided, it switches to that tab before presenting.
+  /// If a tab is provided, it first calls `change(tab:)`, then presents in that tab.
   /// If `nil`, the sheet is presented from the currently active tab.
   ///
   /// - Parameters:
@@ -71,7 +73,7 @@ public protocol TabRouterModel: BaseRouterModel {
 
   /// Presents a route as a full-screen cover within a given tab.
   ///
-  /// If a tab is provided, it switches to that tab before presenting.
+  /// If a tab is provided, it first calls `change(tab:)`, then presents in that tab.
   /// If `nil`, the cover is presented from the currently active tab.
   ///
   /// - Parameters:
@@ -98,7 +100,7 @@ public extension TabRouterModel {
     present(destination, in: nil)
   }
 
-  func cover(_ destination: some Route, in tab: (any TabRoute)?) {
+  func cover(_ destination: some Route) {
     cover(destination, in: nil)
   }
 }

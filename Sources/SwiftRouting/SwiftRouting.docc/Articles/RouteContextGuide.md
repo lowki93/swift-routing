@@ -33,8 +33,8 @@ struct ParentView: View {
     
     var body: some View {
         ContentView()
-            .routerContext(UserSelectionContext.self) { [weak self] context in
-                self?.selectedUser = context.selectedUser
+            .routerContext(UserSelectionContext.self) { context in
+                selectedUser = context.selectedUser
             }
     }
 }
@@ -42,25 +42,37 @@ struct ParentView: View {
 
 ### Using Router Directly
 
-You can also register observers directly on the router:
+For ViewModel-driven architectures, register observers via `any RouterModel`:
 
 ```swift
-struct ParentView: View {
-    @Environment(\.router) private var router
-    @State private var selectedUser: User?
-    
-    var body: some View {
-        ContentView()
-            .onAppear {
-                router.add(context: UserSelectionContext.self) { [weak self] context in
-                    self?.selectedUser = context.selectedUser
-                }
-            }
+@MainActor
+final class ParentViewModel: ObservableObject {
+    private let router: any RouterModel
+
+    init(router: any RouterModel) {
+        self.router = router
+    }
+
+    func startObservingContext() {
+        router.add(context: UserSelectionContext.self) { [weak self] context in
+            self?.selectedUser = context.selectedUser
+        }
+    }
+
+    func stopObservingContext() {
+        router.remove(context: UserSelectionContext.self)
+    }
+
+    deinit {
+        stopObservingContext()
     }
 }
 ```
 
-> Warning: Always capture `self` or view models with `[weak self]` to prevent memory leaks.
+> Note: In views, prefer `.routerContext(...)` for simple cases.
+> Use `any RouterModel` in ViewModels when context handling belongs to presentation/business logic.
+>
+> Warning: Use weak captures for class references (for example view models) to prevent retain cycles.
 
 ## Sending Context
 
@@ -86,9 +98,9 @@ struct UserPickerView: View {
 }
 ```
 
-### terminate(_:) - Send and Navigate Back
+### terminate(_:) - Send and Complete Navigation
 
-Sends the context and navigates back to the observer's route:
+Sends the context, then completes navigation based on router state:
 
 ```swift
 struct UserPickerView: View {
@@ -98,7 +110,7 @@ struct UserPickerView: View {
     var body: some View {
         List(users) { user in
             Button(user.name) {
-                // Send context AND navigate back
+                // Send context and complete the current flow
                 router.terminate(UserSelectionContext(selectedUser: user))
             }
         }
@@ -108,9 +120,9 @@ struct UserPickerView: View {
 
 `terminate(_:)` will:
 1. Execute all matching context observers
-2. Pop routes back to where the context was registered
-3. Or close the modal if presented
-4. Or go back one step if no matching context is found
+2. If a matching local context anchor is found, pop back to that point in the current stack
+3. Otherwise, close the modal if the router is presented
+4. Otherwise, go back one step
 
 ## Context Hierarchy
 
@@ -198,7 +210,7 @@ router.add(context: MyContext.self) { [weak self] context in
     viewModel?.process(context)
 }
 
-// ❌ Wrong - causes retain cycle
+// ❌ Wrong for class references - causes retain cycle
 router.add(context: MyContext.self) { context in
     self.handleContext(context)  // Strong reference to self
 }

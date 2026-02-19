@@ -74,6 +74,10 @@ extension TabRouter: @preconcurrency TabRouterModel {
 
   /// Updates the root route of a given tab's navigation stack.
   ///
+  /// If `tab` is provided, this method first switches the active tab
+  /// (`change(tab:)`), then updates that tab's root route.
+  /// If `tab` is `nil`, it updates the currently selected tab.
+  ///
   /// - Parameters:
   ///   - destination: The new root `Route` for the tab.
   ///   - tab: The `TabRoute` to update.
@@ -85,6 +89,10 @@ extension TabRouter: @preconcurrency TabRouterModel {
   }
 
   /// Pushes a new route onto the navigation stack in a specified tab.
+  ///
+  /// If `tab` is provided, this method first switches the active tab
+  /// (`change(tab:)`), then pushes in that tab.
+  /// If `tab` is `nil`, it pushes in the currently selected tab.
   ///
   /// - Parameters:
   ///   - destination: The `Route` to push onto the stack.
@@ -98,6 +106,10 @@ extension TabRouter: @preconcurrency TabRouterModel {
 
   /// Presents a route as a modal sheet within a given tab.
   ///
+  /// If `tab` is provided, this method first switches the active tab
+  /// (`change(tab:)`), then presents in that tab.
+  /// If `tab` is `nil`, it presents in the currently selected tab.
+  ///
   /// - Parameters:
   ///   - destination: The `Route` to present.
   ///   - tab: The `TabRoute` where the modal should be displayed.
@@ -109,6 +121,10 @@ extension TabRouter: @preconcurrency TabRouterModel {
   }
 
   /// Presents a route as a full-screen cover within a given tab.
+  ///
+  /// If `tab` is provided, this method first switches the active tab
+  /// (`change(tab:)`), then presents in that tab.
+  /// If `tab` is `nil`, it presents in the currently selected tab.
   ///
   /// - Parameters:
   ///   - destination: The `Route` to present as a cover.

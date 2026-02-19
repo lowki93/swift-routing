@@ -33,7 +33,7 @@ import Foundation
 /// To integrate a tab into a navigation system, instantiate a `RoutingView`.
 /// This will also create a router associated with the tab:
 /// ```swift
-/// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self, route: .page1)
+/// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
 /// ```
 public protocol TabRoute: Route {
   var hideTabBarOnPush: Bool { get }

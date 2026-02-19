@@ -36,6 +36,16 @@ NavigationLink(route: HomeRoute.detail(id: 42)) {
 }
 ```
 
+### NavigationLink Behavior
+
+`NavigationLink(route:)` is push-only (stack navigation), because it uses
+`NavigationLink(value:)` with route values.
+
+Important notes:
+- It must be used inside a `RoutingView` configured with a matching `RouteDestination`.
+- It does not perform modal presentation, even if the route has a modal `routingType`.
+- For modal flows, prefer `router.present(...)` or `router.cover(...)`.
+
 ## Modal Presentations
 
 ### Sheet
@@ -49,6 +59,15 @@ router.present(HomeRoute.settings)
 // Without navigation stack
 router.present(HomeRoute.settings, withStack: false)
 ```
+
+Use `withStack: false` when the presented destination needs direct sheet modifiers such as:
+
+```swift
+.presentationDetents([.medium])
+.presentationDragIndicator(.visible)
+```
+
+With `withStack: true` (default), the route is wrapped in a `RoutingView`/`NavigationStack`, which can make these modifiers less predictable on the final destination view.
 
 ### Full-Screen Cover
 
@@ -113,6 +132,12 @@ case .root: router.update(root: route)
 }
 ```
 
+For routes that require sheet presentation customizations (`presentationDetents`, `presentationDragIndicator`), prefer:
+
+```swift
+var routingType: RoutingType { .sheet(withStack: false) }
+```
+
 ## Router Properties
 
 The router provides useful properties for UI decisions:
@@ -138,9 +163,9 @@ For MVVM architectures, inject the router using ``RouterModel``:
 
 ```swift
 class DetailViewModel: ObservableObject {
-    private let router: RouterModel
+    private let router: any RouterModel
     
-    init(router: RouterModel) {
+    init(router: any RouterModel) {
         self.router = router
     }
     
@@ -162,6 +187,41 @@ struct DetailView: View {
     }
 }
 ```
+
+## App-Level Convenience Overloads (Optional)
+
+If your app uses one main route enum (for example `HomeRoute`), you can add
+`RouterModel` overloads to improve call-site ergonomics:
+
+```swift
+public extension RouterModel {
+    @_disfavoredOverload
+    func push(_ homeRoute: HomeRoute) {
+        push(homeRoute)
+    }
+
+    @_disfavoredOverload
+    func update(root homeRoute: HomeRoute) {
+        update(root: homeRoute)
+    }
+}
+```
+
+Before:
+
+```swift
+router.push(HomeRoute.profile)
+router.update(root: HomeRoute.home)
+```
+
+After:
+
+```swift
+router.push(.profile)
+router.update(root: .home)
+```
+
+Use this pattern for your main route type only, to keep overload resolution predictable.
 
 ## Closing Child Routers
 

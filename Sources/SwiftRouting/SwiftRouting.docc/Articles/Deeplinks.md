@@ -61,22 +61,32 @@ Use the router's `handle(deeplink:)` method:
 
 ```swift
 struct ContentView: View {
+    var body: some View {
+        RoutingView(destination: HomeRoute.self, root: .home) {
+            HomeRootView()
+        }
+    }
+}
+
+struct HomeRootView: View {
     @Environment(\.router) private var router
     let handler = AppDeeplinkHandler()
-    
+
     var body: some View {
-        RoutingView(destination: HomeRoute.self, root: .home)
+        HomeView()
             .onOpenURL { url in
                 Task {
-                    if let identifier = DeeplinkIdentifier(url: url),
-                       let deeplink = try await handler.deeplink(from: identifier) {
-                        router.handle(deeplink: deeplink)
-                    }
+                    guard let identifier = DeeplinkIdentifier(url: url) else { return }
+                    guard let deeplink = try await handler.deeplink(from: identifier) else { return }
+                    router.handle(deeplink: deeplink)
                 }
             }
     }
 }
 ```
+
+> Note:
+> The route type returned by `DeeplinkHandler` (`D`) must match the route type used by `RoutingView(destination:root:)`.
 
 ### What handle(deeplink:) Does
 
@@ -110,6 +120,90 @@ func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<Home
     }
 }
 ```
+
+## Composing Deeplink Handlers (Nested Route Logic)
+
+For larger apps, compose deep link handling by feature instead of keeping all cases in one switch.
+This works well with nested route structures.
+
+```swift
+enum AppRoute: Route {
+    case home
+    case profile(ProfileRoute)
+
+    var name: String {
+        switch self {
+        case .home: "home"
+        case .profile(let child): "profile.\(child.name)"
+        }
+    }
+}
+
+enum ProfileRoute: Route {
+    case overview
+    case edit(userId: String)
+
+    var name: String {
+        switch self {
+        case .overview: "overview"
+        case .edit(let userId): "edit(\(userId))"
+        }
+    }
+}
+```
+
+Create feature-level handlers:
+
+```swift
+enum ProfileDeeplinkID: Hashable, Sendable {
+    case profile(userId: String)
+    case editProfile(userId: String)
+}
+
+struct ProfileDeeplinkHandler: DeeplinkHandler {
+    typealias R = ProfileDeeplinkID
+    typealias D = AppRoute
+
+    func deeplink(from route: ProfileDeeplinkID) async throws -> DeeplinkRoute<AppRoute>? {
+        switch route {
+        case .profile(let userId):
+            return DeeplinkRoute(type: .push, route: .profile(.overview), path: [.home])
+        case .editProfile(let userId):
+            return DeeplinkRoute(type: .push, route: .profile(.edit(userId: userId)))
+        }
+    }
+}
+```
+
+Then compose at the app level:
+
+```swift
+enum AppDeeplinkID: Hashable, Sendable {
+    case home
+    case profile(ProfileDeeplinkID)
+}
+
+struct AppDeeplinkHandler: DeeplinkHandler {
+    typealias R = AppDeeplinkID
+    typealias D = AppRoute
+
+    private let profileHandler = ProfileDeeplinkHandler()
+
+    func deeplink(from route: AppDeeplinkID) async throws -> DeeplinkRoute<AppRoute>? {
+        switch route {
+        case .home:
+            return DeeplinkRoute(type: .push, route: .home)
+        case .profile(let profileID):
+            return try await profileHandler.deeplink(from: profileID)
+        }
+    }
+}
+```
+
+Benefits:
+- keeps handlers small and feature-focused
+- mirrors your nested route architecture
+- makes deeplink behavior easier to test
 
 ## Tab-Based Deep Links
 
@@ -149,15 +243,19 @@ struct AppTabDeeplinkHandler: TabDeeplinkHandler {
 Handle with TabRouter:
 
 ```swift
-@Environment(\.tabRouter) private var tabRouter
+@Environment(\.router) private var router
 
 func handleDeeplink(_ url: URL) async throws {
-    if let identifier = DeeplinkIdentifier(url: url),
-       let tabDeeplink = try await handler.deeplink(from: identifier) {
-        tabRouter?.handle(tabDeeplink: tabDeeplink)
-    }
+    guard let identifier = DeeplinkIdentifier(url: url) else { return }
+    guard let tabDeeplink = try await handler.deeplink(from: identifier) else { return }
+    router.tabRouter?.handle(tabDeeplink: tabDeeplink)
 }
 ```
+
+> Note:
+> `tabRouter` is injected inside `RoutingTabView` descendants.
+> If deeplink handling is implemented in a parent container that owns `RoutingTabView`,
+> use `@Environment(\.router)` and then `router.tabRouter` to access the tab router.
 
 ## Building Navigation Paths
 

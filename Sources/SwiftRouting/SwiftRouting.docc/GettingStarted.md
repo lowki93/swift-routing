@@ -135,6 +135,9 @@ NavigationLink(route: HomeRoute.detail(id: 42)) {
 NavigationLink("View Details", route: HomeRoute.detail(id: 42))
 ```
 
+`NavigationLink(route:)` performs push navigation in the current stack.
+For modal presentation, use `router.present(...)` or `router.cover(...)`.
+
 ## Next Steps
 
 Now that you have the basics, explore these topics:
@@ -143,4 +146,4 @@ Now that you have the basics, explore these topics:
 - <doc:NavigationBasics> - Explore all navigation methods in detail
 - <doc:TabNavigation> - Set up tab-based navigation
 - <doc:Deeplinks> - Handle deep links in your app
-- <doc:RouteContext> - Pass data between routes
+- <doc:RouteContextGuide> - Pass data between routes

@@ -24,19 +24,18 @@ import SwiftUI
 ///
 ///   var body: some View {
 ///     ContentView()
-///       .routerContext(ItemSelectionContext.self) { [weak self] context in
-///         self?.selectedItem = context.item
+///       .routerContext(ItemSelectionContext.self) { context in
+///         selectedItem = context.item
 ///       }
 ///   }
 /// }
 /// ```
 ///
-/// > Warning: Always capture references with `[weak self]` or `[weak viewModel]`
-/// > in the closure to prevent memory leaks.
+/// > Warning: If you capture class references (for example a view model),
+/// > use weak captures to prevent retain cycles.
 public struct RouterContextModifier<R: RouteContext>: ViewModifier {
 
   @Environment(\.router) private var router
-  @State private var firstTime: Bool = false
   let object: R.Type
   let perform: (R) -> Void
 
@@ -55,7 +54,7 @@ public extension View {
   /// The closure is called whenever a matching context is dispatched via
   /// `router.context(_:)` or `router.terminate(_:)`.
   ///
-  /// > Warning: If you reference a class instance (e.g. a view model) inside
+  /// > Warning: If you reference a class instance (for example a view model) inside
   /// > the `perform` closure, capture it `[weak]` or `[unowned]` to prevent memory leaks.
   ///
   /// ## Example

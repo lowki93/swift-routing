@@ -10,9 +10,28 @@
 /// A `DeeplinkRoute` specifies the navigation path and the final route to be displayed.
 /// It includes an optional sequence of intermediate routes that construct the navigation path
 /// before reaching the target destination.
+///
+/// ## Example
+/// ```swift
+/// let deeplink = DeeplinkRoute(
+///   root: .home,
+///   type: .push,
+///   route: .product(id: 42),
+///   path: [.catalog, .category(id: 7)]
+/// )
+/// ```
+///
+/// `Router.handle(deeplink:)` applies this in order:
+/// 1. Optionally override `root`
+/// 2. Push all routes from `path`
+/// 3. Navigate to final `route` using `type`
+///
+/// > Note:
+/// > Stored properties are internal by design and consumed by the router.
+/// > Build deeplinks through the public initializer.
 public struct DeeplinkRoute<R: Route> {
 
-  /// The root to override
+  /// Optional root route to replace the current root before processing `path` and `route`.
   let root: R?
 
   /// The presentation type that determines how the final route should be displayed.
@@ -28,7 +47,7 @@ public struct DeeplinkRoute<R: Route> {
   /// Creates a new deeplink route definition.
   ///
   /// - Parameters:
-  ///   - root: The root route to display
+  ///   - root: Optional root route to replace the current root before navigation.
   ///   - type: The presentation style (e.g., push, sheet, cover, root).
   ///   - route: The final route to be displayed.
   ///   - path: An optional sequence of intermediate routes leading to the final destination.

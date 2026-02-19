@@ -7,38 +7,35 @@
 
 import SwiftUI
 
-/// Creates a `NavigationStack` with its own `Router` to manage navigation, sheets, and covers.
+/// Creates a navigation container with its own `Router`.
 ///
-/// `RoutingView` functions like a standard `NavigationStack`, but it automatically manages
-/// the root `Route`, all `RouteDestination` instances, and presentation types such as sheets or covers.
+/// `RoutingView` is the entry point for SwiftRouting. It owns a router scope, maps routes
+/// through `RouteDestination`, and handles stack, sheet, and cover presentations.
 ///
-/// ## Usage
+/// Use it as:
+/// - a standard stack container (`RoutingView(destination:root:)`)
+/// - a tab-scoped stack (`RoutingView(tab:destination:root:)`)
+/// - a custom root-content container (initializers with `@ViewBuilder content`)
+///
+/// ## Examples
 /// ```swift
-/// // For a tab-based navigation with a route as root:
+/// // Standard stack with a route root
+/// RoutingView(destination: HomeRoute.self, root: .page1)
+///
+/// // Standard stack with a custom root view
+/// RoutingView(destination: HomeRoute.self, root: .page1) { Page1View() }
+///
+/// // Tab-scoped stack with a route root
 /// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1)
 ///
-/// // For a tab-based navigation with a view as root:
-/// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self) { Page1View() }
-///
-/// // For a stack-based navigation with a route as root:
-/// RoutingView(stack: "Page", destination: HomeRoute.self, root: .page1)
-///
-/// // For a stack-based navigation with a view as root:
-/// RoutingView(stack: "Page", destination: HomeRoute.self) { Page1View() }
+/// // Tab-scoped stack with a custom root view
+/// RoutingView(tab: HomeTab.tab1, destination: HomeRoute.self, root: .page1) { Page1View() }
 /// ```
-///
-/// ## Closable
-/// Any presented `RoutingView` instance is automatically closable.
 ///
 /// ## Notes
-/// - This navigation system supports deep linking and maintains navigation state.
-/// - It allows navigation operations such as `push`, `present`, and `cover` within the stack.
-/// - Works seamlessly with `TabView` by creating independent navigation stacks per tab.
-///
-/// ## Example with Stack Navigation
-/// ```swift
-/// RoutingView(stack: "Main", destination: HomeRoute.self, root: .page1)
-/// ```
+/// - Presented routing scopes are dismissible via `router.close()`.
+/// - Each tab can own an independent router stack.
+/// - Supports deep links and full programmatic navigation (`push`, `present`, `cover`, `update(root:)`).
 @MainActor
 public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
 
@@ -70,7 +67,7 @@ public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
     self.content = content?()
   }
 
-  /// Initializes a `RoutingView` for tab-based navigation.
+  /// Initializes a `RoutingView` for tab-based navigation with custom root content.
   ///
   /// - Parameters:
   ///   - tab: The tab associated with the navigation, conforming to `TabRoute`.
@@ -86,7 +83,7 @@ public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
     self.init(type: tab.type, inStack: true, destination: destination, root: root, content: content)
   }
 
-  /// Initializes a `RoutingView` for tab-based navigation.
+  /// Initializes a `RoutingView` for stack-based navigation with custom root content.
   ///
   /// - Parameters:
   ///   - destination: The type conforming to `RouteDestination`, defining the available routes.
