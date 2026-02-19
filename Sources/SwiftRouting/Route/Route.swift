@@ -9,12 +9,12 @@ import Foundation
 
 /// Defines route types used to navigate between views.
 ///
-/// The `Route` type is an enumeration that represents all available views.
+/// A `Route` is typically an enum that represents all available destinations.
 ///
 /// ## Defining a Route
 /// Routes are defined as an enumeration with associated values when needed.
 /// ```swift
-/// enum HomeRoute {
+/// enum HomeRoute: Route {
 ///   case page1
 ///   case page2(Int)
 ///   case page3(String)
@@ -31,6 +31,7 @@ import Foundation
 ///
 /// ## Associating a Route with a View
 /// Use the `RouteDestination` protocol to map a route to a specific view.
+/// The most common setup is to make your top-level route conform to `RouteDestination`:
 /// ```swift
 /// extension HomeRoute: @retroactive RouteDestination {
 ///   public static func view(for route: HomeRoute) -> some View {
@@ -43,6 +44,68 @@ import Foundation
 /// }
 /// ```
 ///
+/// For environment-driven destination mapping, prefer a dedicated wrapper view.
+/// See ``RouteDestination`` for a complete example.
+///
+/// ## Nested Routes
+/// For larger features, you can compose routes by nesting a child route inside a parent route.
+/// This keeps route definitions modular while preserving type safety.
+/// ```swift
+/// enum AppRoute: Route {
+///   case home
+///   case profile(ProfileRoute)
+///
+///   var name: String {
+///     switch self {
+///       case .home: "home"
+///       case let .profile(child): "profile.\(child.name)"
+///     }
+///   }
+/// }
+///
+/// enum ProfileRoute: Route {
+///   case overview
+///   case edit(userID: String)
+///
+///   var name: String {
+///     switch self {
+///       case .overview: "overview"
+///       case let .edit(userID): "edit(\(userID))"
+///     }
+///   }
+/// }
+///
+/// extension AppRoute: @retroactive RouteDestination {
+///   public static func view(for route: AppRoute) -> some View {
+///     switch route {
+///       case .home:
+///         HomeView()
+///       case let .profile(child):
+///         ProfileRouteDestination(route: child)
+///     }
+///   }
+/// }
+///
+/// struct ProfileRouteDestination: View {
+///   let route: ProfileRoute
+///
+///   var body: some View {
+///     switch route {
+///       case .overview:
+///         ProfileOverviewView()
+///       case let .edit(userID):
+///         ProfileEditView(userID: userID)
+///     }
+///   }
+/// }
+/// ```
+///
+/// > Note:
+/// > In this pattern, only the top-level route used by `RoutingView` (for example `AppRoute`)
+/// > needs to conform to `RouteDestination`.
+/// > Child route enums (for example `ProfileRoute`) can stay as plain `Route` types and be rendered
+/// > through dedicated destination views like `ProfileRouteDestination`.
+///
 /// ## Using a Route for Navigation
 /// You can trigger navigation using a router instance:
 /// ```swift
@@ -51,7 +114,7 @@ import Foundation
 /// }
 /// ```
 public protocol Route: Hashable, Sendable, CustomStringConvertible {
-  /// `Name` of your route
+  /// The human-readable name of the route, used for logging and diagnostics.
   var name: String { get }
 
   /// The navigation style used when presenting this route.
