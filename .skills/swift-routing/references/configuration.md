@@ -43,13 +43,15 @@ let configuration = Configuration(
 Examples:
 
 ```swift
-let devConfig = Configuration(
-  logger: LoggerConfiguration.default(loggerConfiguration:),
-  shouldCrashOnRouteNotFound: true
-)
+// Uses default logger
+let devConfig = Configuration(shouldCrashOnRouteNotFound: true)
+let prodConfig = Configuration(shouldCrashOnRouteNotFound: false)
 
-let prodConfig = Configuration(
-  logger: LoggerConfiguration.default(loggerConfiguration:),
+// Custom logger
+let customConfig = Configuration(
+  logger: { payload in
+    print(payload.message)
+  },
   shouldCrashOnRouteNotFound: false
 )
 ```

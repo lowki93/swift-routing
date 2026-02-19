@@ -254,8 +254,11 @@ Then execute:
 ```swift
 @Environment(\.router) private var router
 
-guard let tabDeeplink = try await handler.deeplink(from: identifier) else { return }
-router.tabRouter?.handle(tabDeeplink: tabDeeplink)
+func handleTabDeeplink(_ url: URL) async throws {
+  guard let identifier = DeeplinkIdentifier(url: url) else { return }
+  guard let tabDeeplink = try await handler.deeplink(from: identifier) else { return }
+  router.tabRouter?.handle(tabDeeplink: tabDeeplink)
+}
 ```
 
 `TabRouter` switches tab first, then runs the embedded deeplink (if present).

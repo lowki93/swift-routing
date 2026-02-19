@@ -83,7 +83,7 @@ TabView(selection: .tabToRoot(for: $selectedTab, in: router)) {
 }
 ```
 
-Nuance:
+Key difference:
 - `TabView + tabToRoot`: no `TabRouter` environment value.
 - `RoutingTabView`: provides `@Environment(\.tabRouter)` and cross-tab programmatic control.
 
@@ -102,7 +102,7 @@ tabRouter?.change(tab: HomeTab.profile)
 tabRouter?.push(HomeRoute.detail(id: 42), in: HomeTab.profile)
 tabRouter?.present(HomeRoute.settings, in: HomeTab.profile)
 tabRouter?.cover(HomeRoute.onboarding, in: HomeTab.profile)
-tabRouter?.update(root: HomeRoute.profileRoot, in: HomeTab.profile)
+tabRouter?.update(root: HomeRoute.profile, in: HomeTab.profile)
 tabRouter?.popToRoot(in: HomeTab.profile)
 ```
 
