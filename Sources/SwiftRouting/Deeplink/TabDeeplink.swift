@@ -10,6 +10,20 @@
 /// `TabDeeplink` allows for deep linking into a specific tab within the application,
 /// optionally providing a `DeeplinkRoute` to navigate further within that tab.
 ///
+/// ## Example
+/// ```swift
+/// let tabDeeplink = TabDeeplink(
+///   tab: HomeTab.profile,
+///   deeplink: DeeplinkRoute(type: .push, route: .profile(userId: "42"))
+/// )
+/// ```
+///
+/// `TabRouter.handle(tabDeeplink:)` first switches to `tab`, then executes `deeplink` (if present).
+///
+/// > Note:
+/// > Stored properties are internal by design and consumed by the tab router.
+/// > Build tab deeplinks through the public initializer.
+///
 /// - Parameters:
 ///   - Tab: The tab type, conforming to `TabRoute`.
 ///   - R: The route type, conforming to `Route`.

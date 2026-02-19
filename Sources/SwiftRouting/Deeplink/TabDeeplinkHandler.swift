@@ -5,15 +5,21 @@
 //  Created by Kévin Budain on 2/18/26.
 //
 
-/// A protocol for converting a given `Route` into a `TabDeeplink`
+/// A protocol for converting an external deeplink input into a `TabDeeplink`
 /// that can be handled by the `TabRouter`.
 ///
 /// This protocol allows defining how specific routes should be translated
 /// into a tab target with an optional deeplink navigation path.
+/// Handlers can be composed by feature and delegated from a top-level handler
+/// to mirror nested route architecture.
 ///
 /// ## Example
 /// ```swift
 /// struct HomeTabDeeplinkHandler: TabDeeplinkHandler {
+///   typealias R = DeeplinkIdentifier
+///   typealias T = HomeTab
+///   typealias D = HomeRoute
+///
 ///   func deeplink(from route: DeeplinkIdentifier) async throws -> TabDeeplink<HomeTab, HomeRoute>? {
 ///     switch route {
 ///     case .userProfile(let userId):
@@ -23,6 +29,26 @@
 ///       )
 ///     default:
 ///       return nil
+///     }
+///   }
+/// }
+/// ```
+///
+/// ## Composed Example (Nested Feature Logic)
+/// ```swift
+/// struct AppTabDeeplinkHandler: TabDeeplinkHandler {
+///   typealias R = AppDeeplinkID
+///   typealias T = HomeTab
+///   typealias D = HomeRoute
+///
+///   private let profileHandler = ProfileTabDeeplinkHandler()
+///
+///   func deeplink(from route: AppDeeplinkID) async throws -> TabDeeplink<HomeTab, HomeRoute>? {
+///     switch route {
+///     case .home:
+///       return TabDeeplink(tab: .home, deeplink: DeeplinkRoute(type: .push, route: .home))
+///     case .profile(let profileID):
+///       return try await profileHandler.deeplink(from: profileID)
 ///     }
 ///   }
 /// }
