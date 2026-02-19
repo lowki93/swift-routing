@@ -6,6 +6,7 @@ This skill provides practical guidance for implementing and troubleshooting navi
 
 Primary focus areas:
 - `Route` and `RouteDestination`
+- `RoutingView` and router lifecycle
 - `Router` and `RouterModel`
 - `TabRouter` and tab-based flows
 - Deep links
@@ -36,20 +37,17 @@ Do not use this skill for:
 
 ## Quick Decision Tree
 
-- Need to define destinations and route enums?
-  - Use `references/routes.md`
-- Need push/present/cover/back/pop behaviors?
-  - Use `references/router.md`
-- Need tab orchestration and per-tab routing?
-  - Use `references/tab-router.md`
-- Need external URL/app link routing?
-  - Use `references/deeplinks.md`
-- Need child-to-parent data passing?
-  - Use `references/route-context.md`
-- Need declarative row/button navigation?
-  - Use `references/navigation-link.md`
-- Debugging odd lifecycle or routing behavior?
-  - Use `references/troubleshooting.md`
+Recommended learning order:
+1. `references/routes.md`
+2. `references/routing-view.md`
+3. `references/router.md`
+
+Then continue by use case:
+- Tab orchestration and per-tab routing -> `references/tab-router.md`
+- External URL/app link routing -> `references/deeplinks.md`
+- Child-to-parent data passing -> `references/route-context.md`
+- Declarative row/button navigation -> `references/navigation-link.md`
+- Lifecycle/routing debugging -> `references/troubleshooting.md`
 
 ## Triage-First Playbook
 
