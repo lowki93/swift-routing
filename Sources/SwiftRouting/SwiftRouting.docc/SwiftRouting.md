@@ -106,8 +106,7 @@ npx openskills read swift-routing
 
 ### Route Context
 
-- <doc:RouteContext>
-- ``RouteContext``
+- <doc:RouteContextGuide>
 
 ### Configuration
 

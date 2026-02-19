@@ -58,6 +58,73 @@ extension HomeRoute: RouteDestination {
 }
 ```
 
+## Nested Routes and Nested Destinations
+
+For larger apps, you can model feature subflows as nested routes.
+Keep the top-level route as the destination entry point, and render child routes through dedicated destination views.
+
+```swift
+enum AppRoute: Route {
+    case home
+    case profile(ProfileRoute)
+
+    var name: String {
+        switch self {
+        case .home:
+            "home"
+        case .profile(let child):
+            "profile.\(child.name)"
+        }
+    }
+}
+
+enum ProfileRoute: Route {
+    case overview
+    case edit(userId: String)
+
+    var name: String {
+        switch self {
+        case .overview:
+            "overview"
+        case .edit(let userId):
+            "edit(\(userId))"
+        }
+    }
+}
+```
+
+Map from the top-level destination:
+
+```swift
+extension AppRoute: RouteDestination {
+    static func view(for route: AppRoute) -> some View {
+        switch route {
+        case .home:
+            HomeView()
+        case .profile(let child):
+            ProfileRouteDestination(route: child)
+        }
+    }
+}
+
+struct ProfileRouteDestination: View {
+    let route: ProfileRoute
+
+    var body: some View {
+        switch route {
+        case .overview:
+            ProfileOverviewView()
+        case .edit(let userId):
+            ProfileEditView(userId: userId)
+        }
+    }
+}
+```
+
+> Note:
+> Only the route type used by `RoutingView(destination:root:)` (for example `AppRoute`) needs to conform to `RouteDestination`.
+> Child route enums (for example `ProfileRoute`) can remain plain `Route` types.
+
 ## Customizing Routing Type
 
 By default, routes use push navigation. Override `routingType` to change this:

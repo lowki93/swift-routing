@@ -45,45 +45,21 @@ struct ParentView: View {
 For ViewModel-driven architectures, register observers via `any RouterModel`:
 
 ```swift
-struct ParentView: View {
-    @Environment(\.router) private var router
-    @State private var viewModel: ParentViewModel?
-    
-    var body: some View {
-        ContentView(viewModel: viewModel)
-            .onAppear {
-                guard viewModel == nil else { return }
-                let vm = ParentViewModel(router: router)
-                vm.startObservingContext()
-                viewModel = vm
-            }
-            .onDisappear {
-                viewModel?.stopObservingContext()
-            }
-    }
-}
-
 @MainActor
 final class ParentViewModel: ObservableObject {
-    @Published var selectedUser: User?
     private let router: any RouterModel
-    private var isObservingContext = false
 
     init(router: any RouterModel) {
         self.router = router
     }
 
     func startObservingContext() {
-        guard !isObservingContext else { return }
-        isObservingContext = true
         router.add(context: UserSelectionContext.self) { [weak self] context in
             self?.selectedUser = context.selectedUser
         }
     }
 
     func stopObservingContext() {
-        guard isObservingContext else { return }
-        isObservingContext = false
         router.remove(context: UserSelectionContext.self)
     }
 

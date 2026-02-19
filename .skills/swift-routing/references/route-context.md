@@ -41,23 +41,18 @@ Use this when context handling belongs to presentation/business logic in a ViewM
 final class ParentViewModel: ObservableObject {
   @Published var selectedUser: User?
   private let router: any RouterModel
-  private var isObservingContext = false
 
   init(router: any RouterModel) {
     self.router = router
   }
 
   func startObservingContext() {
-    guard !isObservingContext else { return }
-    isObservingContext = true
     router.add(context: UserSelectionContext.self) { [weak self] context in
       self?.selectedUser = context.selectedUser
     }
   }
 
   func stopObservingContext() {
-    guard isObservingContext else { return }
-    isObservingContext = false
     router.remove(context: UserSelectionContext.self)
   }
 }

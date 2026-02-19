@@ -163,9 +163,9 @@ For MVVM architectures, inject the router using ``RouterModel``:
 
 ```swift
 class DetailViewModel: ObservableObject {
-    private let router: RouterModel
+    private let router: any RouterModel
     
-    init(router: RouterModel) {
+    init(router: any RouterModel) {
         self.router = router
     }
     

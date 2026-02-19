@@ -146,4 +146,4 @@ Now that you have the basics, explore these topics:
 - <doc:NavigationBasics> - Explore all navigation methods in detail
 - <doc:TabNavigation> - Set up tab-based navigation
 - <doc:Deeplinks> - Handle deep links in your app
-- <doc:RouteContext> - Pass data between routes
+- <doc:RouteContextGuide> - Pass data between routes
