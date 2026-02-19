@@ -11,6 +11,7 @@ Primary focus areas:
 - `TabRouter` and tab-based flows
 - Deep links
 - Route context patterns
+- `Configuration` and route-not-found behavior
 
 ## When To Use This Skill
 
@@ -47,6 +48,7 @@ Then continue by use case:
 - External URL/app link routing -> `references/deeplinks.md`
 - Child-to-parent data passing -> `references/route-context.md`
 - Declarative row/button navigation -> `references/navigation-link.md`
+- Configuring logger and route-not-found policy -> `references/configuration.md`
 - Lifecycle/routing debugging -> `references/troubleshooting.md`
 
 ## Triage-First Playbook
