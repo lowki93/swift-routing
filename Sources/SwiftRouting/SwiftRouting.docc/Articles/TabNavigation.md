@@ -75,6 +75,10 @@ struct ContentView: View {
 
 The `.tabToRoot` binding automatically pops to root when the user taps the already-selected tab.
 
+> Important:
+> This native `TabView` approach does **not** provide a `TabRouter` in the environment.
+> Use `RoutingTabView` when you need `@Environment(\\.tabRouter)` and cross-tab programmatic actions.
+
 ## Using TabRouter
 
 Access the ``TabRouter`` from the environment to navigate across tabs:
@@ -103,6 +107,10 @@ struct SomeView: View {
 | `update(root:in:)` | Update the root of a specific tab |
 | `popToRoot(in:)` | Pop to root in a specific tab |
 
+> Note:
+> For `update(root:in:)`, `push(_:in:)`, `present(_:in:)`, and `cover(_:in:)`:
+> if you pass a non-`nil` tab, `TabRouter` switches to that tab first (equivalent to calling `change(tab:)`), then performs the navigation action.
+
 ### Navigating in Current Tab
 
 Pass `nil` for the tab parameter to use the currently selected tab:
@@ -110,9 +118,6 @@ Pass `nil` for the tab parameter to use the currently selected tab:
 ```swift
 // Push in the current tab
 tabRouter?.push(HomeRoute.detail(id: 42), in: nil)
-
-// Equivalent to
-tabRouter?.push(HomeRoute.detail(id: 42), in: tabRouter?.tab.wrapped)
 ```
 
 ## Hiding the Tab Bar
