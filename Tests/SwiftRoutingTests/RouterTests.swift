@@ -46,4 +46,32 @@ struct RouterTests {
       #expect(presentedRouter.isPresented == true)
     }
   }
+
+  @MainActor
+  enum RouteCount {
+    @Test
+    static func pathIsEmpty_return_one() {
+      let router = RouterTests().router
+      #expect(router.path.isEmpty)
+      #expect(router.routeCount == 1)
+    }
+
+    @Test
+    static func pathHasOneElement_return_two() {
+      let router = RouterTests().router
+      router.push(TestRoute.details(id: "42"))
+      #expect(router.routeCount == 2)
+    }
+
+    @Test
+    static func pathIsClearedWithPopToRoot_return_one() {
+      let router = RouterTests().router
+      router.push(TestRoute.home)
+      router.push(TestRoute.settings)
+      #expect(router.routeCount == 3)
+
+      router.popToRoot()
+      #expect(router.routeCount == 1)
+    }
+  }
 }
