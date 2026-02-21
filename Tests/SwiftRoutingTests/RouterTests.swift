@@ -25,4 +25,25 @@ struct RouterTests {
       #expect((router.currentRoute.wrapped as? TestRoute) == .details(id: "42"))
     }
   }
+
+  @MainActor
+  enum IsPresented {
+    @Test
+    static func routerTypeIsApp_return_false() {
+      let router = RouterTests().router
+      #expect(router.isPresented == false)
+    }
+
+    @Test
+    static func routerTypeIsPresented_return_true() {
+      let parent = Router(configuration: .default)
+      let presentedRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: parent
+      )
+
+      #expect(presentedRouter.isPresented == true)
+    }
+  }
 }
