@@ -281,4 +281,69 @@ struct RouterTests {
       #expect(router.sheet?.inStack == false)
     }
   }
+
+  @MainActor
+  struct PopToRoot: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func pathHasElements_popToRoot_return_emptyPath() {
+      router.push(TestRoute.home)
+      router.push(TestRoute.details(id: "42"))
+      #expect(router.path.count == 2)
+
+      router.popToRoot()
+
+      #expect(router.path.isEmpty)
+      #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
+    }
+  }
+
+  @MainActor
+  struct Back: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func pathHasElements_back_return_removeLastElement() {
+      router.push(TestRoute.home)
+      router.push(TestRoute.details(id: "42"))
+      #expect(router.path.count == 2)
+
+      router.back()
+
+      #expect(router.path.count == 1)
+      #expect((router.currentRoute.wrapped as? TestRoute) == .home)
+    }
+
+    @Test
+    func pathIsEmpty_back_return_noChange() {
+      router.back()
+
+      #expect(router.path.isEmpty)
+      #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
+    }
+  }
+
+  @MainActor
+  struct Close: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func routerTypeIsApp_close_return_triggerCloseFalse() {
+      router.close()
+      #expect(router.triggerClose == false)
+    }
+
+    @Test
+    func routerTypeIsPresented_close_return_triggerCloseTrue() {
+      let presentedRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: router
+      )
+
+      presentedRouter.close()
+      #expect(presentedRouter.triggerClose == true)
+    }
+  }
 }
