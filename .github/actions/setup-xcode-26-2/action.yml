@@ -1,0 +1,20 @@
+name: Setup Xcode 26.2
+description: Select Xcode 26.2 on macOS runners
+
+runs:
+  using: composite
+  steps:
+    - name: Select Xcode 26.2
+      shell: bash
+      run: |
+        set -euo pipefail
+        XCODE_APP="/Applications/Xcode_26.2.app"
+        if [ ! -d "${XCODE_APP}" ]; then
+          echo "Xcode 26.2 not found on this runner."
+          echo "Installed Xcode versions:"
+          ls -d /Applications/Xcode*.app || true
+          exit 1
+        fi
+        echo "Using ${XCODE_APP}"
+        sudo xcode-select -s "${XCODE_APP}/Contents/Developer"
+        xcodebuild -version
