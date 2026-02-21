@@ -9,6 +9,8 @@ protocol RouterTestSuite {
 @MainActor
 extension RouterTestSuite {
   init() {
-    self.init(router: Router(configuration: .default))
+    self.init(
+      router: Router(configuration: Configuration(logger: nil, shouldCrashOnRouteNotFound: false))
+    )
   }
 }
