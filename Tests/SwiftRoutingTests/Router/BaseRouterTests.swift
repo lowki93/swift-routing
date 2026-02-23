@@ -1,23 +1,40 @@
 import Testing
+import Foundation
 @testable import SwiftRouting
 
 @MainActor
 struct BaseRouterTests {
+  @MainActor
+  struct Deinit {
+    @Test
+    func baseRouterIsDeallocated_deinit_return_loggerCalledWithDelete() {
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      var expectedBaseRouter: BaseRouter? = BaseRouter(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedBaseRouterId = expectedBaseRouter?.id
+
+      expectedBaseRouter = nil
+
+      #expect(expectedBaseRouter == nil)
+      #expect(loggerSpy.receivedRouterId == expectedBaseRouterId)
+      assertLogMessageKind(loggerSpy, is: .delete)
+    }
+  }
+
   @MainActor
   struct AddChild: BaseRouterTestSuite {
     let baseRouter: BaseRouter
 
     @Test
     func childExists_addChild_return_childInChildren() {
-      let configuration = Configuration(logger: nil, shouldCrashOnRouteNotFound: false)
-      let child = BaseRouter(configuration: configuration)
+      let configuration = Configuration()
+      let expectedChild = BaseRouter(configuration: configuration)
 
-      #expect(baseRouter.children[child.id] == nil)
+      #expect(baseRouter.children[expectedChild.id] == nil)
 
-      baseRouter.addChild(child)
+      baseRouter.addChild(expectedChild)
 
       #expect(baseRouter.children.count == 1)
-      #expect(baseRouter.children[child.id]?.value?.id == child.id)
+      #expect(baseRouter.children[expectedChild.id]?.value?.id == expectedChild.id)
     }
   }
 
@@ -27,24 +44,24 @@ struct BaseRouterTests {
 
     @Test
     func childExists_removeChild_return_childRemovedFromChildren() {
-      let configuration = Configuration(logger: nil, shouldCrashOnRouteNotFound: false)
-      let child = BaseRouter(configuration: configuration)
-      baseRouter.addChild(child)
-      #expect(baseRouter.children[child.id] != nil)
+      let configuration = Configuration()
+      let expectedChild = BaseRouter(configuration: configuration)
+      baseRouter.addChild(expectedChild)
+      #expect(baseRouter.children[expectedChild.id] != nil)
 
-      baseRouter.removeChild(child)
+      baseRouter.removeChild(expectedChild)
 
-      #expect(baseRouter.children[child.id] == nil)
+      #expect(baseRouter.children[expectedChild.id] == nil)
       #expect(baseRouter.children.isEmpty)
     }
 
     @Test
     func childDoesNotExist_removeChild_return_noChange() {
-      let configuration = Configuration(logger: nil, shouldCrashOnRouteNotFound: false)
-      let child = BaseRouter(configuration: configuration)
+      let configuration = Configuration()
+      let expectedChild = BaseRouter(configuration: configuration)
       #expect(baseRouter.children.isEmpty)
 
-      baseRouter.removeChild(child)
+      baseRouter.removeChild(expectedChild)
 
       #expect(baseRouter.children.isEmpty)
     }
@@ -56,11 +73,11 @@ struct BaseRouterTests {
 
     @Test
     func childrenExist_clearChildren_return_emptyChildren() {
-      let configuration = Configuration(logger: nil, shouldCrashOnRouteNotFound: false)
-      let firstChild = BaseRouter(configuration: configuration)
-      let secondChild = BaseRouter(configuration: configuration)
-      baseRouter.addChild(firstChild)
-      baseRouter.addChild(secondChild)
+      let configuration = Configuration()
+      let expectedFirstChild = BaseRouter(configuration: configuration)
+      let expectedSecondChild = BaseRouter(configuration: configuration)
+      baseRouter.addChild(expectedFirstChild)
+      baseRouter.addChild(expectedSecondChild)
       #expect(baseRouter.children.count == 2)
 
       baseRouter.clearChildren()
@@ -70,48 +87,12 @@ struct BaseRouterTests {
   }
 
   @MainActor
-  struct Log {
-    @Test
-    func messageDelete_log_return_loggerCalledWithDelete() {
-      let setup = makeBaseRouterWithLoggerSpy()
-      let baseRouter = setup.baseRouter
-
-      baseRouter.log(.delete)
-
-      #expect(setup.received()?.router.id == baseRouter.id)
-      assertLogMessageKind(setup.received()?.message, is: .delete)
-    }
-
-    @Test
-    func messageActionClose_log_return_loggerCalledWithActionClose() {
-      let setup = makeBaseRouterWithLoggerSpy()
-      let baseRouter = setup.baseRouter
-
-      baseRouter.log(.action(.close))
-
-      #expect(setup.received()?.router.id == baseRouter.id)
-      assertLogMessageKind(setup.received()?.message, is: .actionClose)
-    }
-
-    @Test
-    func messageOnAppear_log_return_loggerCalledWithOnAppearRoute() {
-      let setup = makeBaseRouterWithLoggerSpy()
-      let baseRouter = setup.baseRouter
-
-      baseRouter.log(.onAppear(TestRoute.home))
-
-      #expect(setup.received()?.router.id == baseRouter.id)
-      assertLogMessageKind(setup.received()?.message, is: .onAppear(.home))
-    }
-  }
-
-  @MainActor
   struct FindTab: BaseRouterTestSuite {
     let baseRouter: BaseRouter
 
     @Test
     func matchingTabExists_findTab_return_routerForTab() {
-      let routerInTab = Router(
+      let expectedRouterInTab = Router(
         root: AnyRoute(wrapped: TestRoute.home),
         type: .tab("home", hideTabBarOnPush: false),
         parent: baseRouter
@@ -119,7 +100,7 @@ struct BaseRouterTests {
 
       let foundRouter = baseRouter.find(tab: TestTabRoute.home)
 
-      #expect(foundRouter?.id == routerInTab.id)
+      #expect(foundRouter?.id == expectedRouterInTab.id)
     }
 
     @Test
@@ -140,9 +121,9 @@ struct BaseRouterTests {
 
     @Test
     func oneTabRouter_tabRouter_return_instance() {
-      let tabRouter = TabRouter(tab: TestTabRoute.home, parent: baseRouter)
+      let expectedTabRouter = TabRouter(tab: TestTabRoute.home, parent: baseRouter)
 
-      #expect(baseRouter.tabRouter?.id == tabRouter.id)
+      #expect(baseRouter.tabRouter?.id == expectedTabRouter.id)
     }
 
     @Test
@@ -166,11 +147,11 @@ struct BaseRouterTests {
 
     @Test
     func matchingTabRouteTypeExists_tabRouterFor_return_tabRouter() {
-      let tabRouter = TabRouter(tab: TestTabRoute.home, parent: baseRouter)
+      let expectedTabRouter = TabRouter(tab: TestTabRoute.home, parent: baseRouter)
 
       let foundTabRouter = baseRouter.tabRouter(for: TestTabRoute.settings)
 
-      #expect(foundTabRouter?.id == tabRouter.id)
+      #expect(foundTabRouter?.id == expectedTabRouter.id)
     }
 
     @Test
@@ -204,35 +185,16 @@ struct BaseRouterTests {
 
     @Test
     func matchingTabRouterAndRouterExist_findRouterInTabRouter_return_router() {
-      let tabRouter = TabRouter(tab: TestTabRoute.home, parent: baseRouter)
-      let routerInTab = Router(
+      let expectedTabRouter = TabRouter(tab: TestTabRoute.home, parent: baseRouter)
+      let expectedRouterInTab = Router(
         root: AnyRoute(wrapped: TestRoute.home),
         type: .tab("home", hideTabBarOnPush: false),
-        parent: tabRouter
+        parent: expectedTabRouter
       )
 
       let foundRouter = baseRouter.findRouterInTabRouter(for: TestTabRoute.home)
 
-      #expect(foundRouter?.id == routerInTab.id)
+      #expect(foundRouter?.id == expectedRouterInTab.id)
     }
   }
-}
-
-@MainActor
-private func makeBaseRouterWithLoggerSpy() -> (
-  baseRouter: BaseRouter,
-  received: () -> LoggerConfiguration?
-) {
-  var received: LoggerConfiguration?
-  let configuration = Configuration(
-    logger: { loggerConfiguration in
-      received = loggerConfiguration
-    },
-    shouldCrashOnRouteNotFound: false
-  )
-
-  return (
-    baseRouter: BaseRouter(configuration: configuration),
-    received: { received }
-  )
 }

@@ -67,6 +67,8 @@ Rules:
 - Keep one behavior per test.
 - Use `#expect(...)` with clear expected values.
 - Do not combine unrelated scenarios in one test.
+- For mocked/setup reference values asserted in expectations, prefix variable names with `expected` (example: `expectedRouter`, `expectedSettingsContext`).
+- Do not use `expected` prefix for observed outputs returned/emitted by the system under test (example: keep `foundRouter`, `receivedEvent`).
 
 ## 5) Mocks and Test Models
 
@@ -79,3 +81,9 @@ Rules:
 - Tests must be deterministic (no randomness, no timing dependency).
 - Prefer pure state verification over logs.
 - Run `swift test` after each test change.
+
+## 7) Logger Assertions
+
+- When a test must validate logging behavior, always use `LoggerSpy`.
+- Assert log payloads via `assertLogMessageKind(loggerSpy, is: ...)` instead of ad-hoc booleans/switches in each test.
+- Prefer asserting both the log message and the emitting router identity (`loggerSpy.receivedRouterId`).

@@ -10,7 +10,7 @@ protocol RouterTestSuite {
 extension RouterTestSuite {
   init() {
     self.init(
-      router: Router(configuration: Configuration(logger: nil, shouldCrashOnRouteNotFound: false))
+      router: Router(configuration: Configuration())
     )
   }
 }

@@ -9,10 +9,6 @@ protocol BaseRouterTestSuite {
 @MainActor
 extension BaseRouterTestSuite {
   init() {
-    self.init(
-      baseRouter: BaseRouter(
-        configuration: Configuration(logger: nil, shouldCrashOnRouteNotFound: false)
-      )
-    )
+    self.init(baseRouter: BaseRouter(configuration: Configuration()))
   }
 }

@@ -33,13 +33,13 @@ struct RouterTests {
 
     @Test
     func routerTypeIsPresented_return_true() {
-      let presentedRouter = Router(
+      let expectedPresentedRouter = Router(
         root: AnyRoute(wrapped: TestRoute.home),
         type: .presented("sheet"),
         parent: router
       )
 
-      #expect(presentedRouter.isPresented == true)
+      #expect(expectedPresentedRouter.isPresented == true)
     }
   }
 
@@ -174,6 +174,21 @@ struct RouterTests {
       #expect((router.currentRoute.wrapped as? TestRoute) == .settings)
       #expect(router.path.isEmpty)
     }
+
+    @Test
+    func pathIsEmpty_updateRoot_return_loggerCalledWithNavigationRoot() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.update(root: TestRoute.settings)
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .navigation(from: DefaultRoute.main, to: TestRoute.settings, type: .root)
+      )
+    }
   }
 
   @MainActor
@@ -198,6 +213,21 @@ struct RouterTests {
       #expect((router.path.last?.wrapped as? TestRoute) == .details(id: "42"))
       #expect((router.currentRoute.wrapped as? TestRoute) == .details(id: "42"))
     }
+
+    @Test
+    func pathIsEmpty_push_return_loggerCalledWithNavigationPush() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.push(TestRoute.home)
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push)
+      )
+    }
   }
 
   @MainActor
@@ -219,6 +249,21 @@ struct RouterTests {
       #expect((router.sheet?.wrapped as? TestRoute) == .settings)
       #expect(router.sheet?.inStack == false)
     }
+
+    @Test
+    func withStackTrue_return_loggerCalledWithNavigationSheet() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.present(TestRoute.settings, withStack: true)
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .navigation(from: DefaultRoute.main, to: TestRoute.settings, type: .sheet(withStack: true))
+      )
+    }
   }
 
   @MainActor
@@ -232,6 +277,21 @@ struct RouterTests {
       #expect((router.cover?.wrapped as? TestRoute) == .settings)
       #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
       #expect(router.path.isEmpty)
+    }
+
+    @Test
+    func pathIsEmpty_cover_return_loggerCalledWithNavigationCover() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.cover(TestRoute.settings)
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .navigation(from: DefaultRoute.main, to: TestRoute.settings, type: .cover)
+      )
     }
   }
 
@@ -297,6 +357,21 @@ struct RouterTests {
       #expect(router.path.isEmpty)
       #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
     }
+
+    @Test
+    func pathHasElements_popToRoot_return_loggerCalledWithActionPopToRoot() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.popToRoot()
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.popToRoot))
+    }
   }
 
   @MainActor
@@ -322,6 +397,21 @@ struct RouterTests {
       #expect(router.path.isEmpty)
       #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
     }
+
+    @Test
+    func pathHasElements_back_return_loggerCalledWithActionBack() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.back()
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
+    }
   }
 
   @MainActor
@@ -336,14 +426,41 @@ struct RouterTests {
 
     @Test
     func routerTypeIsPresented_close_return_triggerCloseTrue() {
-      let presentedRouter = Router(
+      let expectedPresentedRouter = Router(
         root: AnyRoute(wrapped: TestRoute.home),
         type: .presented("sheet"),
         parent: router
       )
 
-      presentedRouter.close()
-      #expect(presentedRouter.triggerClose == true)
+      expectedPresentedRouter.close()
+      #expect(expectedPresentedRouter.triggerClose == true)
+    }
+
+    @Test
+    func routerTypeIsPresented_close_return_loggerCalledWithActionClose() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedParentRouter
+      )
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedPresentedRouter.close()
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
     }
   }
+}
+
+@MainActor
+private func makeRouterWithLoggerSpy() -> (router: Router, loggerSpy: LoggerSpy) {
+  let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+  let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+  expectedLoggerSpy.receivedMessage = nil
+  expectedLoggerSpy.receivedRouterId = nil
+  return (expectedRouter, expectedLoggerSpy)
 }

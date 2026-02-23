@@ -11,7 +11,7 @@ protocol TabRouterTestSuite {
 extension TabRouterTestSuite {
   init() {
     let parentRouter = Router(
-      configuration: Configuration(logger: nil, shouldCrashOnRouteNotFound: false)
+      configuration: Configuration()
     )
     let tabRouter = TabRouter(tab: TestTabRoute.home, parent: parentRouter)
     self.init(parentRouter: parentRouter, tabRouter: tabRouter)
