@@ -543,6 +543,87 @@ struct RouterTests {
       #expect(expectedLoggerSpy.receivedMessage == nil)
     }
   }
+
+  @MainActor
+  struct Terminate: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func contextExistsInPreviousRoute_terminate_return_popToContextRouteAndLoggerBackCount() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      var receivedContext: StringContext?
+
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.add(context: StringContext.self) { context in
+        receivedContext = context
+      }
+      expectedRouter.push(TestRoute.settings)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.terminate(StringContext(value: "42"))
+
+      #expect(receivedContext == StringContext(value: "42"))
+      #expect(expectedRouter.path.count == 1)
+      #expect((expectedRouter.currentRoute.wrapped as? TestRoute) == .home)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 1)))
+    }
+
+    @Test
+    func contextDoesNotExistAndRouterIsPresented_terminate_return_triggerCloseTrueAndLoggerClose() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedParentRouter
+      )
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedPresentedRouter.terminate(StringContext(value: "42"))
+
+      #expect(expectedPresentedRouter.triggerClose == true)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
+    }
+
+    @Test
+    func contextDoesNotExistAndPathHasElements_terminate_return_backOneAndLoggerBack() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.push(TestRoute.settings)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.terminate(StringContext(value: "42"))
+
+      #expect(expectedRouter.path.count == 1)
+      #expect((expectedRouter.currentRoute.wrapped as? TestRoute) == .home)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
+    }
+
+    @Test
+    func contextDoesNotExistAndPathIsEmpty_terminate_return_noChangeAndNoLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.terminate(StringContext(value: "42"))
+
+      #expect(expectedRouter.path.isEmpty)
+      #expect((expectedRouter.currentRoute.wrapped as? DefaultRoute) == .main)
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+  }
 }
 
 @MainActor
