@@ -624,6 +624,87 @@ struct RouterTests {
       #expect(expectedLoggerSpy.receivedMessage == nil)
     }
   }
+
+  @MainActor
+  struct Context: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func matchingContextExistsInParentAndCurrent_context_return_executeBoth() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedChildRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedParentRouter
+      )
+      var expectedParentReceivedContext: StringContext?
+      var expectedChildReceivedContext: StringContext?
+
+      expectedParentRouter.add(context: StringContext.self) { context in
+        expectedParentReceivedContext = context
+      }
+      expectedChildRouter.add(context: StringContext.self) { context in
+        expectedChildReceivedContext = context
+      }
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedChildRouter.context(StringContext(value: "42"))
+
+      #expect(expectedParentReceivedContext == StringContext(value: "42"))
+      #expect(expectedChildReceivedContext == StringContext(value: "42"))
+      #expect(expectedLoggerSpy.receivedRouterId == expectedChildRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .context(.execute(StringContext(value: "42"), from: TestRoute.home))
+      )
+    }
+
+    @Test
+    func matchingContextDoesNotExist_context_return_noActionAndNoLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      var expectedReceivedIntContext: IntContext?
+      expectedRouter.add(context: IntContext.self) { context in
+        expectedReceivedIntContext = context
+      }
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.context(StringContext(value: "42"))
+
+      #expect(expectedReceivedIntContext == nil)
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func matchingContextExistsOnlyInParent_context_return_executeParentAndLoggerFromParent() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedChildRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedParentRouter
+      )
+      var expectedParentReceivedContext: StringContext?
+      expectedParentRouter.add(context: StringContext.self) { context in
+        expectedParentReceivedContext = context
+      }
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedChildRouter.context(StringContext(value: "42"))
+
+      #expect(expectedParentReceivedContext == StringContext(value: "42"))
+      #expect(expectedLoggerSpy.receivedRouterId == expectedParentRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .context(.execute(StringContext(value: "42"), from: DefaultRoute.main))
+      )
+    }
+  }
 }
 
 @MainActor
