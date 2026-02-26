@@ -171,6 +171,7 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func remove<R: RouteContext>(context object: R.Type) {
+    // TODO: update logic -> should remove only context in a given route
     for element in contexts.all(for: object) {
       contexts.remove(element)
       log(.context(.remove(element.route, context: element.routerContext)))

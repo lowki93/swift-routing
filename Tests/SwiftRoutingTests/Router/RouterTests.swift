@@ -454,6 +454,79 @@ struct RouterTests {
       assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
     }
   }
+
+  @MainActor
+  struct AddContext: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func contextTypeIsAdded_addContext_return_contextRegistered() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.add(context: StringContext.self) { _ in }
+
+      #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .context(.add(DefaultRoute.main, context: StringContext.self))
+      )
+    }
+
+    @Test
+    func contextTypeAlreadyRegistered_addContext_return_noDuplicateContext() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.add(context: StringContext.self) { _ in }
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+      expectedRouter.add(context: StringContext.self) { _ in }
+
+      #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+  }
+
+  @MainActor
+  struct RemoveContext: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func contextTypeIsRegistered_removeContext_return_contextRemovedAndLoggerCalled() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.add(context: StringContext.self) { _ in }
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.remove(context: StringContext.self)
+
+      #expect(expectedRouter.contexts.all(for: StringContext.self).isEmpty)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .context(.remove(DefaultRoute.main, context: StringContext.self))
+      )
+    }
+
+    @Test
+    func contextTypeIsNotRegistered_removeContext_return_noChangeAndNoLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.remove(context: StringContext.self)
+
+      #expect(expectedRouter.contexts.all(for: StringContext.self).isEmpty)
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+  }
 }
 
 @MainActor
