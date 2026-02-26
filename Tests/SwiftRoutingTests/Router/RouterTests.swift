@@ -526,6 +526,22 @@ struct RouterTests {
       #expect(expectedRouter.contexts.all(for: StringContext.self).isEmpty)
       #expect(expectedLoggerSpy.receivedMessage == nil)
     }
+
+    @Test
+    func contextTypeIsRegisteredOnRootAndCurrentRouteDiffers_removeContext_return_noChangeAndNoLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.add(context: StringContext.self) { _ in }
+      expectedRouter.push(TestRoute.home)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.remove(context: StringContext.self)
+
+      #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
   }
 }
 

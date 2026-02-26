@@ -146,6 +146,8 @@ Observers are automatically removed when their route is popped. You can also rem
 router.remove(context: UserSelectionContext.self)
 ```
 
+`remove(context:)` removes observers for that context type **only on the current route**.
+
 ## Common Patterns
 
 ### Selection Flow

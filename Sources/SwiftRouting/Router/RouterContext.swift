@@ -42,14 +42,25 @@ struct RouterContext: Hashable {
 
 extension Set where Element == RouterContext {
   func first<T: RouteContext>(for termination: T.Type, currentRoute: any Route) -> Self.Element? {
-    first(where: { $0.routerContext == termination && $0.route.hashValue != currentRoute.hashValue })
+    first(where: { $0.routerContext == termination && !$0.route.isSame(as: currentRoute) })
   }
 
   func all<T: RouteContext>(for termination: T.Type) -> Self {
     filter { $0.routerContext == termination }
   }
 
+  func all<T: RouteContext>(for termination: T.Type, currentRoute: any Route) -> Self {
+    filter {
+      $0.routerContext == termination
+      && $0.route.isSame(as: currentRoute)
+    }
+  }
+
   func all(for routes: [any Route]) -> Self {
-    filter { routes.map(\.hashValue).contains($0.route.hashValue) }
+    filter { context in
+      routes.contains { route in
+        context.route.isSame(as: route)
+      }
+    }
   }
 }
