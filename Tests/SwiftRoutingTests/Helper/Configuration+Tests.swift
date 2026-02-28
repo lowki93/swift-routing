@@ -6,12 +6,14 @@ final class LoggerSpy {
   var receivedLoggerConfiguration: LoggerConfiguration?
   var receivedMessage: LoggerMessage?
   var receivedRouterId: UUID?
+  var receivedCallCount: Int = 0
 
   init(storesConfiguration: Bool = true) {
     self.storesConfiguration = storesConfiguration
   }
 
   func receive(_ loggerConfiguration: LoggerConfiguration) {
+    receivedCallCount += 1
     receivedMessage = loggerConfiguration.message
     receivedRouterId = loggerConfiguration.router.id
     if storesConfiguration {

@@ -705,6 +705,89 @@ struct RouterTests {
       )
     }
   }
+
+  @MainActor
+  struct CloseChildren: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func noPresentedChild_closeChildren_return_noChangeAndNoLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
+      expectedRouter.cover = AnyRoute(wrapped: TestRoute.settings)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.closeChildren()
+
+      #expect((expectedRouter.sheet?.wrapped as? TestRoute) == .home)
+      #expect((expectedRouter.cover?.wrapped as? TestRoute) == .settings)
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func presentedChildrenExist_closeChildren_return_sheetAndCoverNil() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedSheetChild = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedRouter
+      )
+      let expectedPresentedCoverChild = Router(
+        root: AnyRoute(wrapped: TestRoute.settings),
+        type: .presented("cover"),
+        parent: expectedRouter
+      )
+      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
+      expectedRouter.cover = AnyRoute(wrapped: TestRoute.settings)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+      expectedLoggerSpy.receivedCallCount = 0
+
+      #expect(expectedPresentedSheetChild.id != expectedPresentedCoverChild.id)
+      expectedRouter.closeChildren()
+
+      #expect(expectedRouter.sheet == nil)
+      #expect(expectedRouter.cover == nil)
+      #expect(expectedLoggerSpy.receivedCallCount == 2)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      let expectedIsCloseChildrenLog: Bool
+      if case .action(.closeChildren(_))? = expectedLoggerSpy.receivedMessage {
+        expectedIsCloseChildrenLog = true
+      } else {
+        expectedIsCloseChildrenLog = false
+      }
+      #expect(expectedIsCloseChildrenLog)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+      expectedLoggerSpy.receivedCallCount = 0
+    }
+
+    @Test
+    func presentedChildExists_closeChildren_return_loggerCalledWithActionCloseChildren() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedChild = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedRouter
+      )
+      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.closeChildren()
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.closeChildren(expectedPresentedChild)))
+      // Clear the retained message payload before child deallocation to avoid reentrant logger writes.
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+    }
+  }
 }
 
 @MainActor
@@ -713,5 +796,6 @@ private func makeRouterWithLoggerSpy() -> (router: Router, loggerSpy: LoggerSpy)
   let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
   expectedLoggerSpy.receivedMessage = nil
   expectedLoggerSpy.receivedRouterId = nil
+  expectedLoggerSpy.receivedCallCount = 0
   return (expectedRouter, expectedLoggerSpy)
 }
