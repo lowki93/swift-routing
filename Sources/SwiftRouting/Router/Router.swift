@@ -28,7 +28,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var root: AnyRoute
   @Published internal var path: [AnyRoute] = [] {
     willSet {
-      updateContext(old: path, new: newValue)
+      removeContext(old: path, new: newValue)
     }
   }
   @Published internal var sheet: AnyRoute? {
@@ -237,7 +237,7 @@ private extension Router  {
     }
   }
 
-  func updateContext(old: [AnyRoute], new: [AnyRoute]) {
+  func removeContext(old: [AnyRoute], new: [AnyRoute]) {
     let count = old.count - new.count
     guard count > 0 else { return }
 

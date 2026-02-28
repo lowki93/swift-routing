@@ -35,6 +35,37 @@ func assertLogMessageKind(_ loggerSpy: LoggerSpy, is expected: LogMessageKind) {
   #expect(matches)
 }
 
+@MainActor
+func assertLogMessagesContain(_ loggerSpy: LoggerSpy, expected: LogMessageKind) {
+  let found = loggerSpy.receivedMessages.contains { message in
+    matchesLogMessage(expected: expected, actual: message)
+  }
+  #expect(found)
+}
+
+private func matchesLogMessage(expected: LogMessageKind, actual: LoggerMessage) -> Bool {
+  switch (expected, actual) {
+  case (.delete, .delete):
+    return true
+  case let (.onAppear(expectedRoute), .onAppear(route)):
+    return expectedRoute.hashValue == route.hashValue
+  case let (.onDisappear(expectedRoute), .onDisappear(route)):
+    return expectedRoute.hashValue == route.hashValue
+  case let (.action(expectedAction), .action(action)):
+    return assertAction(expectedAction, action)
+  case let (.context(expectedContext), .context(context)):
+    return assertContext(expectedContext, context)
+  case let (.navigation(from: expectedFrom, to: expectedTo, type: expectedType), .navigation(from: from, to: to, type: type)):
+    return expectedFrom.hashValue == from.hashValue
+      && expectedTo.hashValue == to.hashValue
+      && assertRoutingType(expectedType, type)
+  case (.create, .create):
+    return true
+  default:
+    return false
+  }
+}
+
 private func assertRoutingType(_ expected: RoutingType, _ actual: RoutingType) -> Bool {
   switch (expected, actual) {
   case (.root, .root):
