@@ -237,6 +237,118 @@ struct TabRouterTests {
       #expect(expectedSettingsRouter.path.isEmpty)
     }
   }
+
+  @MainActor
+  struct HandleTabDeeplink: TabRouterTestSuite {
+    let parentRouter: Router
+    let tabRouter: TabRouter
+
+    @Test
+    func deeplinkIsNil_handleTabDeeplink_return_tabChangedOnly() {
+      let expectedHomeRouter = attachRouter(in: tabRouter, tab: .home, root: .home)
+      let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
+      expectedHomeRouter.push(TestRoute.details(id: "existing"))
+      let tabDeeplink = TabDeeplink<TestTabRoute, TestRoute>(tab: .settings, deeplink: nil)
+
+      tabRouter.handle(tabDeeplink: tabDeeplink)
+
+      #expect((tabRouter.tab.wrapped as? TestTabRoute) == .settings)
+      #expect(expectedHomeRouter.path.count == 1)
+      #expect(expectedSettingsRouter.path.isEmpty)
+    }
+
+    @Test
+    func deeplinkWithPushType_handleTabDeeplink_return_routePushedInTargetTab() {
+      let expectedHomeRouter = attachRouter(in: tabRouter, tab: .home, root: .home)
+      let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
+      let deeplink = DeeplinkRoute(type: .push, route: TestRoute.details(id: "deeplink"))
+      let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
+
+      tabRouter.handle(tabDeeplink: tabDeeplink)
+
+      #expect((tabRouter.tab.wrapped as? TestTabRoute) == .settings)
+      #expect(expectedHomeRouter.path.isEmpty)
+      #expect((expectedSettingsRouter.path.last?.wrapped as? TestRoute) == .details(id: "deeplink"))
+    }
+
+    @Test
+    func deeplinkWithPath_handleTabDeeplink_return_pathAndRouteInTargetTab() {
+      let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
+      let deeplink = DeeplinkRoute(
+        type: .push,
+        route: TestRoute.details(id: "final"),
+        path: [TestRoute.home, TestRoute.settings]
+      )
+      let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
+
+      tabRouter.handle(tabDeeplink: tabDeeplink)
+
+      #expect((tabRouter.tab.wrapped as? TestTabRoute) == .settings)
+      #expect(expectedSettingsRouter.path.count == 3)
+      #expect((expectedSettingsRouter.path[0].wrapped as? TestRoute) == .home)
+      #expect((expectedSettingsRouter.path[1].wrapped as? TestRoute) == .settings)
+      #expect((expectedSettingsRouter.path[2].wrapped as? TestRoute) == .details(id: "final"))
+    }
+
+    @Test
+    func deeplinkWithRoot_handleTabDeeplink_return_rootUpdatedInTargetTab() {
+      let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
+      let deeplink = DeeplinkRoute(
+        root: TestRoute.home,
+        type: .push,
+        route: TestRoute.details(id: "after-root")
+      )
+      let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
+
+      tabRouter.handle(tabDeeplink: tabDeeplink)
+
+      #expect((tabRouter.tab.wrapped as? TestTabRoute) == .settings)
+      #expect((expectedSettingsRouter.root.wrapped as? TestRoute) == .home)
+      #expect((expectedSettingsRouter.path.last?.wrapped as? TestRoute) == .details(id: "after-root"))
+    }
+
+    @Test
+    func deeplinkWithSheetType_handleTabDeeplink_return_sheetPresentedInTargetTab() {
+      let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
+      let deeplink = DeeplinkRoute(type: .sheet(withStack: true), route: TestRoute.details(id: "sheet"))
+      let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
+
+      tabRouter.handle(tabDeeplink: tabDeeplink)
+
+      #expect((tabRouter.tab.wrapped as? TestTabRoute) == .settings)
+      #expect(expectedSettingsRouter.path.isEmpty)
+      #expect((expectedSettingsRouter.sheet?.wrapped as? TestRoute) == .details(id: "sheet"))
+    }
+
+    @Test
+    func existingPathInTargetTab_handleTabDeeplink_return_pathClearedAndDeeplinkApplied() {
+      let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
+      expectedSettingsRouter.push(TestRoute.home)
+      expectedSettingsRouter.push(TestRoute.details(id: "existing"))
+      #expect(expectedSettingsRouter.path.count == 2)
+      let deeplink = DeeplinkRoute(type: .push, route: TestRoute.details(id: "new"))
+      let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
+
+      tabRouter.handle(tabDeeplink: tabDeeplink)
+
+      #expect((tabRouter.tab.wrapped as? TestTabRoute) == .settings)
+      #expect(expectedSettingsRouter.path.count == 1)
+      #expect((expectedSettingsRouter.path.last?.wrapped as? TestRoute) == .details(id: "new"))
+    }
+
+    @Test
+    func tabRouterDoesNotExistForTab_handleTabDeeplink_return_tabChangedOnly() {
+      let tabDeeplink = TabDeeplink(
+        tab: TestTabRoute.settings,
+        deeplink: DeeplinkRoute(type: .push, route: TestRoute.details(id: "orphan"))
+      )
+
+      tabRouter.handle(tabDeeplink: tabDeeplink)
+
+      #expect((tabRouter.tab.wrapped as? TestTabRoute) == .settings)
+      #expect(tabRouter.routers.isEmpty)
+    }
+  }
 }
 
 @MainActor
