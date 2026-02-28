@@ -135,6 +135,11 @@ public extension Route {
   var description: String {
     name
   }
+
+  func isSame(as other: any Route) -> Bool {
+    ObjectIdentifier(type(of: self)) == ObjectIdentifier(type(of: other))
+      && self.hashValue == other.hashValue
+  }
 }
 
 /// A type-erased wrapper for any `Route` type.

@@ -28,7 +28,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var root: AnyRoute
   @Published internal var path: [AnyRoute] = [] {
     willSet {
-      updatePath(old: path, new: newValue)
+      removeContext(old: path, new: newValue)
     }
   }
   @Published internal var sheet: AnyRoute? {
@@ -171,7 +171,8 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func remove<R: RouteContext>(context object: R.Type) {
-    for element in contexts.all(for: object) {
+    // Removes observers matching the context type only for the current route.
+    for element in contexts.all(for: object, currentRoute: currentRoute.wrapped) {
       contexts.remove(element)
       log(.context(.remove(element.route, context: element.routerContext)))
     }
@@ -236,7 +237,7 @@ private extension Router  {
     }
   }
 
-  func updatePath(old: [AnyRoute], new: [AnyRoute]) {
+  func removeContext(old: [AnyRoute], new: [AnyRoute]) {
     let count = old.count - new.count
     guard count > 0 else { return }
 

@@ -101,10 +101,11 @@ public protocol RouterModel: BaseRouterModel {
   ///   - perform: A closure executed when the context is triggered.
   func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void)
 
-  /// Removes all context observers for a specific `RouteContext` type.
+  /// Removes context observers for a specific `RouteContext` type on the current route.
   ///
   /// Use this method to stop listening for a particular context type, typically during cleanup
   /// or when the observer is no longer needed.
+  /// Only observers registered on the router's current route are removed.
   ///
   /// - Parameter object: The `RouteContext` type to stop observing.
   func remove<R: RouteContext>(context object: R.Type)

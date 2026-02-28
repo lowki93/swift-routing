@@ -63,7 +63,7 @@ extension Configuration {
   /// The default configuration with built-in logging using `OSLog`.
   ///
   /// Logs router actions, including type, message, and metadata.
-  static var `default`: Configuration {
+  public static var `default`: Configuration {
     Configuration(
       logger: LoggerConfiguration.default(loggerConfiguration:),
       shouldCrashOnRouteNotFound: false
