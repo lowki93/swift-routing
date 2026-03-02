@@ -25,10 +25,21 @@ jobs:
       - name: Setup Xcode 26.2
         uses: ./.github/actions/setup-xcode-26-2
 
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF_NAME}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          else
+            # For manual dispatch, use latest tag or fallback
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+            echo "version=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build DocC
         run: |
           set -euo pipefail
-          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${{ steps.version.outputs.version }}"
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
           OUTPUT_DIR="build/docc"
 
@@ -56,47 +67,47 @@ jobs:
           marker = "docc-version-switcher"
           css = f"""
           <style id="{marker}-style">
-            .docc-version-switcher {{
+            .docc-version-banner {{
               position: fixed;
               top: 0;
-              left: 50%;
-              transform: translateX(60px);
-              height: 52px;
+              left: 0;
+              right: 0;
+              height: 32px;
+              background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
               display: flex;
               align-items: center;
-              z-index: 10000;
+              justify-content: center;
+              gap: 8px;
+              z-index: 99999;
               font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
               font-size: 13px;
+              color: rgba(255, 255, 255, 0.9);
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
             }}
-            .docc-version-switcher select {{
-              background: transparent;
-              color: var(--color-figure-gray-secondary, #6e6e73);
-              border: none;
-              padding: 4px 8px;
-              cursor: pointer;
-              font-size: 13px;
+            .docc-version-banner .banner-label {{
               font-weight: 400;
             }}
-            .docc-version-switcher select:hover {{
-              color: var(--color-figure-gray, #1d1d1f);
+            .docc-version-banner select {{
+              background: rgba(255, 255, 255, 0.1);
+              color: #fff;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 4px;
+              padding: 3px 8px;
+              cursor: pointer;
+              font-size: 12px;
+              font-weight: 500;
             }}
-            .docc-version-switcher select:focus {{
+            .docc-version-banner select:hover {{
+              background: rgba(255, 255, 255, 0.15);
+            }}
+            .docc-version-banner select:focus {{
               outline: none;
             }}
-            @media (prefers-color-scheme: dark) {{
-              .docc-version-switcher select {{
-                color: var(--color-figure-gray-secondary-dark, #a1a1a6);
-              }}
-              .docc-version-switcher select:hover {{
-                color: var(--color-figure-gray-dark, #f5f5f7);
-              }}
+            body {{
+              padding-top: 32px !important;
             }}
-            @media only screen and (max-width: 767px) {{
-              .docc-version-switcher {{
-                left: auto;
-                right: 12px;
-                transform: none;
-              }}
+            nav.nav, .nav--in-breakpoint-container, header {{
+              top: 32px !important;
             }}
           </style>
           """
@@ -116,10 +127,10 @@ jobs:
               }}
             }}
 
-            const container = document.createElement("div");
-            container.className = "docc-version-switcher";
-            container.innerHTML = '<select id="docc-version-select" aria-label="Version"></select>';
-            document.body.appendChild(container);
+            const banner = document.createElement("div");
+            banner.className = "docc-version-banner";
+            banner.innerHTML = '<span class="banner-label">SwiftRouting</span><select id="docc-version-select" aria-label="Version"></select>';
+            document.body.insertBefore(banner, document.body.firstChild);
 
             fetch(basePath + "versions.json", {{ cache: "no-store" }})
               .then(r => r.json())
@@ -170,7 +181,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${{ steps.version.outputs.version }}"
           OUTPUT_DIR="build/docc"
           PUBLISH_DIR=".publish"
           REPO="${GITHUB_REPOSITORY}"
