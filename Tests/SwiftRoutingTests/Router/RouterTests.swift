@@ -907,6 +907,134 @@ struct RouterTests {
       expectedLoggerSpy.receivedRouterId = nil
     }
   }
+
+  @MainActor
+  struct HandleDeeplink: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func pathHasElements_handleDeeplink_return_pathClearedBeforeNavigation() {
+      router.push(TestRoute.home)
+      router.push(TestRoute.settings)
+      #expect(router.path.count == 2)
+      let deeplink = DeeplinkRoute.push(TestRoute.details(id: "new"))
+
+      router.handle(deeplink: deeplink)
+
+      #expect(router.path.count == 1)
+      #expect((router.currentRoute.wrapped as? TestRoute) == .details(id: "new"))
+    }
+
+    @Test
+    func deeplinkWithRoot_handleDeeplink_return_rootUpdatedBeforeNavigation() {
+      let deeplink = DeeplinkRoute.push(TestRoute.details(id: "after-root"), root: .home)
+
+      router.handle(deeplink: deeplink)
+
+      #expect((router.root.wrapped as? TestRoute) == .home)
+      #expect(router.path.count == 1)
+      #expect((router.currentRoute.wrapped as? TestRoute) == .details(id: "after-root"))
+    }
+
+    @Test
+    func deeplinkWithPath_handleDeeplink_return_intermediateRoutesPushedBeforeFinal() {
+      let deeplink = DeeplinkRoute.push(
+        TestRoute.details(id: "final"),
+        path: [.home, .settings]
+      )
+
+      router.handle(deeplink: deeplink)
+
+      #expect(router.path.count == 3)
+      #expect((router.path[0].wrapped as? TestRoute) == .home)
+      #expect((router.path[1].wrapped as? TestRoute) == .settings)
+      #expect((router.path[2].wrapped as? TestRoute) == .details(id: "final"))
+    }
+
+    @Test
+    func deeplinkWithSheetType_handleDeeplink_return_sheetPresented() {
+      let deeplink = DeeplinkRoute.present(TestRoute.settings)
+
+      router.handle(deeplink: deeplink)
+
+      #expect(router.path.isEmpty)
+      #expect((router.sheet?.wrapped as? TestRoute) == .settings)
+      #expect(router.sheet?.inStack == true)
+    }
+
+    @Test
+    func deeplinkWithCoverType_handleDeeplink_return_coverPresented() {
+      let deeplink = DeeplinkRoute.cover(TestRoute.settings)
+
+      router.handle(deeplink: deeplink)
+
+      #expect(router.path.isEmpty)
+      #expect((router.cover?.wrapped as? TestRoute) == .settings)
+    }
+
+    @Test
+    func deeplinkPopToRoot_handleDeeplink_return_pathClearedAndNoNavigation() {
+      router.push(TestRoute.home)
+      router.push(TestRoute.settings)
+      #expect(router.path.count == 2)
+      let deeplink = DeeplinkRoute<TestRoute>.popToRoot()
+
+      router.handle(deeplink: deeplink)
+
+      #expect(router.path.isEmpty)
+      #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
+    }
+
+    @Test
+    func deeplinkUpdateRoot_handleDeeplink_return_rootUpdatedAndNoNavigation() {
+      let deeplink = DeeplinkRoute.updateRoot(TestRoute.home)
+
+      router.handle(deeplink: deeplink)
+
+      #expect(router.path.isEmpty)
+      #expect((router.root.wrapped as? TestRoute) == .home)
+      #expect((router.currentRoute.wrapped as? TestRoute) == .home)
+    }
+
+    @Test
+    func presentedChildExists_handleDeeplink_return_childClosedBeforeNavigation() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedChild = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedRouter
+      )
+      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
+      #expect(expectedRouter.sheet != nil)
+      #expect(expectedRouter.children[expectedPresentedChild.id] != nil)
+      expectedLoggerSpy.clearReceivedMessages()
+      let deeplink = DeeplinkRoute.push(TestRoute.settings)
+
+      expectedRouter.handle(deeplink: deeplink)
+
+      #expect(expectedRouter.sheet == nil)
+      #expect((expectedRouter.currentRoute.wrapped as? TestRoute) == .settings)
+      assertLogMessagesContain(expectedLoggerSpy, expected: .action(.closeChildren(expectedPresentedChild)))
+      expectedLoggerSpy.clearReceivedMessages()
+    }
+
+    @Test
+    func deeplinkWithRootPathAndRoute_handleDeeplink_return_fullNavigationSequence() {
+      let deeplink = DeeplinkRoute.push(
+        TestRoute.details(id: "final"),
+        root: .home,
+        path: [.settings]
+      )
+
+      router.handle(deeplink: deeplink)
+
+      #expect((router.root.wrapped as? TestRoute) == .home)
+      #expect(router.path.count == 2)
+      #expect((router.path[0].wrapped as? TestRoute) == .settings)
+      #expect((router.path[1].wrapped as? TestRoute) == .details(id: "final"))
+    }
+  }
 }
 
 @MainActor

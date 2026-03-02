@@ -39,6 +39,12 @@ Local rules:
 <location>global</location>
 </skill>
 
+<skill>
+<name>swift-docc-documentation</name>
+<description>Guidance for writing and updating Swift-DocC documentation, including article structure, symbol documentation, and navigation curation.</description>
+<location>global</location>
+</skill>
+
 </available_skills>
 <!-- SKILLS_TABLE_END -->
 

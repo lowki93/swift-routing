@@ -18,13 +18,16 @@ struct AppDeeplinkHandler: DeeplinkHandler {
     func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRoute>? {
         switch route {
         case .home:
-            return DeeplinkRoute(type: .push, route: .home)
+            return .push(.home)
             
         case .userProfile(let userId):
-            return DeeplinkRoute(type: .push, route: .profile(userId: userId))
+            return .push(.profile(userId: userId))
             
         case .settings:
-            return DeeplinkRoute(type: .sheet(), route: .settings)
+            return .present(.settings)
+            
+        case .reset:
+            return .popToRoot()
             
         default:
             return nil
@@ -33,27 +36,65 @@ struct AppDeeplinkHandler: DeeplinkHandler {
 }
 ```
 
+### Choosing the Right Factory
+
+| Scenario | Factory |
+|----------|---------|
+| Navigate to a screen in the stack | `.push(_:)` |
+| Show a modal sheet | `.present(_:)` |
+| Show a full-screen modal | `.cover(_:)` |
+| Reset navigation (logout, clear state) | `.popToRoot()` |
+| Change root without clearing stack | `.updateRoot(_:)` |
+
 ## DeeplinkRoute Structure
 
-``DeeplinkRoute`` defines how to navigate to a destination:
+``DeeplinkRoute`` defines how to navigate to a destination. Use factory methods for common scenarios:
 
 ```swift
-DeeplinkRoute(
-    root: .home,           // Optional: Override the root route
-    type: .push,           // How to present the final route
-    route: .detail(id: 1), // The destination route
-    path: [.list, .category(id: 5)]  // Optional: Intermediate routes
-)
+// Push a route onto the navigation stack
+.push(.detail(id: 1))
+
+// Push with intermediate routes (builds navigation hierarchy)
+.push(.detail(id: 1), path: [.list, .category(id: 5)])
+
+// Push with a new root
+.push(.detail(id: 1), root: .home, path: [.list])
+
+// Present as a sheet
+.present(.settings)
+.present(.settings, withStack: false)  // Without navigation stack
+
+// Present as a full-screen cover
+.cover(.onboarding)
+
+// Reset navigation without navigating to a new route
+.popToRoot()
+.popToRoot(root: .home)  // Reset and update root
+
+// Update root without additional navigation
+.updateRoot(.dashboard)
 ```
+
+### Factory Methods
+
+| Factory | Description |
+|---------|-------------|
+| `.push(_:root:path:)` | Push a route onto the navigation stack |
+| `.present(_:withStack:root:path:)` | Present as a sheet |
+| `.cover(_:root:path:)` | Present as a full-screen cover |
+| `.popToRoot(root:)` | Reset navigation to root (no final route) |
+| `.updateRoot(_:)` | Replace the root route only |
 
 ### Parameters
 
 | Parameter | Description |
 |-----------|-------------|
-| `root` | Optional route to set as the new root |
-| `type` | Presentation type (push, sheet, cover) |
-| `route` | The final destination route |
-| `path` | Array of intermediate routes to push first |
+| `root` | Optional route to set as the new root (default: `nil`) |
+| `type` | Presentation type for the final route: `.push`, `.sheet(withStack:)`, or `.cover` |
+| `route` | Optional final destination route (default: `nil` for reset scenarios) |
+| `path` | Array of intermediate routes to push first (default: `[]`) |
+
+> Note: When `route` is `nil` (e.g., with `.popToRoot()`), the final navigation step is skipped. The `type` parameter is set automatically by factory methods.
 
 ## Handling Deep Links
 
@@ -92,9 +133,29 @@ struct HomeRootView: View {
 
 1. Closes all presented modals (`closeChildren()`)
 2. Pops to the root (`popToRoot()`)
-3. Optionally updates the root route
+3. Optionally updates the root route (if `root` is set)
 4. Pushes intermediate routes from `path`
-5. Navigates to the final route with the specified type
+5. Navigates to the final route with the specified type (only if `route` is not `nil`)
+
+> Note: Step 5 is skipped when `route` is `nil`, making `.popToRoot()` and `.updateRoot(_:)` useful for reset scenarios without a final destination.
+
+### Complete Example
+
+```swift
+// Deep link: reset to dashboard, build path, then push detail as sheet
+.present(
+    .orderDetail(id: orderId),
+    root: .dashboard,
+    path: [.orders, .orderList]
+)
+```
+
+This will:
+1. Close any presented modals
+2. Pop to root
+3. Set `.dashboard` as the new root
+4. Push `.orders` then `.orderList` onto the stack
+5. Present `.orderDetail(id:)` as a sheet
 
 ## Async Deep Link Handling
 
@@ -106,14 +167,14 @@ func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<Home
     case .product(let productId):
         // Fetch product details before navigating
         let product = try await productService.fetch(id: productId)
-        return DeeplinkRoute(type: .push, route: .productDetail(product))
+        return .push(.productDetail(product))
         
     case .user(let userId):
         // Validate user exists
         guard await userService.exists(id: userId) else {
             return nil  // Return nil to ignore invalid deep links
         }
-        return DeeplinkRoute(type: .push, route: .profile(userId: userId))
+        return .push(.profile(userId: userId))
         
     default:
         return nil
@@ -167,9 +228,9 @@ struct ProfileDeeplinkHandler: DeeplinkHandler {
     func deeplink(from route: ProfileDeeplinkID) async throws -> DeeplinkRoute<AppRoute>? {
         switch route {
         case .profile(let userId):
-            return DeeplinkRoute(type: .push, route: .profile(.overview), path: [.home])
+            return .push(.profile(.overview), path: [.home])
         case .editProfile(let userId):
-            return DeeplinkRoute(type: .push, route: .profile(.edit(userId: userId)))
+            return .push(.profile(.edit(userId: userId)))
         }
     }
 }
@@ -181,6 +242,7 @@ Then compose at the app level:
 enum AppDeeplinkID: Hashable, Sendable {
     case home
     case profile(ProfileDeeplinkID)
+    case reset
 }
 
 struct AppDeeplinkHandler: DeeplinkHandler {
@@ -192,9 +254,11 @@ struct AppDeeplinkHandler: DeeplinkHandler {
     func deeplink(from route: AppDeeplinkID) async throws -> DeeplinkRoute<AppRoute>? {
         switch route {
         case .home:
-            return DeeplinkRoute(type: .push, route: .home)
+            return .push(.home)
         case .profile(let profileID):
             return try await profileHandler.deeplink(from: profileID)
+        case .reset:
+            return .popToRoot()
         }
     }
 }
@@ -207,7 +271,7 @@ Benefits:
 
 ## Tab-Based Deep Links
 
-For apps with tab navigation, implement ``TabDeeplinkHandler`` and return a ``TabDeeplink``:
+For apps with tab navigation, implement ``TabDeeplinkHandler`` and return a ``TabDeeplink``. The `deeplink` property accepts any ``DeeplinkRoute``, including reset scenarios with `.popToRoot()`:
 
 ```swift
 struct AppTabDeeplinkHandler: TabDeeplinkHandler {
@@ -220,18 +284,17 @@ struct AppTabDeeplinkHandler: TabDeeplinkHandler {
         case .profile(let userId):
             return TabDeeplink(
                 tab: .profile,
-                deeplink: DeeplinkRoute(type: .push, route: .profile(userId: userId))
+                deeplink: .push(.profile(userId: userId))
             )
             
         case .search(let query):
             return TabDeeplink(
                 tab: .search,
-                deeplink: DeeplinkRoute(
-                    type: .push,
-                    route: .searchResults(query: query),
-                    path: [.search]  // Show search screen first
-                )
+                deeplink: .push(.searchResults(query: query), path: [.search])
             )
+            
+        case .resetHome:
+            return TabDeeplink(tab: .home, deeplink: .popToRoot())
             
         default:
             return nil
@@ -239,6 +302,8 @@ struct AppTabDeeplinkHandler: TabDeeplinkHandler {
     }
 }
 ```
+
+The `handle(tabDeeplink:)` method switches to the specified tab, then delegates to `handle(deeplink:)` on that tab's router. This means all ``DeeplinkRoute`` factories work seamlessly within tabs, including `.popToRoot()` for resetting a specific tab's navigation.
 
 Handle with TabRouter:
 
@@ -263,9 +328,8 @@ For complex deep links, build a path of intermediate routes:
 
 ```swift
 // Deep link to: Home → Category → Subcategory → Product
-DeeplinkRoute(
-    type: .push,
-    route: .product(id: productId),
+.push(
+    .product(id: productId),
     path: [
         .category(id: categoryId),
         .subcategory(id: subcategoryId)
@@ -274,6 +338,23 @@ DeeplinkRoute(
 ```
 
 This ensures the back button works correctly through the entire hierarchy.
+
+## Resetting Navigation
+
+Use `.popToRoot()` to reset navigation without navigating to a specific route:
+
+```swift
+// Simply reset to root
+.popToRoot()
+
+// Reset and change the root route
+.popToRoot(root: .dashboard)
+
+// Update root only (no popToRoot, no path navigation)
+.updateRoot(.newHome)
+```
+
+These are useful for logout flows, session resets, or returning users to a clean state.
 
 ## Error Handling
 
@@ -290,6 +371,16 @@ func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<Home
         throw DeeplinkError.notFound
     }
     
-    return DeeplinkRoute(type: .push, route: .detail(data))
+    return .push(.detail(data))
 }
 ```
+
+## Topics
+
+### Related
+
+- <doc:DeeplinkRoute>
+- ``DeeplinkHandler``
+- ``TabDeeplinkHandler``
+- ``DeeplinkRoute``
+- ``TabDeeplink``
