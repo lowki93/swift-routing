@@ -82,7 +82,7 @@ public extension DeeplinkRoute {
   ///   - path: Optional intermediate routes to push before the final route.
   /// - Returns: A deeplink configured for push navigation.
   static func push(_ route: R, root: R? = nil, path: [R] = []) -> DeeplinkRoute<R> {
-    DeeplinkRoute(root: root, type: .push, route: route, path: path)
+    DeeplinkRoute(root: root, type: .push, route: route as R?, path: path)
   }
 
   /// Creates a deeplink that presents a route as a sheet.
@@ -94,7 +94,7 @@ public extension DeeplinkRoute {
   ///   - path: Optional intermediate routes to push before presenting.
   /// - Returns: A deeplink configured for sheet presentation.
   static func present(_ route: R, withStack: Bool = true, root: R? = nil, path: [R] = []) -> DeeplinkRoute<R> {
-    DeeplinkRoute(root: root, type: .sheet(withStack: withStack), route: route, path: path)
+    DeeplinkRoute(root: root, type: .sheet(withStack: withStack), route: route as R?, path: path)
   }
 
   /// Creates a deeplink that presents a route as a full-screen cover.
@@ -105,7 +105,7 @@ public extension DeeplinkRoute {
   ///   - path: Optional intermediate routes to push before presenting.
   /// - Returns: A deeplink configured for cover presentation.
   static func cover(_ route: R, root: R? = nil, path: [R] = []) -> DeeplinkRoute<R> {
-    DeeplinkRoute(root: root, type: .cover, route: route, path: path)
+    DeeplinkRoute(root: root, type: .cover, route: route as R?, path: path)
   }
 
   /// Creates a deeplink that updates the root route.

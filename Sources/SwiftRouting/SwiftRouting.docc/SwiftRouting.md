@@ -1,19 +1,34 @@
 # ``SwiftRouting``
 
-A lightweight, flexible navigation framework built on top of NavigationStack for SwiftUI.
+A lightweight, type-safe navigation framework built on top of NavigationStack for SwiftUI.
 
 ## Overview
 
 SwiftRouting simplifies navigation in SwiftUI by introducing a decoupled routing system based on enums and deep links. It provides a clean separation between routes and views, making your navigation logic more maintainable and testable.
+
+### Why SwiftRouting?
+
+SwiftUI's `NavigationStack` is powerful but can become hard to manage in larger apps. SwiftRouting provides a structured approach that keeps navigation logic **decoupled**, **testable**, and **scalable**.
+
+| Benefit | Description |
+|---------|-------------|
+| **Type-Safe Navigation** | Routes are Swift enums with associated values — no stringly-typed paths |
+| **Separation of Concerns** | Routes define *what*, views define *how* — clean architecture |
+| **Bidirectional Data Flow** | Pass data back from child routes with ``RouteContext`` |
+| **Deep Linking Ready** | Built-in support with expressive factory methods |
+| **Tab Navigation** | First-class ``TabRouter`` for cross-tab navigation |
+| **Testable** | Mock ``RouterModel`` protocol for unit testing navigation logic |
+| **Swift 6 Ready** | Full concurrency support with `@MainActor` and `Sendable` |
 
 ### Key Features
 
 - **Declarative Navigation**: Define routes as simple Swift enums with associated values
 - **Type-Safe**: Full compile-time safety for your navigation paths
 - **Deep Linking**: Built-in support for complex deep link handling
-- **Tab Navigation**: First-class support for tab-based navigation with `TabRouter`
+- **Tab Navigation**: First-class support for tab-based navigation with ``TabRouter``
 - **Presentation Modes**: Support for push, sheet, and full-screen cover presentations
-- **Context Passing**: Pass data back from child routes using `RouteContext`
+- **Context Passing**: Pass data back from child routes using ``RouteContext``
+- **Configurable Logging**: Built-in logging system for debugging and analytics
 
 ### Quick Example
 
@@ -116,5 +131,12 @@ openskills install lowki93/swift-routing --global
 
 ### Configuration
 
+- <doc:ConfigurationGuide>
 - ``Configuration``
+- ``LoggerConfiguration``
 - ``LoggerMessage``
+
+### Architecture and Testing
+
+- <doc:Architecture>
+- <doc:Testing>
