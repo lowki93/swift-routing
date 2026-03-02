@@ -57,26 +57,46 @@ jobs:
           css = f"""
           <style id="{marker}-style">
             .docc-version-switcher {{
-              display: inline-flex;
+              position: fixed;
+              top: 0;
+              left: 50%;
+              transform: translateX(60px);
+              height: 52px;
+              display: flex;
               align-items: center;
-              margin-left: 12px;
+              z-index: 10000;
               font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-              font-size: 12px;
+              font-size: 13px;
             }}
             .docc-version-switcher select {{
-              background: rgba(255, 255, 255, 0.1);
-              color: #fff;
-              border: 1px solid rgba(255, 255, 255, 0.2);
-              border-radius: 4px;
+              background: transparent;
+              color: var(--color-figure-gray-secondary, #6e6e73);
+              border: none;
               padding: 4px 8px;
               cursor: pointer;
-              font-size: 12px;
+              font-size: 13px;
+              font-weight: 400;
             }}
             .docc-version-switcher select:hover {{
-              background: rgba(255, 255, 255, 0.15);
+              color: var(--color-figure-gray, #1d1d1f);
             }}
-            .docc-version-switcher .label {{
-              display: none;
+            .docc-version-switcher select:focus {{
+              outline: none;
+            }}
+            @media (prefers-color-scheme: dark) {{
+              .docc-version-switcher select {{
+                color: var(--color-figure-gray-secondary-dark, #a1a1a6);
+              }}
+              .docc-version-switcher select:hover {{
+                color: var(--color-figure-gray-dark, #f5f5f7);
+              }}
+            }}
+            @media only screen and (max-width: 767px) {{
+              .docc-version-switcher {{
+                left: auto;
+                right: 12px;
+                transform: none;
+              }}
             }}
           </style>
           """
@@ -98,29 +118,8 @@ jobs:
 
             const container = document.createElement("div");
             container.className = "docc-version-switcher";
-            container.innerHTML = '<span class="label">Version</span><select id="docc-version-select"></select>';
-            
-            // Insert next to "Documentation" title in the nav bar
-            const insertSwitcher = () => {{
-              const navTitle = document.querySelector(".documentation-hero .title, nav .title, .nav-title, header .title");
-              if (navTitle && navTitle.parentNode) {{
-                navTitle.parentNode.insertBefore(container, navTitle.nextSibling);
-              }} else {{
-                // Fallback: try to find the nav bar header area
-                const header = document.querySelector("nav, header, .nav-menu-items");
-                if (header) {{
-                  header.appendChild(container);
-                }} else {{
-                  document.body.appendChild(container);
-                }}
-              }}
-            }};
-            
-            if (document.readyState === "loading") {{
-              document.addEventListener("DOMContentLoaded", insertSwitcher);
-            }} else {{
-              insertSwitcher();
-            }}
+            container.innerHTML = '<select id="docc-version-select" aria-label="Version"></select>';
+            document.body.appendChild(container);
 
             fetch(basePath + "versions.json", {{ cache: "no-store" }})
               .then(r => r.json())
