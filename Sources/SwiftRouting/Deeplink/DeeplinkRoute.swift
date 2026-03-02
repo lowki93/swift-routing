@@ -28,7 +28,7 @@
 ///
 /// > Note:
 /// > Stored properties are internal by design and consumed by the router.
-/// > Build deeplinks through the public initializer or factory methods.
+/// > Build deeplinks through the factory methods (`.push()`, `.present()`, `.cover()`, `.popToRoot()`, `.updateRoot()`).
 public struct DeeplinkRoute<R: Route> {
 
   /// Optional root route to replace the current root before processing `path` and `route`.
@@ -53,6 +53,7 @@ public struct DeeplinkRoute<R: Route> {
   ///   - type: The presentation style (e.g., push, sheet, cover, root).
   ///   - route: The final route to be displayed.
   ///   - path: An optional sequence of intermediate routes leading to the final destination.
+  @available(*, deprecated, message: "Use factory methods instead: .push(), .present(), .cover(), .popToRoot(), .updateRoot()")
   public init(root: R? = nil, type: RoutingType, route: R, path: [R] = []) {
     self.type = type
     self.root = root

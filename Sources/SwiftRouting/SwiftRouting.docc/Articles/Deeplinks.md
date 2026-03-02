@@ -36,6 +36,16 @@ struct AppDeeplinkHandler: DeeplinkHandler {
 }
 ```
 
+### Choosing the Right Factory
+
+| Scenario | Factory |
+|----------|---------|
+| Navigate to a screen in the stack | `.push(_:)` |
+| Show a modal sheet | `.present(_:)` |
+| Show a full-screen modal | `.cover(_:)` |
+| Reset navigation (logout, clear state) | `.popToRoot()` |
+| Change root without clearing stack | `.updateRoot(_:)` |
+
 ## DeeplinkRoute Structure
 
 ``DeeplinkRoute`` defines how to navigate to a destination. Use factory methods for common scenarios:
@@ -261,7 +271,7 @@ Benefits:
 
 ## Tab-Based Deep Links
 
-For apps with tab navigation, implement ``TabDeeplinkHandler`` and return a ``TabDeeplink``:
+For apps with tab navigation, implement ``TabDeeplinkHandler`` and return a ``TabDeeplink``. The `deeplink` property accepts any ``DeeplinkRoute``, including reset scenarios with `.popToRoot()`:
 
 ```swift
 struct AppTabDeeplinkHandler: TabDeeplinkHandler {
@@ -292,6 +302,8 @@ struct AppTabDeeplinkHandler: TabDeeplinkHandler {
     }
 }
 ```
+
+The `handle(tabDeeplink:)` method switches to the specified tab, then delegates to `handle(deeplink:)` on that tab's router. This means all ``DeeplinkRoute`` factories work seamlessly within tabs, including `.popToRoot()` for resetting a specific tab's navigation.
 
 Handle with TabRouter:
 
@@ -362,3 +374,13 @@ func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<Home
     return .push(.detail(data))
 }
 ```
+
+## Topics
+
+### Related
+
+- <doc:DeeplinkRoute>
+- ``DeeplinkHandler``
+- ``TabDeeplinkHandler``
+- ``DeeplinkRoute``
+- ``TabDeeplink``
