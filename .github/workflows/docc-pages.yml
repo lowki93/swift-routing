@@ -57,27 +57,26 @@ jobs:
           css = f"""
           <style id="{marker}-style">
             .docc-version-switcher {{
-              position: fixed;
-              top: 14px;
-              right: 18px;
-              z-index: 9999;
+              display: inline-flex;
+              align-items: center;
+              margin-left: 12px;
               font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-              font-size: 13px;
+              font-size: 12px;
             }}
             .docc-version-switcher select {{
-              background: rgba(20, 26, 38, 0.9);
+              background: rgba(255, 255, 255, 0.1);
               color: #fff;
-              border: 1px solid rgba(255, 255, 255, 0.12);
-              border-radius: 8px;
-              padding: 6px 10px;
-              min-width: 140px;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 4px;
+              padding: 4px 8px;
               cursor: pointer;
+              font-size: 12px;
+            }}
+            .docc-version-switcher select:hover {{
+              background: rgba(255, 255, 255, 0.15);
             }}
             .docc-version-switcher .label {{
-              display: inline-block;
-              margin-right: 8px;
-              color: #c8d1e0;
-              font-weight: 600;
+              display: none;
             }}
           </style>
           """
@@ -100,7 +99,28 @@ jobs:
             const container = document.createElement("div");
             container.className = "docc-version-switcher";
             container.innerHTML = '<span class="label">Version</span><select id="docc-version-select"></select>';
-            document.body.appendChild(container);
+            
+            // Insert next to "Documentation" title in the nav bar
+            const insertSwitcher = () => {{
+              const navTitle = document.querySelector(".documentation-hero .title, nav .title, .nav-title, header .title");
+              if (navTitle && navTitle.parentNode) {{
+                navTitle.parentNode.insertBefore(container, navTitle.nextSibling);
+              }} else {{
+                // Fallback: try to find the nav bar header area
+                const header = document.querySelector("nav, header, .nav-menu-items");
+                if (header) {{
+                  header.appendChild(container);
+                }} else {{
+                  document.body.appendChild(container);
+                }}
+              }}
+            }};
+            
+            if (document.readyState === "loading") {{
+              document.addEventListener("DOMContentLoaded", insertSwitcher);
+            }} else {{
+              insertSwitcher();
+            }}
 
             fetch(basePath + "versions.json", {{ cache: "no-store" }})
               .then(r => r.json())
