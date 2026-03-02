@@ -1,0 +1,94 @@
+<!doctype html><html lang="en-US" class="no-js"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="icon" href="/swift-routing/0.1.0/favicon.ico"><link rel="mask-icon" href="/swift-routing/0.1.0/favicon.svg" color="#333333"><title>Documentation</title><script>var baseUrl = "/swift-routing/0.1.0/"</script><script defer="defer" src="/swift-routing/0.1.0/js/chunk-vendors.bdb7cbba.js"></script><script defer="defer" src="/swift-routing/0.1.0/js/index.5b6366e8.js"></script><link href="/swift-routing/0.1.0/css/index.d0b63544.css" rel="stylesheet">
+<style id="docc-version-switcher-style">
+  .docc-version-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 99999;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  .docc-version-banner .banner-label {
+    font-weight: 400;
+  }
+  .docc-version-banner select {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .docc-version-banner select:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .docc-version-banner select:focus {
+    outline: none;
+  }
+  body {
+    padding-top: 32px !important;
+  }
+  nav.nav, .nav--in-breakpoint-container, header {
+    top: 32px !important;
+  }
+</style>
+
+</head><body data-color-scheme="auto"><noscript><style>.noscript{font-family:"SF Pro Display","SF Pro Icons","Helvetica Neue",Helvetica,Arial,sans-serif;margin:92px auto 140px auto;text-align:center;width:980px}.noscript-title{color:#111;font-size:48px;font-weight:600;letter-spacing:-.003em;line-height:1.08365;margin:0 auto 54px auto;width:502px}@media only screen and (max-width:1068px){.noscript{margin:90px auto 120px auto;width:692px}.noscript-title{font-size:40px;letter-spacing:0;line-height:1.1;margin:0 auto 45px auto;width:420px}}@media only screen and (max-width:735px){.noscript{margin:45px auto 60px auto;width:87.5%}.noscript-title{font-size:32px;letter-spacing:.004em;line-height:1.125;margin:0 auto 35px auto;max-width:330px;width:auto}}#loading-placeholder{display:none}</style><div class="noscript"><h1 class="noscript-title">This page requires JavaScript.</h1><p>Please turn on JavaScript in your browser and refresh the page to view its content.</p></div></noscript><div id="app"></div>
+<script id="docc-version-switcher">
+(function() {
+  const basePath = "/swift-routing/";
+  const currentPath = window.location.pathname;
+  const parts = currentPath.split("/").filter(Boolean);
+  const repo = basePath.replace(/^\//, "").replace(/\/$/, "");
+  const repoIndex = parts.indexOf(repo);
+  let currentVersion = "";
+  if (repoIndex >= 0 && parts.length > repoIndex + 1) {
+    const candidate = parts[repoIndex + 1];
+    if (/^\d+\.\d+\.\d+$/.test(candidate)) {
+      currentVersion = candidate;
+    }
+  }
+
+  const banner = document.createElement("div");
+  banner.className = "docc-version-banner";
+  banner.innerHTML = '<span class="banner-label">SwiftRouting</span><select id="docc-version-select" aria-label="Version"></select>';
+  document.body.insertBefore(banner, document.body.firstChild);
+
+  fetch(basePath + "versions.json", { cache: "no-store" })
+    .then(r => r.json())
+    .then(data => {
+      const select = document.getElementById("docc-version-select");
+      const versions = (data.versions || []).slice().reverse();
+      versions.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v + (v === data.latest ? " · latest" : "");
+        if (v === currentVersion) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.addEventListener("change", () => {
+        const v = select.value;
+        if (!v) return;
+        if (currentVersion) {
+          window.location.href = currentPath.replace("/" + currentVersion + "/", "/" + v + "/");
+        } else {
+          window.location.href = basePath + v + "/documentation/swiftrouting/";
+        }
+      });
+    })
+    .catch(() => {});
+})();
+</script>
+
+</body></html>
