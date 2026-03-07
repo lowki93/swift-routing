@@ -28,7 +28,7 @@ Example: `add NavigationLink extension tests`
 ## PR Conventions
 
 - **Title** format: `type(scope): [SWI-XX] description`
-- **Body** must follow this template:
+- **Body** must follow this template (always written in English):
 
 ```
 **What**:
