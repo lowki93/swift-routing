@@ -10,7 +10,7 @@ This article covers the most common errors and unexpected behaviors you may enco
 
 ### Symptom
 
-A route is pushed but no view appears, or the app shows a message like:
+A route is pushed but no view appears, or an error message is displayed:
 
 ```
 Route 'DetailRoute' are not define in 'HomeRoute'
@@ -18,157 +18,73 @@ Route 'DetailRoute' are not define in 'HomeRoute'
 
 ### Cause
 
-This happens when a route type doesn't match the expected ``RouteDestination``. The ``ErrorView`` is displayed when the resolved route cannot be cast to the destination's associated type.
-
-The error message comes directly from `ErrorView`:
-
-```swift
-"Route '\(type(of: route.wrapped))' are not define in '\(String(describing: destination.self))'"
-```
+SwiftRouting renders an ``ErrorView`` when the resolved route cannot be cast to the expected ``RouteDestination`` type. This typically happens when a route from one enum is pushed into a ``RoutingView`` configured for a different destination.
 
 ### Solution
 
-Ensure the pushed route belongs to the correct destination type. Each ``RoutingView`` expects routes of a specific type — mixing route types from different enums is not supported.
+Ensure the pushed route matches the destination type of the ``RoutingView`` it targets:
 
 ```swift
 // ✅ Correct — route and destination match
 router.push(HomeRoute.detail(id: 42))
 
-// ❌ Wrong — pushing a route from a different enum
-router.push(SettingsRoute.profile) // into a HomeRoute RoutingView
+// ❌ Wrong — route type doesn't match the active RoutingView
+router.push(SettingsRoute.profile)
 ```
-
----
 
 ## ErrorView Behavior
 
-``ErrorView`` is an internal view rendered when SwiftRouting cannot resolve a route to a valid destination view.
-
-Its behavior depends on ``Configuration/shouldCrashOnRouteNotFound``:
+When a route cannot be resolved, ``ErrorView`` is rendered. Its behavior depends on ``Configuration/shouldCrashOnRouteNotFound``:
 
 | `shouldCrashOnRouteNotFound` | Behavior |
 |---|---|
-| `false` (default) | Displays an error message inline: `Text(message).padding()` |
-| `true` | Calls `fatalError(message)`, crashing the app immediately |
+| `false` (default) | Displays the error message inline as `Text` |
+| `true` | Crashes the app with `fatalError` |
 
-Use `true` in debug builds to surface routing mismatches early:
+Use `true` during development to catch routing mismatches immediately. See <doc:ConfigurationGuide> for setup details.
 
-```swift
-#if DEBUG
-let config = Configuration(shouldCrashOnRouteNotFound: true)
-#else
-let config = Configuration(shouldCrashOnRouteNotFound: false)
-#endif
+## Context Not Received
 
-RoutingView(destination: AppRoute.self, root: .home)
-    .environment(\.router, Router(configuration: config))
-```
-
----
-
-## Configuration: shouldCrashOnRouteNotFound
-
-### Purpose
-
-`shouldCrashOnRouteNotFound` controls what happens when a route cannot be matched to a destination view.
-
-- `false` — fails silently with an inline error message. Safe for production.
-- `true` — crashes the app via `fatalError`. Useful in development to catch routing mismatches at the source.
-
-### Recommendation
-
-Use environment-based configuration to distinguish between debug and release behavior:
-
-```swift
-extension Configuration {
-    static var app: Configuration {
-        #if DEBUG
-        Configuration(shouldCrashOnRouteNotFound: true)
-        #else
-        Configuration(shouldCrashOnRouteNotFound: false)
-        #endif
-    }
-}
-```
-
-### Default Value
-
-``Configuration/default`` sets `shouldCrashOnRouteNotFound` to `false`.
-
----
-
-## Memory Issues with Contexts
-
-### Retain Cycles in Context Closures
-
-When registering a context observer directly via `router.add(context:perform:)`, capturing `self` strongly creates a retain cycle that prevents deallocation.
-
-```swift
-// ❌ Retain cycle — self is captured strongly
-router.add(context: MyContext.self) { context in
-    self.handleContext(context)
-}
-
-// ✅ Correct — use weak capture
-router.add(context: MyContext.self) { [weak self] context in
-    self?.handleContext(context)
-}
-```
-
-The same applies when using the `routerContext` modifier with a ViewModel:
-
-```swift
-// ✅ Correct
-.routerContext(MyContext.self) { [weak viewModel] context in
-    viewModel?.process(context)
-}
-```
-
-### Observers Not Removed
-
-Observers registered with `router.add(context:perform:)` are automatically removed when the associated route is popped from the navigation stack. However, if you register observers outside of a view lifecycle (e.g., in a ViewModel), remove them explicitly:
-
-```swift
-@MainActor
-final class MyViewModel: ObservableObject {
-    private let router: any RouterModel
-
-    func startObserving() {
-        router.add(context: MyContext.self) { [weak self] context in
-            self?.handleContext(context)
-        }
-    }
-
-    deinit {
-        router.remove(context: MyContext.self)
-    }
-}
-```
-
-### Context Not Received
-
-If a context is sent but no observer is triggered, check the following:
+If a context is sent but no observer is triggered, check:
 
 - The observer is registered **before** the context is sent.
-- The observer is registered on the correct router (the parent, not the child).
-- The context type matches exactly — `MyContext.self` must be the same type on both sides.
+- The observer is registered on the **parent** router, not the child.
+- The context type matches exactly on both the sender and the observer side.
 
 ```swift
-// Sender (child route)
-router.context(UserSelectionContext(selectedUser: user))
+// Parent — register before navigation
+router.add(context: UserSelectionContext.self) { [weak self] context in
+    self?.selectedUser = context.selectedUser
+}
 
-// Observer (parent route) — must be registered before the above runs
-router.add(context: UserSelectionContext.self) { context in
-    // ...
+// Child — send context
+router.context(UserSelectionContext(selectedUser: user))
+```
+
+## Memory Leaks with Contexts
+
+Retain cycles occur when closures capture `self` strongly. Always use `[weak self]` when referencing class instances:
+
+```swift
+// ❌ Retain cycle
+router.add(context: MyContext.self) { context in
+    self.handle(context)
+}
+
+// ✅ Correct
+router.add(context: MyContext.self) { [weak self] context in
+    self?.handle(context)
 }
 ```
 
----
+Observers registered outside of a view lifecycle (e.g., in a ViewModel) must be removed explicitly. See <doc:RouteContextGuide> for the full memory management guide.
 
 ## Topics
 
 ### Related
 
+- <doc:ConfigurationGuide>
+- <doc:RouteContextGuide>
 - ``Configuration``
 - ``RouteContext``
 - ``RouterModel``
