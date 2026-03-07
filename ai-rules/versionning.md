@@ -31,8 +31,11 @@ Example: `add NavigationLink extension tests`
 - **Body** must follow this template:
 
 ```
-**What**: Clear summary of what this PR accomplishes
-**Breaking Changes**: Highlight any API, public interface, or dependency changes
+**What**:
+Clear summary of what this PR accomplishes
+
+**Breaking Changes**:
+Highlight any API, public interface, or dependency changes
 ```
 
 Types: `feat`, `fix`, `update`, `impr`, `revert`
