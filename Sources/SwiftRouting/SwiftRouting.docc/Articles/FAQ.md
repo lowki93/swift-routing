@@ -44,54 +44,7 @@ router.cover(AppRoute.onboarding)
 
 ## How do I share a router between views?
 
-The router is injected via the SwiftUI environment and automatically available to any view inside a ``RoutingView``:
-
-```swift
-struct MyView: View {
-    @Environment(\.router) private var router
-
-    var body: some View {
-        Button("Go to detail") {
-            router.push(AppRoute.detail(id: 42))
-        }
-    }
-}
-```
-
-You don't need to pass the router manually. Any descendant view of ``RoutingView`` can read it from the environment.
-
-**For ViewModels**, use a `RouteDestination` wrapper view that reads the router from the environment and injects it at initialization:
-
-```swift
-extension AppRoute: RouteDestination {
-    static func view(for route: AppRoute) -> some View {
-        AppRouteDestination(route: route)
-    }
-}
-
-struct AppRouteDestination: View {
-    @Environment(\.router) private var router
-    let route: AppRoute
-
-    var body: some View {
-        switch route {
-        case .myView:
-            MyView(viewModel: MyViewModel(router: router))
-        }
-    }
-}
-
-@MainActor
-final class MyViewModel {
-    private let router: any RouterModel
-
-    init(router: any RouterModel) {
-        self.router = router
-    }
-}
-```
-
-> Important: Always type the property as `any RouterModel`, not `Router`, to keep the ViewModel testable.
+See <doc:NavigationBasics> for accessing the router via `@Environment(\.router)`, and <doc:DefiningRoutes> for injecting it into ViewModels via a `RouteDestination` wrapper.
 
 ---
 
