@@ -339,6 +339,96 @@ func crossTabNavigation_pushesToCorrectTab() {
 }
 ```
 
+## Testing Logger Output with LoggerSpy
+
+A `LoggerSpy` captures all ``LoggerMessage`` events emitted by a real ``Router``. Use it to assert that specific navigation events trigger the expected log output.
+
+### Define the LoggerSpy
+
+```swift
+@MainActor
+final class LoggerSpy {
+    private(set) var messages: [LoggerMessage] = []
+
+    var configuration: Configuration {
+        Configuration(
+            logger: { [weak self] loggerConfig in
+                self?.messages.append(loggerConfig.message)
+            },
+            shouldCrashOnRouteNotFound: false
+        )
+    }
+
+    func navigationMessages() -> [(from: any Route, to: any Route, type: RoutingType)] {
+        messages.compactMap {
+            if case .navigation(let from, let to, let type) = $0 {
+                return (from, to, type)
+            }
+            return nil
+        }
+    }
+
+    func actionMessages() -> [LoggerMessage.Action] {
+        messages.compactMap {
+            if case .action(let action) = $0 { return action }
+            return nil
+        }
+    }
+}
+```
+
+### Test Navigation Events
+
+```swift
+import Testing
+
+@Suite("Router Logging")
+struct RouterLoggingTests {
+
+    @Test
+    @MainActor
+    func push_logsNavigationMessage() {
+        let spy = LoggerSpy()
+        let router = Router(configuration: spy.configuration)
+
+        router.push(HomeRoute.detail(id: 42))
+
+        let navMessages = spy.navigationMessages()
+        #expect(navMessages.count == 1)
+        #expect((navMessages.first?.to as? HomeRoute) == .detail(id: 42))
+        #expect(navMessages.first?.type == .push)
+    }
+
+    @Test
+    @MainActor
+    func back_logsBackAction() {
+        let spy = LoggerSpy()
+        let router = Router(configuration: spy.configuration)
+        router.push(HomeRoute.detail(id: 1))
+
+        router.back()
+
+        let actions = spy.actionMessages()
+        #expect(actions.contains { if case .back = $0 { true } else { false } })
+    }
+
+    @Test
+    @MainActor
+    func popToRoot_logsPopToRootAction() {
+        let spy = LoggerSpy()
+        let router = Router(configuration: spy.configuration)
+        router.push(HomeRoute.detail(id: 1))
+
+        router.popToRoot()
+
+        let actions = spy.actionMessages()
+        #expect(actions.contains { if case .popToRoot = $0 { true } else { false } })
+    }
+}
+```
+
+> Note: `LoggerSpy` uses a real ``Router`` — it tests the actual routing behavior along with the log output, not a mock.
+
 ## Best Practices
 
 ### Use Protocol Types
