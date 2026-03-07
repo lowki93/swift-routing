@@ -18,7 +18,7 @@ Route 'DetailRoute' are not define in 'HomeRoute'
 
 ### Cause
 
-SwiftRouting renders an ``ErrorView`` when the resolved route cannot be cast to the expected ``RouteDestination`` type. This typically happens when a route from one enum is pushed into a ``RoutingView`` configured for a different destination.
+SwiftRouting renders an error view when the resolved route cannot be cast to the expected ``RouteDestination`` type. This typically happens when a route from one enum is pushed into a ``RoutingView`` configured for a different destination.
 
 ### Solution
 
@@ -34,7 +34,7 @@ router.push(SettingsRoute.profile)
 
 ## ErrorView Behavior
 
-When a route cannot be resolved, ``ErrorView`` is rendered. Its behavior depends on ``Configuration/shouldCrashOnRouteNotFound``:
+When a route cannot be resolved, an error view is rendered. Its behavior depends on ``Configuration/shouldCrashOnRouteNotFound``:
 
 | `shouldCrashOnRouteNotFound` | Behavior |
 |---|---|
