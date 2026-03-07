@@ -67,7 +67,23 @@ This protocol-based design enables:
 
 ### Hierarchical Router Structure
 
-SwiftRouting creates a hierarchy of routers that mirrors your navigation structure:
+SwiftRouting creates a hierarchy of routers that mirrors your navigation structure.
+
+**Without tabs** (single stack):
+
+```
+App
+└── RoutingView
+    └── Router  root: .home
+        ├── push(.list)
+        │   └── Stack: [.home, .list]          (same Router)
+        └── present(.detail)
+            └── Router  root: .detail          (child Router, sheet)
+                └── push(.comments)
+                    └── Stack: [.detail, .comments]
+```
+
+**With tabs**:
 
 ```
 App
