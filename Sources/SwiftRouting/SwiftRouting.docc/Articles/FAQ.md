@@ -60,14 +60,24 @@ struct MyView: View {
 
 You don't need to pass the router manually. Any descendant view of ``RoutingView`` can read it from the environment.
 
-**For ViewModels**, read the router from the environment in the parent and pass it at initialization:
+**For ViewModels**, use a `RouteDestination` wrapper view that reads the router from the environment and injects it at initialization:
 
 ```swift
-struct ParentView: View {
+extension AppRoute: RouteDestination {
+    static func view(for route: AppRoute) -> some View {
+        AppRouteDestination(route: route)
+    }
+}
+
+struct AppRouteDestination: View {
     @Environment(\.router) private var router
+    let route: AppRoute
 
     var body: some View {
-        MyView(viewModel: MyViewModel(router: router))
+        switch route {
+        case .myView:
+            MyView(viewModel: MyViewModel(router: router))
+        }
     }
 }
 
