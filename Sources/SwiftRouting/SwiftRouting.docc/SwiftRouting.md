@@ -140,3 +140,7 @@ openskills install lowki93/swift-routing --global
 
 - <doc:Architecture>
 - <doc:Testing>
+
+### Troubleshooting
+
+- <doc:Troubleshooting>
