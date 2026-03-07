@@ -67,15 +67,40 @@ This protocol-based design enables:
 
 ### Hierarchical Router Structure
 
-SwiftRouting creates a hierarchy of routers that mirrors your navigation structure:
+SwiftRouting creates a hierarchy of routers that mirrors your navigation structure.
+
+**Without tabs** (single stack):
 
 ```
 App
-└── TabRouter (manages tab selection)
-    ├── Router [Home Tab]
-    │   └── Router [Presented Sheet]
-    ├── Router [Search Tab]
-    └── Router [Profile Tab]
+└── RoutingView
+    └── Router  root: .home
+        ├── push(.list)
+        │   └── Stack: [.home, .list]          (same Router)
+        └── present(.detail)
+            └── Router  root: .detail          (child Router, sheet)
+                └── push(.comments)
+                    └── Stack: [.detail, .comments]
+```
+
+**With tabs**:
+
+```
+App
+└── RoutingTabView
+    └── TabRouter
+        ├── RoutingView [Home Tab]
+        │   └── Router  root: .home
+        │       ├── push(.list)
+        │       │   └── Stack: [.home, .list]          (same Router)
+        │       └── present(.detail)
+        │           └── Router  root: .detail          (child Router, sheet)
+        │               └── push(.comments)
+        │                   └── Stack: [.detail, .comments]
+        ├── RoutingView [Search Tab]
+        │   └── Router  root: .search
+        └── RoutingView [Profile Tab]
+            └── Router  root: .profile
 ```
 
 Each ``RoutingView`` creates its own ``Router``. When you present a sheet or cover, a new child router is created. This hierarchy enables:
@@ -85,6 +110,25 @@ Each ``RoutingView`` creates its own ``Router``. When you present a sheet or cov
 - **Coordinated dismissal**: `closeChildren()` dismisses all descendants
 
 ## Component Relationships
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        RoutingTabView                        │
+│                             │                               │
+│                        TabRouter                            │
+│               ┌─────────────┼─────────────┐                │
+│               ▼             ▼             ▼                │
+│         RoutingView    RoutingView    RoutingView           │
+│              │                                              │
+│           Router  ◀── @Environment(\.router)               │
+│           │    │                                            │
+│      path │    │ sheet / cover                             │
+│           ▼    ▼                                            │
+│        Routes  Child Router (weak ref to parent)           │
+│                │                                            │
+│            contexts: [RouteContext observers]               │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### RoutingView
 
@@ -123,12 +167,30 @@ The ``Router`` manages:
 
 ### Navigation Flow
 
+Each navigation type operates differently on the router hierarchy:
+
 ```
-User Action → Router Method → State Update → SwiftUI Renders
-     │              │              │
-     │              │              └── @Published properties trigger view updates
-     │              └── push(), present(), back(), etc.
-     └── Button tap, deep link, programmatic call
+push(_:)
+    │
+    ├── Appends route to NavigationStack path
+    ├── Same Router instance handles the new route
+    └── back() or popToRoot() to unwind
+
+present(_:)  /  cover(_:)
+    │
+    ├── Creates a new child Router
+    ├── Presented as .sheet (present) or .fullScreenCover (cover)
+    ├── Child Router manages its own NavigationStack
+    └── close() or terminate(_:) to dismiss
+
+
+User Action        Router Method         State Change         SwiftUI Result
+─────────────      ─────────────         ────────────         ──────────────
+Button tap    ──▶  push(.detail)    ──▶  path += [.detail]  ──▶  New view pushed
+Link tapped   ──▶  present(.form)   ──▶  child Router set   ──▶  Sheet appears
+Back gesture  ──▶  back()           ──▶  path.removeLast()  ──▶  View popped
+Dismiss swipe ──▶  close()          ──▶  child Router = nil ──▶  Sheet dismissed
+Deep link     ──▶  handle(_:)       ──▶  path replaced      ──▶  Stack rebuilt
 ```
 
 ### Context Flow
@@ -141,6 +203,31 @@ Child Router                    Parent Router
      │ router.terminate(context) ────▶│ .routerContext handler executes
      │                               │
      │◀──── Navigation completes ────│
+```
+
+#### RouterContext Lifecycle
+
+```
+                    ┌─────────────────────────────────────┐
+                    │           Parent Router              │
+                    │                                      │
+  add(context:) ──▶ │  contexts: [SelectionContext: {...}] │
+                    │                                      │
+                    └──────────────────┬───────────────────┘
+                                       │ context propagates up
+                                       │
+                    ┌──────────────────▼───────────────────┐
+                    │           Child Router               │
+                    │                                      │
+ context(_:)    ──▶ │  Finds observer in parent hierarchy  │
+  terminate(_:) ──▶ │  Executes observer + navigates back  │
+                    │                                      │
+                    └──────────────────────────────────────┘
+
+Observer removal:
+  • Automatic  ──▶  route popped from stack (back / popToRoot)
+  • Automatic  ──▶  Router deallocated (sheet dismissed)
+  • Manual     ──▶  remove(context:) called explicitly
 ```
 
 ### Deep Link Flow
