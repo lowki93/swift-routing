@@ -14,7 +14,7 @@ struct ErrorView<Destination: RouteDestination, Content: View>: View {
   let destination: Destination.Type
   @ViewBuilder let content: (Destination.R, Destination.Type) -> Content
 
-  var error: RouterError {
+  private var error: RouterError {
     .routeNotFound(route: route, in: String(describing: destination.self))
   }
 

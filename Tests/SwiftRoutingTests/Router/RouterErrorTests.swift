@@ -1,11 +1,9 @@
 import Testing
-import SwiftUI
 @testable import SwiftRouting
 
-@MainActor
-struct ErrorViewTests {
+struct RouterErrorTests {
 
-  struct Error {
+  struct RouteNotFound {
     @Test
     func routeNotFound_description_containsRouteTypeName() {
       let error = RouterError.routeNotFound(route: AnyRoute(wrapped: DefaultRoute.main), in: "TestRouteDestination")
