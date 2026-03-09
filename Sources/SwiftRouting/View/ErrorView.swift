@@ -10,7 +10,7 @@ import SwiftUI
 struct ErrorView<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
-  private var message: String {
+  var message: String {
     "Route '\(type(of: route.wrapped))' are not define in '\(String(describing: destination.self))'"
   }
   let route: AnyRoute
