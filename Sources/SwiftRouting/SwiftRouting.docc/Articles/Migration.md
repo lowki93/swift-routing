@@ -170,33 +170,45 @@ Deep link handling typically required parsing URLs and manually mutating `Naviga
 
 ### After
 
-Implement ``DeeplinkHandler`` to map URLs to route sequences:
+Define a ``DeeplinkHandler`` that converts an input type into a ``DeeplinkRoute``:
 
 ```swift
 struct HomeDeeplinkHandler: DeeplinkHandler {
-    typealias Route = HomeRoute
+    typealias R = URL
+    typealias D = HomeRoute
 
-    func handle(_ url: URL, on router: any RouterModel) -> Bool {
+    func deeplink(from url: URL) async throws -> DeeplinkRoute<HomeRoute>? {
         switch url.path {
         case "/detail":
-            guard let id = Int(url.lastPathComponent) else { return false }
-            router.push(HomeRoute.detail(id: id))
-            return true
+            guard let id = Int(url.lastPathComponent) else { return nil }
+            return .push(.detail(id: id))
         default:
-            return false
+            return nil
         }
     }
 }
 ```
 
-Then attach the handler to your ``RoutingView``:
+Then call it from `.onOpenURL` inside a view that has access to the router:
 
 ```swift
-RoutingView(destination: HomeRoute.self, root: .home)
-    .deeplink(HomeDeeplinkHandler())
+struct HomeRootView: View {
+    @Environment(\.router) private var router
+    let handler = HomeDeeplinkHandler()
+
+    var body: some View {
+        HomeView()
+            .onOpenURL { url in
+                Task {
+                    guard let deeplink = try? await handler.deeplink(from: url) else { return }
+                    router.handle(deeplink: deeplink)
+                }
+            }
+    }
+}
 ```
 
-See <doc:Deeplinks> for advanced patterns including tab-aware deep linking.
+See <doc:Deeplinks> for advanced patterns including path building, async data fetching, and tab-aware deep linking.
 
 ## Dismissing Modals
 
