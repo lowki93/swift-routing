@@ -5,21 +5,19 @@ import SwiftUI
 @MainActor
 struct ErrorViewTests {
 
-  struct Message {
-    @MainActor @Test
-    func unmatchedRoute_message_containsRouteTypeName() {
-      let route = AnyRoute(wrapped: DefaultRoute.main)
-      let view = ErrorView(route: route, destination: TestRouteDestination.self) { _, _ in EmptyView() }
+  struct Error {
+    @Test
+    func routeNotFound_description_containsRouteTypeName() {
+      let error = RouterError.routeNotFound(route: AnyRoute(wrapped: DefaultRoute.main), in: "TestRouteDestination")
 
-      #expect(view.message.contains("DefaultRoute"))
+      #expect(error.description.contains("DefaultRoute"))
     }
 
-    @MainActor @Test
-    func unmatchedRoute_message_containsDestinationTypeName() {
-      let route = AnyRoute(wrapped: DefaultRoute.main)
-      let view = ErrorView(route: route, destination: TestRouteDestination.self) { _, _ in EmptyView() }
+    @Test
+    func routeNotFound_description_containsDestinationName() {
+      let error = RouterError.routeNotFound(route: AnyRoute(wrapped: DefaultRoute.main), in: "TestRouteDestination")
 
-      #expect(view.message.contains("TestRouteDestination"))
+      #expect(error.description.contains("TestRouteDestination"))
     }
   }
 }

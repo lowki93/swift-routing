@@ -10,20 +10,21 @@ import SwiftUI
 struct ErrorView<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
-  var message: String {
-    "Route '\(type(of: route.wrapped))' are not define in '\(String(describing: destination.self))'"
-  }
   let route: AnyRoute
   let destination: Destination.Type
   @ViewBuilder let content: (Destination.R, Destination.Type) -> Content
+
+  var error: RouterError {
+    .routeNotFound(route: route, in: String(describing: destination.self))
+  }
 
   var body: some View {
     if let route = route.wrapped as? Destination.R {
       content(route, destination)
     } else if router.configuration.shouldCrashOnRouteNotFound {
-      fatalError(message)
+      fatalError(error.description)
     } else {
-      Text(message).padding()
+      Text(error.description).padding()
     }
   }
 }
