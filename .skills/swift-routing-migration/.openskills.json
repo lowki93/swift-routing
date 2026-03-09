@@ -1,0 +1,5 @@
+{
+  "name": "swift-routing-migration",
+  "description": "Step-by-step guidance for migrating an existing SwiftUI app from native NavigationStack to SwiftRouting.",
+  "version": "1.0.0"
+}

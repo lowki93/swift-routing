@@ -13,6 +13,7 @@ Auto-load guidance:
 - For Swift tests (`Swift Testing`, `#expect`, `#require`, flaky tests, XCTest migration), load `swift-testing-expert`.
 - For Swift concurrency topics (`async/await`, actors, `@MainActor`, `Sendable`, Swift 6 migration), load `swift-concurrency`.
 - For app navigation architecture using SwiftRouting, load `swift-routing`.
+- For migration from native NavigationStack to SwiftRouting, load `swift-routing` **and** `swift-routing-migration`.
 
 Local rules:
 - Load and apply Markdown rules from `ai-rules/` when relevant to the current task.
@@ -43,6 +44,12 @@ Local rules:
 <name>swift-docc-documentation</name>
 <description>Guidance for writing and updating Swift-DocC documentation, including article structure, symbol documentation, and navigation curation.</description>
 <location>global</location>
+</skill>
+
+<skill>
+<name>swift-routing-migration</name>
+<description>Step-by-step guidance for migrating from native NavigationStack to SwiftRouting.</description>
+<location>project</location>
 </skill>
 
 </available_skills>
