@@ -135,6 +135,7 @@ openskills install lowki93/swift-routing --global
 - ``Configuration``
 - ``LoggerConfiguration``
 - ``LoggerMessage``
+- ``RouterError``
 
 ### Design
 
