@@ -15,7 +15,7 @@ struct ErrorView<Destination: RouteDestination, Content: View>: View {
   @ViewBuilder let content: (Destination.R, Destination.Type) -> Content
 
   private var error: RouterError {
-    .routeNotFound(route: route, in: String(describing: destination.self))
+    .routeNotFound(route: route.wrapped, in: String(describing: destination.self))
   }
 
   var body: some View {
