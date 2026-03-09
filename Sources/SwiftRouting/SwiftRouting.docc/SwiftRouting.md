@@ -136,12 +136,15 @@ openskills install lowki93/swift-routing --global
 - ``LoggerConfiguration``
 - ``LoggerMessage``
 
-### Architecture and Testing
+### Design
 
 - <doc:Architecture>
+
+### Test Guidance
+
 - <doc:Testing>
 
-### Common Issues
+### Support
 
 - <doc:Troubleshooting>
 - <doc:FAQ>

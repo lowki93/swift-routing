@@ -5,12 +5,13 @@ This file defines the workflow to follow when working on a Linear ticket.
 ## Workflow
 
 1. **Read the ticket** — fetch title, description, labels via the Linear MCP
-2. **Create a branch** from `main` — see `ai-rules/versionning.md` for branch naming
-3. **Explore the code** before making any changes
-4. **Implement** following the project conventions
-5. **Run tests**: `swift test`
-6. **Commit** — see `ai-rules/versionning.md` for commit format
-7. **Push + create PR** — see `ai-rules/versionning.md` for PR format
+2. **Pull `main`** — `git checkout main && git pull origin main`
+3. **Create a branch** from `main` — see `ai-rules/versionning.md` for branch naming
+4. **Explore the code** before making any changes
+5. **Implement** following the project conventions
+6. **Run tests**: `swift test`
+7. **Commit** — see `ai-rules/versionning.md` for commit format
+8. **Push + create PR** — see `ai-rules/versionning.md` for PR format
 
 > Ticket states are updated automatically via the Linear ↔ GitHub integration.
 
