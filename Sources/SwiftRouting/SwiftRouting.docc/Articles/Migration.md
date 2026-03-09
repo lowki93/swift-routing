@@ -154,6 +154,93 @@ Button("Start Onboarding") {
 }
 ```
 
+## TabView → RoutingTabView
+
+### Before
+
+```swift
+@State private var selectedTab = 0
+
+TabView(selection: $selectedTab) {
+    HomeView()
+        .tabItem { Label("Home", systemImage: "house") }
+        .tag(0)
+
+    SearchView()
+        .tabItem { Label("Search", systemImage: "magnifyingglass") }
+        .tag(1)
+
+    ProfileView()
+        .tabItem { Label("Profile", systemImage: "person") }
+        .tag(2)
+}
+```
+
+### After — Option 1: RoutingTabView (recommended)
+
+Use `RoutingTabView` when you need programmatic cross-tab navigation via ``TabRouter``:
+
+```swift
+enum HomeTab: TabRoute {
+    case home
+    case search
+    case profile
+
+    var name: String {
+        switch self {
+        case .home: "home"
+        case .search: "search"
+        case .profile: "profile"
+        }
+    }
+}
+
+struct ContentView: View {
+    @State private var selectedTab: HomeTab = .home
+
+    var body: some View {
+        RoutingTabView(tab: $selectedTab, destination: HomeRoute.self) { destination in
+            RoutingView(tab: .home, destination: destination, root: .home)
+                .tabItem { Label("Home", systemImage: "house") }
+
+            RoutingView(tab: .search, destination: destination, root: .search)
+                .tabItem { Label("Search", systemImage: "magnifyingglass") }
+
+            RoutingView(tab: .profile, destination: destination, root: .profile)
+                .tabItem { Label("Profile", systemImage: "person") }
+        }
+    }
+}
+```
+
+### After — Option 2: Native TabView with .tabToRoot
+
+For simpler cases without programmatic tab control:
+
+```swift
+struct ContentView: View {
+    @Environment(\.router) private var router
+    @State private var selectedTab: HomeTab = .home
+
+    var body: some View {
+        TabView(selection: .tabToRoot(for: $selectedTab, in: router)) {
+            RoutingView(tab: .home, destination: HomeRoute.self, root: .home)
+                .tabItem { Label("Home", systemImage: "house") }
+
+            RoutingView(tab: .search, destination: HomeRoute.self, root: .search)
+                .tabItem { Label("Search", systemImage: "magnifyingglass") }
+
+            RoutingView(tab: .profile, destination: HomeRoute.self, root: .profile)
+                .tabItem { Label("Profile", systemImage: "person") }
+        }
+    }
+}
+```
+
+The `.tabToRoot` binding automatically pops to root when the user taps the already-selected tab.
+
+> Important: This option does **not** provide `@Environment(\.tabRouter)`. Use `RoutingTabView` when cross-tab programmatic navigation is needed.
+
 ## Deep Links
 
 ### Before

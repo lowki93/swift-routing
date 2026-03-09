@@ -25,6 +25,7 @@ Do not use this skill for:
 | `.sheet(isPresented:)` | `router.present(_:)` |
 | `.fullScreenCover(isPresented:)` | `router.cover(_:)` |
 | `@Environment(\.dismiss)` | `router.close()` |
+| Native `TabView` with `@State` int selection | `RoutingTabView` or `TabView` + `.tabToRoot` |
 | Manual `NavigationPath` mutation in `.onOpenURL` | `DeeplinkHandler` + `router.handle(deeplink:)` |
 
 ## Key Constraints
