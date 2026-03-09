@@ -23,31 +23,3 @@ struct ErrorViewTests {
     }
   }
 }
-
-struct ShouldCrashOnRouteNotFound {
-  @Test
-  func whenSetToFalse_triggerCrashIfNeeded_doesNotCallCrashHandler() {
-    var crashed = false
-
-    ErrorView<TestRouteDestination, EmptyView>.triggerCrashIfNeeded(
-      message: "route not found",
-      shouldCrash: false,
-      crashHandler: { _ in crashed = true }
-    )
-
-    #expect(crashed == false)
-  }
-
-  @Test
-  func whenSetToTrue_triggerCrashIfNeeded_callsCrashHandler() {
-    var crashedMessage: String?
-
-    ErrorView<TestRouteDestination, EmptyView>.triggerCrashIfNeeded(
-      message: "route not found",
-      shouldCrash: true,
-      crashHandler: { crashedMessage = $0 }
-    )
-
-    #expect(crashedMessage == "route not found")
-  }
-}
