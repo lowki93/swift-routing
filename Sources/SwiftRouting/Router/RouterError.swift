@@ -39,8 +39,8 @@ public enum RouterError: Error, CustomStringConvertible {
   ///
   /// - Parameters:
   ///   - route: The route that could not be resolved.
-  ///   - in: The name of the destination that was expected to handle the route.
-  case routeNotFound(route: any Route, in: String)
+  ///   - in: The destination type that was expected to handle the route.
+  case routeNotFound(route: any Route, in: any RouteDestination.Type)
 
   /// A human-readable description of the error.
   ///
@@ -48,8 +48,8 @@ public enum RouterError: Error, CustomStringConvertible {
   /// destination it was dispatched to.
   public var description: String {
     switch self {
-    case .routeNotFound(let route, let destination):
-      "Route '\(type(of: route))' are not define in '\(destination)'"
+    case let .routeNotFound(route, destination):
+      "Route '\(type(of: route))' are not define in '\(String(describing: destination))'"
     }
   }
 }
