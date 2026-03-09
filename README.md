@@ -167,6 +167,21 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 | [Tab Navigation](https://lowki93.github.io/swift-routing/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
 | [Deep Linking](https://lowki93.github.io/swift-routing/documentation/swiftrouting/deeplinks) | Handle deep links in your app |
 | [Route Context](https://lowki93.github.io/swift-routing/documentation/swiftrouting/routecontextguide) | Pass data between routes |
+| [Migration](https://lowki93.github.io/swift-routing/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
+
+## OpenSkills
+
+This project includes AI skills for assisted development via [OpenSkills](https://openskills.dev).
+
+| Skill | Description |
+|-------|-------------|
+| `swift-routing` | Guidance for routes, routers, tabs, deeplinks, and troubleshooting |
+| `swift-routing-migration` | Step-by-step migration from native NavigationStack to SwiftRouting |
+
+```bash
+npx openskills read swift-routing
+npx openskills read swift-routing-migration
+```
 
 ## Requirements
 
