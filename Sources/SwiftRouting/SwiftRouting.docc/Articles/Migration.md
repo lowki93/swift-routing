@@ -170,26 +170,39 @@ Deep link handling typically required parsing URLs and manually mutating `Naviga
 
 ### After
 
-Define a ``DeeplinkHandler`` that converts an input type into a ``DeeplinkRoute``:
+Define a typed identifier enum (`Hashable & Sendable`) to represent your deep link inputs, then implement ``DeeplinkHandler`` to map it to a ``DeeplinkRoute``:
 
 ```swift
-struct HomeDeeplinkHandler: DeeplinkHandler {
-    typealias R = URL
-    typealias D = HomeRoute
+enum AppDeeplinkIdentifier: Hashable, Sendable {
+    case detail(id: Int)
+}
 
-    func deeplink(from url: URL) async throws -> DeeplinkRoute<HomeRoute>? {
+extension AppDeeplinkIdentifier {
+    init?(url: URL) {
         switch url.path {
         case "/detail":
             guard let id = Int(url.lastPathComponent) else { return nil }
-            return .push(.detail(id: id))
+            self = .detail(id: id)
         default:
             return nil
         }
     }
 }
+
+struct HomeDeeplinkHandler: DeeplinkHandler {
+    typealias R = AppDeeplinkIdentifier
+    typealias D = HomeRoute
+
+    func deeplink(from route: AppDeeplinkIdentifier) async throws -> DeeplinkRoute<HomeRoute>? {
+        switch route {
+        case .detail(let id):
+            return .push(.detail(id: id))
+        }
+    }
+}
 ```
 
-Then call it from `.onOpenURL` inside a view that has access to the router:
+Parse the URL into the identifier inside `.onOpenURL`, then pass it to the handler:
 
 ```swift
 struct HomeRootView: View {
@@ -200,7 +213,8 @@ struct HomeRootView: View {
         HomeView()
             .onOpenURL { url in
                 Task {
-                    guard let deeplink = try? await handler.deeplink(from: url) else { return }
+                    guard let identifier = AppDeeplinkIdentifier(url: url) else { return }
+                    guard let deeplink = try? await handler.deeplink(from: identifier) else { return }
                     router.handle(deeplink: deeplink)
                 }
             }
