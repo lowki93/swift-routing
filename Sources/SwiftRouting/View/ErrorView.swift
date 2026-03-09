@@ -17,6 +17,16 @@ struct ErrorView<Destination: RouteDestination, Content: View>: View {
   let destination: Destination.Type
   @ViewBuilder let content: (Destination.R, Destination.Type) -> Content
 
+  nonisolated static func triggerCrashIfNeeded(
+    message: String,
+    shouldCrash: Bool,
+    crashHandler: (String) -> Void = { fatalError($0) }
+  ) {
+    if shouldCrash {
+      crashHandler(message)
+    }
+  }
+
   var body: some View {
     if let route = route.wrapped as? Destination.R {
       content(route, destination)
