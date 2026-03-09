@@ -5,6 +5,17 @@ description: Step-by-step guidance for migrating an existing SwiftUI app from na
 
 # SwiftRouting Migration
 
+## Dependencies
+
+Always load `swift-routing` alongside this skill:
+
+```
+npx openskills read swift-routing
+npx openskills read swift-routing-migration
+```
+
+This skill covers the migration path (before → after). The `swift-routing` skill covers the complete SwiftRouting API reference, patterns, and troubleshooting.
+
 ## When To Use This Skill
 
 Load this skill when:
