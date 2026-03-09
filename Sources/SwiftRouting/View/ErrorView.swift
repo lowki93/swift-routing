@@ -21,10 +21,13 @@ struct ErrorView<Destination: RouteDestination, Content: View>: View {
   var body: some View {
     if let route = route.wrapped as? Destination.R {
       content(route, destination)
-    } else if router.configuration.shouldCrashOnRouteNotFound {
-      fatalError(error.description)
     } else {
-      Text(error.description).padding()
+      let _ = router.log(.error(error))
+      if router.configuration.shouldCrashOnRouteNotFound {
+        fatalError(error.description)
+      } else {
+        Text(error.description).padding()
+      }
     }
   }
 }

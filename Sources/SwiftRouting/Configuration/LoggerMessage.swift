@@ -79,6 +79,11 @@ public enum LoggerMessage {
   ///
   /// See ``Context`` for the list of context events (add, execute, remove).
   case context(Context)
+
+  /// Logs a routing error.
+  ///
+  /// - Parameter error: The ``RouterError`` that occurred.
+  case error(RouterError)
 }
 
 public extension LoggerMessage {
