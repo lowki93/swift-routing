@@ -240,13 +240,9 @@ This is useful for establishing conventions in your codebase — "settings is al
 
 ## "But What About the Coordinator Pattern?"
 
-Fair question. The Coordinator pattern has been around in iOS development since at least 2015, and it addresses the same root problem: views shouldn't own navigation. If you've used it with UIKit, the mental model is similar.
+Fair question. The Coordinator pattern addresses the same root problem — views shouldn't own navigation — and some SwiftUI-native implementations of it do exist.
 
-The difference is context. UIKit coordinators work by holding references to view controllers and pushing/presenting them imperatively. That fits UIKit's lifecycle well. In SwiftUI, the same approach fights the framework — SwiftUI wants to own the view hierarchy, and `NavigationStack` is declarative by design. Bolting a UIKit-style coordinator on top means managing two conflicting mental models at once, and you end up writing adapter code to bridge them.
-
-swift-routing is built for SwiftUI from the ground up. Routes are values, navigation state is observable, and the router is injected via the SwiftUI environment — not passed through `init` chains or stored in a coordinator tree. Everything works with SwiftUI's rendering model rather than against it.
-
-Some SwiftUI-native routing libraries do exist, and they're worth knowing about. The main difference with swift-routing is philosophy: most give you full control over the navigation stack as a plain array of screens — powerful, but verbose. swift-routing leans on convention instead. Routes declare their own presentation style, routers are scoped automatically, and the common cases require almost no configuration. The flexibility is there when you need it; it just doesn't get in the way when you don't.
+The difference is philosophy. Most coordinator approaches give you full control over the navigation stack as a plain array of screens. That's powerful, but verbose. swift-routing leans on convention instead: routes declare their own presentation style, routers are scoped automatically, and the common cases require almost no configuration. The flexibility is there when you need it; it just doesn't get in the way when you don't.
 
 ---
 
