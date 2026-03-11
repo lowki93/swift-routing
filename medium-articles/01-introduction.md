@@ -242,7 +242,7 @@ This is useful for establishing conventions in your codebase — "settings is al
 
 Fair question. The Coordinator pattern addresses the same root problem — views shouldn't own navigation — and some SwiftUI-native implementations of it do exist.
 
-The difference is philosophy. Most coordinator approaches give you full control over the navigation stack as a plain array of screens. That's powerful, but verbose. swift-routing leans on convention instead: routes declare their own presentation style, routers are scoped automatically, and the common cases require almost no configuration. The flexibility is there when you need it; it just doesn't get in the way when you don't.
+Other solutions give you the stack as an array and wish you luck. Swift Routing bets on convention: routes know how they want to be presented, routers scope themselves, and the boring cases disappear. Control is still there when you need it — it just doesn't leak into every line of code.
 
 ---
 
