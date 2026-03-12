@@ -179,8 +179,8 @@ This project includes AI skills for assisted development via [OpenSkills](https:
 | `swift-routing-migration` | Step-by-step migration from native NavigationStack to SwiftRouting |
 
 ```bash
-npx openskills read swift-routing
-npx openskills read swift-routing-migration
+npx openskills install lowki93/swift-routing
+npx openskills install lowki93/swift-routing-migration
 ```
 
 ## Requirements
