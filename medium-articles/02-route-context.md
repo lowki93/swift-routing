@@ -1,5 +1,9 @@
 # Two-Way Navigation in SwiftUI: The RouteContext Pattern
 
+*Part 2 of the swift-routing series. If you're new here, start with [Part 1: Type-Safe Navigation in SwiftUI with swift-routing](#).*
+
+---
+
 Navigation in SwiftUI is a one-way street by default. You push a screen, it does something, and then... you have no clean way to get the result back.
 
 The usual workarounds — shared state, closures passed as parameters, `@Binding` threaded down the stack — work for simple cases. But they break down fast. Closures couple screens together. Shared state is hard to reason about. `@Binding` leaks presentation concerns into your view hierarchy.
