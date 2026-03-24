@@ -38,7 +38,7 @@ struct UserPickerView: View {
 }
 ```
 
-This works. But `UserPickerView` now depends on a closure. You can't use it in a push navigation without plumbing the callback through. If the picker is three levels deep, that closure travels through every intermediate screen. And testing requires you to manually trigger the callback.
+This works. But `UserPickerView` now requires a closure to be injected by whoever presents it. If the picker sits three levels deep in the stack, every intermediate screen has to forward that closure down — screens that have nothing to do with the selection. And in tests, verifying the result means triggering the callback manually instead of asserting on a plain value.
 
 ---
 
