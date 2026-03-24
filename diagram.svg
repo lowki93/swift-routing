@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="840" viewBox="0 0 1600 840">
+  <rect width="1600" height="840" fill="#1a1a2e"/>
+
+  <!-- Title -->
+  <text x="800" y="60" text-anchor="middle" font-family="SF Pro Display, Helvetica, sans-serif" font-size="36" font-weight="bold" fill="#ffffff">Type-Safe SwiftUI Navigation</text>
+  <text x="800" y="95" text-anchor="middle" font-family="SF Pro Display, Helvetica, sans-serif" font-size="20" fill="#888888">with swift-routing</text>
+
+  <!-- RootView (center) -->
+  <rect x="630" y="180" width="340" height="80" rx="20" fill="#FF6B35"/>
+  <text x="800" y="215" text-anchor="middle" font-family="SF Mono, monospace" font-size="18" font-weight="bold" fill="#ffffff">🏠 RootView</text>
+  <text x="800" y="242" text-anchor="middle" font-family="SF Mono, monospace" font-size="13" fill="#ffe0d0">RoutingView { router in ... }</text>
+
+  <!-- DetailView (left) -->
+  <rect x="200" y="420" width="340" height="80" rx="20" fill="#4A90D9"/>
+  <text x="370" y="455" text-anchor="middle" font-family="SF Mono, monospace" font-size="18" font-weight="bold" fill="#ffffff">📄 DetailView</text>
+  <text x="370" y="482" text-anchor="middle" font-family="SF Mono, monospace" font-size="13" fill="#d0e8ff">Push (NavigationStack)</text>
+
+  <!-- ProfileView (center) -->
+  <rect x="630" y="420" width="340" height="80" rx="20" fill="#7B68EE"/>
+  <text x="800" y="455" text-anchor="middle" font-family="SF Mono, monospace" font-size="18" font-weight="bold" fill="#ffffff">👤 ProfileView</text>
+  <text x="800" y="482" text-anchor="middle" font-family="SF Mono, monospace" font-size="13" fill="#e0dcff">Sheet (Modal)</text>
+
+  <!-- OnboardingView (right) -->
+  <rect x="1060" y="420" width="340" height="80" rx="20" fill="#2ECC71"/>
+  <text x="1230" y="455" text-anchor="middle" font-family="SF Mono, monospace" font-size="18" font-weight="bold" fill="#ffffff">🚀 OnboardingView</text>
+  <text x="1230" y="482" text-anchor="middle" font-family="SF Mono, monospace" font-size="13" fill="#d0ffe8">Cover (Full Screen)</text>
+
+  <!-- Arrows: Root → Detail -->
+  <line x1="700" y1="260" x2="420" y2="420" stroke="#FF6B35" stroke-width="2.5" stroke-dasharray="8,4" marker-end="url(#arrow-orange)"/>
+  <rect x="490" y="305" width="185" height="32" rx="8" fill="#1a1a2e" opacity="0.85"/>
+  <text x="583" y="326" text-anchor="middle" font-family="SF Mono, monospace" font-size="13" fill="#FF9A70">router.push(.detail)</text>
+
+  <!-- Arrows: Root → Profile -->
+  <line x1="800" y1="260" x2="800" y2="420" stroke="#7B68EE" stroke-width="2.5" stroke-dasharray="8,4" marker-end="url(#arrow-purple)"/>
+  <rect x="680" y="320" width="240" height="32" rx="8" fill="#1a1a2e" opacity="0.85"/>
+  <text x="800" y="341" text-anchor="middle" font-family="SF Mono, monospace" font-size="13" fill="#b0a0ff">router.present(.profile)</text>
+
+  <!-- Arrows: Root → Onboarding -->
+  <line x1="900" y1="260" x2="1180" y2="420" stroke="#2ECC71" stroke-width="2.5" stroke-dasharray="8,4" marker-end="url(#arrow-green)"/>
+  <rect x="945" y="305" width="210" height="32" rx="8" fill="#1a1a2e" opacity="0.85"/>
+  <text x="1050" y="326" text-anchor="middle" font-family="SF Mono, monospace" font-size="13" fill="#80ffb0">router.cover(.onboarding)</text>
+
+  <!-- Back arrows -->
+  <!-- Detail → Root (back) -->
+  <path d="M 250 420 Q 150 320 620 240" stroke="#4A90D9" stroke-width="2" fill="none" stroke-dasharray="5,5" marker-end="url(#arrow-blue)"/>
+  <rect x="145" y="295" width="165" height="32" rx="8" fill="#1a1a2e" opacity="0.85"/>
+  <text x="228" y="316" text-anchor="middle" font-family="SF Mono, monospace" font-size="12" fill="#80c0ff">router.back()</text>
+
+  <!-- Profile → Root (close) -->
+  <path d="M 720 420 Q 680 370 720 280" stroke="#7B68EE" stroke-width="2" fill="none" stroke-dasharray="5,5" marker-end="url(#arrow-purple2)"/>
+  <rect x="578" y="360" width="170" height="28" rx="8" fill="#1a1a2e" opacity="0.85"/>
+  <text x="663" y="379" text-anchor="middle" font-family="SF Mono, monospace" font-size="12" fill="#b0a0ff">router.close()</text>
+
+  <!-- Onboarding → Root (close) -->
+  <path d="M 1350 420 Q 1450 320 980 240" stroke="#2ECC71" stroke-width="2" fill="none" stroke-dasharray="5,5" marker-end="url(#arrow-green2)"/>
+  <rect x="1285" y="295" width="170" height="28" rx="8" fill="#1a1a2e" opacity="0.85"/>
+  <text x="1370" y="314" text-anchor="middle" font-family="SF Mono, monospace" font-size="12" fill="#80ffb0">router.close()</text>
+
+  <!-- Legend -->
+  <rect x="100" y="640" width="1400" height="120" rx="16" fill="#0f0f1f"/>
+  <text x="800" y="672" text-anchor="middle" font-family="SF Pro Display, Helvetica, sans-serif" font-size="16" font-weight="bold" fill="#888888">NAVIGATION TYPES</text>
+
+  <rect x="200" y="690" width="16" height="16" rx="4" fill="#4A90D9"/>
+  <text x="225" y="703" font-family="SF Mono, monospace" font-size="14" fill="#ffffff">push()</text>
+  <text x="225" y="720" font-family="SF Mono, monospace" font-size="12" fill="#888888">NavigationStack</text>
+
+  <rect x="520" y="690" width="16" height="16" rx="4" fill="#7B68EE"/>
+  <text x="545" y="703" font-family="SF Mono, monospace" font-size="14" fill="#ffffff">present()</text>
+  <text x="545" y="720" font-family="SF Mono, monospace" font-size="12" fill="#888888">Modal Sheet</text>
+
+  <rect x="840" y="690" width="16" height="16" rx="4" fill="#2ECC71"/>
+  <text x="865" y="703" font-family="SF Mono, monospace" font-size="14" fill="#ffffff">cover()</text>
+  <text x="865" y="720" font-family="SF Mono, monospace" font-size="12" fill="#888888">Full Screen Cover</text>
+
+  <rect x="1160" y="690" width="16" height="16" rx="4" fill="#FF6B35"/>
+  <text x="1185" y="703" font-family="SF Mono, monospace" font-size="14" fill="#ffffff">route()</text>
+  <text x="1185" y="720" font-family="SF Mono, monospace" font-size="12" fill="#888888">Auto (routingType)</text>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#FF6B35"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B68EE"/>
+    </marker>
+    <marker id="arrow-purple2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7B68EE"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2ECC71"/>
+    </marker>
+    <marker id="arrow-green2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2ECC71"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4A90D9"/>
+    </marker>
+  </defs>
+</svg>
