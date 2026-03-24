@@ -300,3 +300,8 @@ The problem appears when the communication is transient. A user picker doesn't b
 `RouteContext` handles data flowing back up. The next piece is getting into your app from the outside: deep linking — rebuilding a navigation stack from a URL or push notification payload.
 
 *Next: [Deep Linking in SwiftUI with swift-routing](#)*
+
+---
+
+The library is open source — explore the code, open issues, or contribute:
+[github.com/lowki93/swift-routing](https://github.com/lowki93/swift-routing)
