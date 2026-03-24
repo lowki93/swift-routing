@@ -235,6 +235,30 @@ struct UserPickerView: View {
 
 ---
 
+## Why This Works: Dependency Inversion
+
+The shift from closures to `RouteContext` isn't just a stylistic choice — it's an application of the **Dependency Inversion Principle**.
+
+With closures, `UserPickerView` depends directly on the parent that created it:
+
+```
+ParentView ──provides──▶ onSelect: (User) -> Void ──injected into──▶ UserPickerView
+```
+
+The child accepts a concrete dependency from above. Change the parent, and the child interface changes with it.
+
+With `RouteContext`, both sides depend on the abstraction:
+
+```
+ParentView     ──observes──▶ UserSelectionContext ◀──fires── UserPickerView
+```
+
+Neither side knows about the other. `UserPickerView` doesn't know who is listening. `ParentView` doesn't know who will fire the context. They're decoupled through a shared type.
+
+This is what makes `UserPickerView` reusable without modification: it has no parent-specific code to change. And it's what makes the observer in `ParentView` easy to move or replace — the picker keeps working regardless.
+
+---
+
 ## Testing Navigation Flows
 
 Because `RouteContext` values are plain Swift types, testing a navigation flow doesn't require UI. You can verify the full round-trip at the unit level:
