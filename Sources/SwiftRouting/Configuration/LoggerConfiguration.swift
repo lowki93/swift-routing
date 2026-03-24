@@ -47,6 +47,7 @@ extension LoggerConfiguration {
     case let .action(.back(count: .some(count))): "back, count: \(count)"
     case let .action(.closeChildren(router)): "closeChildren for: '\(router)'"
     case let .action(.changeTab(tab)): "changeTab to: '\(tab)'"
+    case let .error(error): "error: \(error.description)"
     }
 
     Logger.default.log(

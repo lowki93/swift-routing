@@ -111,6 +111,23 @@ SwiftRouting logs various events through ``LoggerMessage``:
 | `.context(.execute)` | Context was sent and executed |
 | `.context(.remove)` | Context observer was removed |
 
+#### Routing Errors
+
+| Message | Description |
+|---------|-------------|
+| `.error(RouterError)` | A route could not be resolved to its destination |
+
+When a route cannot be matched, SwiftRouting emits `.error(RouterError.routeNotFound)` before either crashing or displaying the fallback message. Use this in your logger to monitor unresolved routes in production:
+
+```swift
+Configuration(logger: { config in
+    if case .error(let error) = config.message {
+        // Report to your error tracking service
+        Analytics.record(error.description)
+    }
+})
+```
+
 ## Custom Logger Examples
 
 ### Analytics Integration

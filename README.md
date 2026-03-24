@@ -145,7 +145,7 @@ Add SwiftRouting via **Swift Package Manager**:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "1.0.0"))
+    .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "0.2.0"))
 ]
 ```
 
@@ -161,13 +161,17 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 
 | Topic | Description |
 |-------|-------------|
-| [Getting Started](https://lowki93.github.io/swift-routing/documentation/swiftrouting/gettingstarted) | Installation and basic setup |
-| [Defining Routes](https://lowki93.github.io/swift-routing/documentation/swiftrouting/definingroutes) | Route customization and routing types |
-| [Navigation Basics](https://lowki93.github.io/swift-routing/documentation/swiftrouting/navigationbasics) | Push, present, cover, and more |
-| [Tab Navigation](https://lowki93.github.io/swift-routing/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
-| [Deep Linking](https://lowki93.github.io/swift-routing/documentation/swiftrouting/deeplinks) | Handle deep links in your app |
-| [Route Context](https://lowki93.github.io/swift-routing/documentation/swiftrouting/routecontextguide) | Pass data between routes |
-| [Migration](https://lowki93.github.io/swift-routing/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
+| [Getting Started](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/gettingstarted) | Installation and basic setup |
+| [Defining Routes](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/definingroutes) | Route customization and routing types |
+| [Navigation Basics](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/navigationbasics) | Push, present, cover, and more |
+| [Tab Navigation](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
+| [Deep Linking](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/deeplinks) | Handle deep links in your app |
+| [Route Context](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/routecontextguide) | Pass data between routes |
+| [Migration](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
+
+## Articles
+
+- [Stop Fighting SwiftUI Navigation — A Type-Safe Approach with Swift Routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270)
 
 ## OpenSkills
 
@@ -179,8 +183,8 @@ This project includes AI skills for assisted development via [OpenSkills](https:
 | `swift-routing-migration` | Step-by-step migration from native NavigationStack to SwiftRouting |
 
 ```bash
-npx openskills read swift-routing
-npx openskills read swift-routing-migration
+npx openskills install lowki93/swift-routing
+npx openskills install lowki93/swift-routing-migration
 ```
 
 ## Requirements

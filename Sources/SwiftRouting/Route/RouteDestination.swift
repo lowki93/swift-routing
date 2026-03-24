@@ -29,7 +29,7 @@ import SwiftUI
 /// For environment-driven mapping (`@Environment`, `@EnvironmentObject`,
 /// dependency injection), use a dedicated destination wrapper view.
 /// See the example on ``view(for:)`` below.
-public protocol RouteDestination: Hashable, Identifiable {
+public protocol RouteDestination: Sendable, Hashable, Identifiable {
   associatedtype R: Route
   associatedtype Destination: View
 
