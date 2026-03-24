@@ -44,7 +44,7 @@ This works. But `UserPickerView` now requires a closure to be injected by whoeve
 
 ## RouteContext: Data as a First-Class Value
 
-`RouteContext` flips the model. Instead of passing a callback *down*, you register an observer *up*. The child fires a typed value. The parent catches it.
+`RouteContext` inverts the flow. With closures, the parent says: *"here's what to call when you're done"* — and the child has to accept it. With `RouteContext`, the parent says: *"I'm listening for this type of value"* — and the child just fires it, without knowing who's listening.
 
 Define your context type — any `Hashable & Sendable` struct works:
 
