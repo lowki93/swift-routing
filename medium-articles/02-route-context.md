@@ -257,6 +257,16 @@ No views. No `@State`. No async dance. Just a router, an observer, and a value.
 
 ---
 
+## "But What About Shared State?"
+
+Fair question. A shared `@Observable` model — injected via the environment — is a perfectly valid way to communicate between screens. In simple flows, it's the right choice.
+
+The problem appears when the communication is transient. A user picker doesn't belong in your app's global state. It runs, returns a value, and disappears. Injecting an `@Observable` for that means creating something that exists only to be discarded, and whose lifetime you have to manage manually.
+
+`RouteContext` makes the scope explicit: an observer is registered before navigating and removed when the route is popped. The value flows up, the screen closes, and there's nothing left to clean up. It's not a replacement for shared state — it's the right tool when shared state is too much.
+
+---
+
 ## What's Next
 
 `RouteContext` handles data flowing back up. The next piece is getting into your app from the outside: deep linking — rebuilding a navigation stack from a URL or push notification payload.
