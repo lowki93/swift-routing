@@ -20,7 +20,7 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-public final class Router: BaseRouter, @unchecked Sendable {
+public final class Router: PresentableRouter, @unchecked Sendable {
 
   static let defaultRouter: Router = Router(configuration: .default)
 
@@ -31,19 +31,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
       removeContext(old: path, new: newValue)
     }
   }
-  @Published internal var sheet: AnyRoute? {
-    didSet {
-      guard oldValue != sheet else { return }
-      present.send((sheet != nil, self))
-    }
-  }
-  @Published internal var cover: AnyRoute? {
-    didSet {
-      guard oldValue != cover else { return }
-      present.send((cover != nil, self))
-    }
-  }
-  @Published internal var triggerClose: Bool = false
 
   /// The currently visible route in the navigation stack.
   ///
@@ -71,7 +58,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   ///   Button("Close") { router.close() }
   /// }
   /// ```
-  public var isPresented: Bool {
+  override public var isPresented: Bool {
     type.isPresented
   }
 
@@ -130,24 +117,9 @@ extension Router: @preconcurrency RouterModel {
     route(to: destination, type: .push)
   }
 
-  @MainActor public func present(_ destination: some Route, withStack: Bool) {
-    route(to: destination, type: .sheet(withStack: withStack))
-  }
-
-  @MainActor public func cover(_ destination: some Route) {
-    route(to: destination, type: .cover)
-  }
-
   @MainActor public func popToRoot() {
     path.removeAll()
     log(.action(.popToRoot))
-  }
-
-  @MainActor public func close() {
-    guard type.isPresented else { return }
-
-    triggerClose = true
-    log(.action(.close))
   }
 
   @MainActor public func back() {
@@ -174,17 +146,9 @@ extension Router: @preconcurrency RouterModel {
       back()
     }
   }
-
-  @MainActor public func closeChildren() {
-    for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
-      log(.action(.closeChildren(router)))
-      sheet = nil
-      cover = nil
-    }
-  }
 }
 
-private extension Router  {
+private extension Router {
 
   @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation(from: currentRoute.wrapped, to: destination, type: type))

@@ -35,7 +35,7 @@ import SwiftUI
 ///
 ///   let viewModel = ViewModel(router: router)
 /// ```
-public protocol RouterModel: BaseRouterModel, ContextModel {
+public protocol RouterModel: BaseRouterModel, ContextModel, PresentationModel {
   /// Navigates to the given destination using its associated routingType.
   ///
   /// This method examines the `routingType` property of the route and performs the appropriate navigation action (push, sheet, cover, root, etc).
@@ -82,13 +82,4 @@ public protocol RouterModel: BaseRouterModel, ContextModel {
   /// End navigation flows that depend on a specific context, ensuring all related actions are completed before navigating back or closing.
   /// - Parameter value: `RouteContext` to execute before the back or close operation.
   func terminate(_ value: some RouteContext)
-
-  /// Closes all child routers presented from the parent router.
-  func closeChildren()
-}
-
-public extension RouterModel {
-  func present(_ destination: some Route) {
-    present(destination, withStack: true)
-  }
 }
