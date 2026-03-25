@@ -18,6 +18,12 @@ import Foundation
 /// navigation flow completions.
 public protocol ContextModel {
 
+  /// The currently visible route managed by this router.
+  var currentRoute: AnyRoute { get }
+
+  /// The number of routes currently in the navigation path.
+  var pathCount: Int { get }
+
   /// Registers a context observer for a specific ``RouteContext`` type.
   ///
   /// The closure is executed whenever a matching context is dispatched via

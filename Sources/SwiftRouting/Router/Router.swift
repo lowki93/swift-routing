@@ -57,7 +57,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
     path.last ?? root
   }
 
-  override var pathCount: Int { path.count }
+  override public var pathCount: Int { path.count }
 
   /// Indicates whether this router is presented as a modal (sheet or cover).
   ///

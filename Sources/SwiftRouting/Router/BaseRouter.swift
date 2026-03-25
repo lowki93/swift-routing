@@ -37,7 +37,7 @@ public class BaseRouter: ObservableObject, Identifiable {
     AnyRoute(wrapped: DefaultRoute.main)
   }
 
-  var pathCount: Int { 0 }
+  public var pathCount: Int { 0 }
 
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.
   var children: [UUID: WeakContainer<BaseRouter>] = [:]
