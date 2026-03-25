@@ -87,9 +87,9 @@ public class BaseRouter: ObservableObject, Identifiable {
   }
 }
 
-// MARK: - Context Management
+// MARK: - ContextModel
 
-extension BaseRouter {
+extension BaseRouter: @preconcurrency ContextModel {
 
   @MainActor public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
     let (inserted, element) = contexts.insert(

@@ -35,7 +35,7 @@ import SwiftUI
 ///
 ///   let viewModel = ViewModel(router: router)
 /// ```
-public protocol RouterModel: BaseRouterModel {
+public protocol RouterModel: BaseRouterModel, ContextModel {
   /// Navigates to the given destination using its associated routingType.
   ///
   /// This method examines the `routingType` property of the route and performs the appropriate navigation action (push, sheet, cover, root, etc).
@@ -79,48 +79,9 @@ public protocol RouterModel: BaseRouterModel {
   /// Removes the last element from the navigation path, navigating back one step.
   func back()
 
-  /// Registers a context observer for a specific `RouteContext` type.
-  ///
-  /// Use this method to listen for context events triggered by `context(_:)` or `terminate(_:)`.
-  /// The closure will be executed whenever a matching context is dispatched, allowing you to
-  /// react to navigation flow completions or pass data between routes.
-  ///
-  /// > **Warning:**
-  /// > If you reference a class instance (e.g. a view model) inside the `perform` closure,
-  /// > capture it `[weak]` or `[unowned]` to prevent memory leaks.
-  ///
-  /// ## Example
-  /// ```swift
-  /// router.add(context: UserSelectionContext.self) { [weak self] context in
-  ///   self?.selectedUser = context.user
-  /// }
-  /// ```
-  ///
-  /// - Parameters:
-  ///   - object: The `RouteContext` type to observe.
-  ///   - perform: A closure executed when the context is triggered.
-  func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void)
-
-  /// Removes context observers for a specific `RouteContext` type on the current route.
-  ///
-  /// Use this method to stop listening for a particular context type, typically during cleanup
-  /// or when the observer is no longer needed.
-  /// Only observers registered on the router's current route are removed.
-  ///
-  /// - Parameter object: The `RouteContext` type to stop observing.
-  func remove<R: RouteContext>(context object: R.Type)
-
   /// End navigation flows that depend on a specific context, ensuring all related actions are completed before navigating back or closing.
   /// - Parameter value: `RouteContext` to execute before the back or close operation.
-  func terminate( _ value: some RouteContext)
-
-  /// Executes a navigation context action across the entire router hierarchy.
-  ///
-  /// This method searches for matching context observers in all parent routers (from root to direct parent)
-  /// and in the current router, then executes them with the provided value.
-  ///
-  /// - Parameter value: The `RouteContext` to execute across the router hierarchy.
-  func context(_ value: some RouteContext)
+  func terminate(_ value: some RouteContext)
 
   /// Closes all child routers presented from the parent router.
   func closeChildren()
