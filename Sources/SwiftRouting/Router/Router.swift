@@ -53,9 +53,11 @@ public final class Router: BaseRouter, @unchecked Sendable {
   /// ```swift
   /// print("Current route: \(router.currentRoute.name)")
   /// ```
-  public var currentRoute: AnyRoute {
+  override public var currentRoute: AnyRoute {
     path.last ?? root
   }
+
+  override var pathCount: Int { path.count }
 
   /// Indicates whether this router is presented as a modal (sheet or cover).
   ///
@@ -154,30 +156,6 @@ extension Router: @preconcurrency RouterModel {
     log(.action(.back()))
   }
 
-  @MainActor public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
-    let (inserted, element) = contexts.insert(
-      RouterContext(
-        router: self,
-        routerContext: object,
-        action: { [perform] in
-          guard let value = $0 as? R else { return }
-          perform(value)
-        }
-      )
-    )
-    if inserted {
-      log(.context(.add(element.route, context: element.routerContext)))
-    }
-  }
-
-  @MainActor public func remove<R: RouteContext>(context object: R.Type) {
-    // Removes observers matching the context type only for the current route.
-    for element in contexts.all(for: object, currentRoute: currentRoute.wrapped) {
-      contexts.remove(element)
-      log(.context(.remove(element.route, context: element.routerContext)))
-    }
-  }
-
   @MainActor public func terminate(_ value: some RouteContext) {
     /// Execute all termination observers for the given context type (in both parent and child routers).
     context(value)
@@ -195,20 +173,6 @@ extension Router: @preconcurrency RouterModel {
     } else {
       back()
     }
-  }
-
-  @MainActor public func context(_ value: some RouteContext) {
-    let termination = Swift.type(of: value)
-
-    // Execute context in all parent routers (from root to direct parent)
-    var current = parent
-    while let router = current {
-      router.contexts.all(for: termination).forEach { $0.execute(value) }
-      current = router.parent
-    }
-
-    // Execute context in current router
-    contexts.all(for: termination).forEach { $0.execute(value) }
   }
 
   @MainActor public func closeChildren() {
