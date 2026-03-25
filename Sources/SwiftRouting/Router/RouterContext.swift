@@ -24,6 +24,15 @@ struct RouterContext: Hashable {
     self.router = router
   }
 
+  init(baseRouter: BaseRouter, routerContext: any RouteContext.Type, action: @escaping (any RouteContext) -> Void) {
+    self.id = baseRouter.id
+    self.route = DefaultRoute.main
+    self.pathCount = 0
+    self.routerContext = routerContext
+    self.action = action
+    self.router = baseRouter
+  }
+
   func hash(into hasher: inout Hasher) {
     hasher.combine(id)
     hasher.combine(route.hashValue)

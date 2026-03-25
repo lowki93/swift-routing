@@ -27,4 +27,14 @@ extension EnvironmentValues {
   ///
   /// This provides access to the current router within the navigation stack.
   @Entry public var tabRouter: TabRouter?
+
+  /// Adds a `SplitRouter` instance to the environment values.
+  ///
+  /// This allows access to the splitRouter from anywhere in the app using:
+  /// ```swift
+  /// @Environment(\.splitRouter) var splitRouter
+  /// ```
+  ///
+  /// This provides access to the split-level router for sheet, cover, and context management.
+  @Entry public var splitRouter: SplitRouter?
 }

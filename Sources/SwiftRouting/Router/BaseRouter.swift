@@ -186,6 +186,8 @@ extension BaseRouter: CustomStringConvertible {
       "router(\(String(describing: router.type)))"
     } else if let tabRouter = self as? TabRouter {
       "tabRouter(\(String(describing: type(of: tabRouter.tab.wrapped)).lowercased()))"
+    } else if self is SplitRouter {
+      "splitRouter"
     } else {
       "baseRouter"
     }
