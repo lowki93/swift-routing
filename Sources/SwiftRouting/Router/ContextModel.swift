@@ -11,8 +11,7 @@ import Foundation
 ///
 /// `ContextModel` provides the ability to register, remove, and dispatch
 /// ``RouteContext`` observers. It is implemented by ``BaseRouter`` and
-/// inherited by all concrete router types, including ``Router`` and future
-/// router types such as `SplitRouter`.
+/// inherited by all concrete router types built on ``BaseRouter``.
 ///
 /// Use these methods to pass data back from child routes or to react to
 /// navigation flow completions.

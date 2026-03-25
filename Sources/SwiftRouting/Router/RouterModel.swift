@@ -54,21 +54,6 @@ public protocol RouterModel: BaseRouterModel, ContextModel, PresentationModel {
   /// - Parameter destination: The `Route` to be pushed onto the stack.
   func push(_ destination: some Route)
 
-  /// Presents a route as a modal sheet.
-  ///
-  /// This method displays the specified route as a sheet, overlaying the current view.
-  ///
-  /// - Parameters:
-  ///   - destination: The `Route` to be presented as a sheet.
-  ///   - withStack: If `true`, the sheet includes its own navigation stack. If `false`, the route is presented without navigation capabilities.
-  func present(_ destination: some Route, withStack: Bool)
-
-  /// Presents a route as a full-screen cover.
-  ///
-  /// This method presents the specified route as a cover, taking over the entire screen.
-  /// - Parameter destination: The `Route` to be presented as a cover.
-  func cover(_ destination: some Route)
-
   /// Clears the entire navigation path, returning to the root.
   func popToRoot()
 

@@ -11,11 +11,11 @@ import Foundation
 /// An intermediate router class that adds sheet and cover presentation capabilities.
 ///
 /// `PresentableRouter` sits between ``BaseRouter`` and concrete router types such as
-/// ``Router`` and future types like `SplitRouter`. It owns the shared presentation
+/// ``Router`` and any concrete router type that needs modal presentation. It owns the shared presentation
 /// state (`sheet`, `cover`, `triggerClose`) and provides default implementations of
 /// ``PresentationModel``, so subclasses get modal presentation for free.
 ///
-/// You should not use `PresentableRouter` directly — use ``Router`` or a subclass instead.
+/// You should not use `PresentableRouter` directly — use ``Router`` instead.
 public class PresentableRouter: BaseRouter {
 
   /// The route currently presented as a sheet, or `nil` if no sheet is shown.

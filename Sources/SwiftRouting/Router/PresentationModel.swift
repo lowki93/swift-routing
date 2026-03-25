@@ -11,7 +11,7 @@ import Foundation
 ///
 /// `PresentationModel` is implemented by ``PresentableRouter`` and shared by all
 /// concrete router types that support sheet and cover presentation, such as
-/// ``Router`` and future router types like `SplitRouter`.
+/// ``Router`` and any concrete router type built on ``PresentableRouter``.
 ///
 /// Use these methods to present routes modally or to dismiss the current router.
 public protocol PresentationModel {
