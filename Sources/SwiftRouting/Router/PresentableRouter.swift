@@ -64,10 +64,11 @@ extension PresentableRouter: @preconcurrency PresentationModel {
   }
 
   @MainActor public func closeChildren() {
-    for child in children.values.compactMap({ $0.value as? PresentableRouter }) where child.isPresented {
-      log(.action(.closeChildren(child)))
-      sheet = nil
-      cover = nil
-    }
+    let presentedChildren = children.values.compactMap({ $0.value as? PresentableRouter }).filter(\.isPresented)
+
+    guard !presentedChildren.isEmpty else { return }
+    presentedChildren.forEach { log(.action(.closeChildren($0))) }
+    sheet = nil
+    cover = nil
   }
 }
