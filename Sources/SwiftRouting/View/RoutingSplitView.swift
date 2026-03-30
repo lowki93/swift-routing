@@ -12,28 +12,28 @@ import SwiftUI
 /// `RoutingSplitView` wraps SwiftUI's `NavigationSplitView` and injects a `SplitRouter`
 /// into the environment for programmatic sheet/cover presentations and cross-column context passing.
 ///
-/// The sidebar column is automatically wrapped in a `RoutingView` driven by `SidebarDestination`.
-/// The detail column can be provided manually or auto-wrapped via a convenience initializer.
+/// Both sidebar and detail columns share the same `Destination` type. The sidebar is automatically
+/// wrapped in a `RoutingView` driven by `sidebarRoot`.
 ///
 /// ## Examples
 /// ```swift
 /// // 2-column, auto detail
-/// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: DetailRoute.self, root: .home)
+/// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar, root: .home)
 ///
 /// // 2-column, manual detail
-/// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: AppRoute.self) {
-///   RoutingView(destination: DetailRoute.self, root: .home)
+/// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar) {
+///   RoutingView(destination: AppRoute.self, root: .home)
 /// }
 ///
 /// // 3-column
-/// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: AppRoute.self) {
+/// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar) {
 ///   ContentView()
 /// } detail: {
-///   RoutingView(destination: DetailRoute.self, root: .home)
+///   RoutingView(destination: AppRoute.self, root: .home)
 /// }
 ///
 /// // With column visibility binding
-/// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: DetailRoute.self, root: .home, columnVisibility: $visibility)
+/// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar, root: .home, columnVisibility: $visibility)
 /// ```
 ///
 /// ## Accessing the SplitRouter
@@ -46,27 +46,24 @@ import SwiftUI
 /// }
 /// ```
 @MainActor
-public struct RoutingSplitView<SidebarDestination: RouteDestination, Destination: RouteDestination, Content: View, Detail: View>: View {
+public struct RoutingSplitView<Destination: RouteDestination, Content: View, Detail: View>: View {
 
   @Environment(\.router) private var parent
-  private let sidebarDestination: SidebarDestination.Type
-  private let sidebarRoot: SidebarDestination.R
   private let destination: Destination.Type
+  private let sidebarRoot: Destination.R
   private let columnVisibility: Binding<NavigationSplitViewVisibility>?
   private let content: Content?
   private let detail: Detail
 
   init(
-    sidebarDestination: SidebarDestination.Type,
-    sidebarRoot: SidebarDestination.R,
     destination: Destination.Type,
+    sidebarRoot: Destination.R,
     columnVisibility: Binding<NavigationSplitViewVisibility>?,
     content: Content?,
     detail: Detail
   ) {
-    self.sidebarDestination = sidebarDestination
-    self.sidebarRoot = sidebarRoot
     self.destination = destination
+    self.sidebarRoot = sidebarRoot
     self.columnVisibility = columnVisibility
     self.content = content
     self.detail = detail
@@ -75,9 +72,8 @@ public struct RoutingSplitView<SidebarDestination: RouteDestination, Destination
   public var body: some View {
     Wrapped(
       splitRouter: SplitRouter(parent: parent),
-      sidebarDestination: sidebarDestination,
-      sidebarRoot: sidebarRoot,
       destination: destination,
+      sidebarRoot: sidebarRoot,
       columnVisibility: columnVisibility,
       content: content,
       detail: detail
@@ -87,9 +83,8 @@ public struct RoutingSplitView<SidebarDestination: RouteDestination, Destination
   private struct Wrapped: View {
 
     @StateObject var splitRouter: SplitRouter
-    let sidebarDestination: SidebarDestination.Type
-    let sidebarRoot: SidebarDestination.R
     let destination: Destination.Type
+    let sidebarRoot: Destination.R
     let columnVisibility: Binding<NavigationSplitViewVisibility>?
     let content: Content?
     let detail: Detail
@@ -103,7 +98,7 @@ public struct RoutingSplitView<SidebarDestination: RouteDestination, Destination
 
     @ViewBuilder
     private var navigationView: some View {
-      let sidebar = RoutingView(destination: sidebarDestination, root: sidebarRoot)
+      let sidebar = RoutingView(destination: destination, root: sidebarRoot)
       if let content {
         if let visibility = columnVisibility {
           NavigationSplitView(columnVisibility: visibility) { sidebar } content: { content } detail: { detail }
@@ -128,47 +123,43 @@ extension RoutingSplitView where Content == EmptyView {
   /// Creates a 2-column split view with a route-driven sidebar and a custom detail column.
   ///
   /// - Parameters:
-  ///   - sidebarDestination: The `RouteDestination` type for the sidebar column.
+  ///   - destination: The `RouteDestination` type shared by both columns and split-level presentations.
   ///   - sidebarRoot: The initial route displayed in the sidebar column.
-  ///   - destination: The `RouteDestination` type used for split-level sheet and cover presentations.
   ///   - detail: A view builder for the detail column. Typically wraps a `RoutingView`.
   ///
   /// ```swift
-  /// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: AppRoute.self) {
-  ///   RoutingView(destination: DetailRoute.self, root: .home)
+  /// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar) {
+  ///   RoutingView(destination: AppRoute.self, root: .home)
   /// }
   /// ```
   public init(
-    sidebarDestination: SidebarDestination.Type,
-    sidebarRoot: SidebarDestination.R,
     destination: Destination.Type,
+    sidebarRoot: Destination.R,
     @ViewBuilder detail: () -> Detail
   ) {
-    self.init(sidebarDestination: sidebarDestination, sidebarRoot: sidebarRoot, destination: destination, columnVisibility: nil, content: nil, detail: detail())
+    self.init(destination: destination, sidebarRoot: sidebarRoot, columnVisibility: nil, content: nil, detail: detail())
   }
 
   /// Creates a 2-column split view with a route-driven sidebar, a custom detail column, and column visibility control.
   ///
   /// - Parameters:
-  ///   - sidebarDestination: The `RouteDestination` type for the sidebar column.
+  ///   - destination: The `RouteDestination` type shared by both columns and split-level presentations.
   ///   - sidebarRoot: The initial route displayed in the sidebar column.
-  ///   - destination: The `RouteDestination` type used for split-level sheet and cover presentations.
   ///   - columnVisibility: A binding to control which columns are visible.
   ///   - detail: A view builder for the detail column. Typically wraps a `RoutingView`.
   ///
   /// ```swift
-  /// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: AppRoute.self, columnVisibility: $visibility) {
-  ///   RoutingView(destination: DetailRoute.self, root: .home)
+  /// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar, columnVisibility: $visibility) {
+  ///   RoutingView(destination: AppRoute.self, root: .home)
   /// }
   /// ```
   public init(
-    sidebarDestination: SidebarDestination.Type,
-    sidebarRoot: SidebarDestination.R,
     destination: Destination.Type,
+    sidebarRoot: Destination.R,
     columnVisibility: Binding<NavigationSplitViewVisibility>,
     @ViewBuilder detail: () -> Detail
   ) {
-    self.init(sidebarDestination: sidebarDestination, sidebarRoot: sidebarRoot, destination: destination, columnVisibility: columnVisibility, content: nil, detail: detail())
+    self.init(destination: destination, sidebarRoot: sidebarRoot, columnVisibility: columnVisibility, content: nil, detail: detail())
   }
 }
 
@@ -179,24 +170,21 @@ extension RoutingSplitView where Content == EmptyView, Detail == RoutingView<Des
   /// Creates a 2-column split view where both sidebar and detail columns are automatically wrapped in a `RoutingView`.
   ///
   /// - Parameters:
-  ///   - sidebarDestination: The `RouteDestination` type for the sidebar column.
+  ///   - destination: The `RouteDestination` type shared by both columns and split-level presentations.
   ///   - sidebarRoot: The initial route displayed in the sidebar column.
-  ///   - destination: The `RouteDestination` type for the detail column and split-level presentations.
   ///   - root: The initial route displayed in the detail column.
   ///
   /// ```swift
-  /// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: DetailRoute.self, root: .home)
+  /// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar, root: .home)
   /// ```
   public init(
-    sidebarDestination: SidebarDestination.Type,
-    sidebarRoot: SidebarDestination.R,
     destination: Destination.Type,
+    sidebarRoot: Destination.R,
     root: Destination.R
   ) {
     self.init(
-      sidebarDestination: sidebarDestination,
-      sidebarRoot: sidebarRoot,
       destination: destination,
+      sidebarRoot: sidebarRoot,
       columnVisibility: nil,
       content: nil,
       detail: RoutingView(destination: destination, root: root)
@@ -206,26 +194,23 @@ extension RoutingSplitView where Content == EmptyView, Detail == RoutingView<Des
   /// Creates a 2-column split view with auto-managed sidebar and detail columns, and column visibility control.
   ///
   /// - Parameters:
-  ///   - sidebarDestination: The `RouteDestination` type for the sidebar column.
+  ///   - destination: The `RouteDestination` type shared by both columns and split-level presentations.
   ///   - sidebarRoot: The initial route displayed in the sidebar column.
-  ///   - destination: The `RouteDestination` type for the detail column and split-level presentations.
   ///   - root: The initial route displayed in the detail column.
   ///   - columnVisibility: A binding to control which columns are visible.
   ///
   /// ```swift
-  /// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: DetailRoute.self, root: .home, columnVisibility: $visibility)
+  /// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar, root: .home, columnVisibility: $visibility)
   /// ```
   public init(
-    sidebarDestination: SidebarDestination.Type,
-    sidebarRoot: SidebarDestination.R,
     destination: Destination.Type,
+    sidebarRoot: Destination.R,
     root: Destination.R,
     columnVisibility: Binding<NavigationSplitViewVisibility>
   ) {
     self.init(
-      sidebarDestination: sidebarDestination,
-      sidebarRoot: sidebarRoot,
       destination: destination,
+      sidebarRoot: sidebarRoot,
       columnVisibility: columnVisibility,
       content: nil,
       detail: RoutingView(destination: destination, root: root)
@@ -240,54 +225,50 @@ extension RoutingSplitView {
   /// Creates a 3-column split view with a route-driven sidebar, a content column, and a detail column.
   ///
   /// - Parameters:
-  ///   - sidebarDestination: The `RouteDestination` type for the sidebar column.
+  ///   - destination: The `RouteDestination` type shared by both columns and split-level presentations.
   ///   - sidebarRoot: The initial route displayed in the sidebar column.
-  ///   - destination: The `RouteDestination` type used for split-level sheet and cover presentations.
   ///   - content: A view builder for the content (middle) column.
   ///   - detail: A view builder for the detail column.
   ///
   /// ```swift
-  /// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: AppRoute.self) {
+  /// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar) {
   ///   ContentView()
   /// } detail: {
-  ///   RoutingView(destination: DetailRoute.self, root: .home)
+  ///   RoutingView(destination: AppRoute.self, root: .home)
   /// }
   /// ```
   public init(
-    sidebarDestination: SidebarDestination.Type,
-    sidebarRoot: SidebarDestination.R,
     destination: Destination.Type,
+    sidebarRoot: Destination.R,
     @ViewBuilder content: () -> Content,
     @ViewBuilder detail: () -> Detail
   ) {
-    self.init(sidebarDestination: sidebarDestination, sidebarRoot: sidebarRoot, destination: destination, columnVisibility: nil, content: content(), detail: detail())
+    self.init(destination: destination, sidebarRoot: sidebarRoot, columnVisibility: nil, content: content(), detail: detail())
   }
 
   /// Creates a 3-column split view with a route-driven sidebar, column visibility control, a content column, and a detail column.
   ///
   /// - Parameters:
-  ///   - sidebarDestination: The `RouteDestination` type for the sidebar column.
+  ///   - destination: The `RouteDestination` type shared by both columns and split-level presentations.
   ///   - sidebarRoot: The initial route displayed in the sidebar column.
-  ///   - destination: The `RouteDestination` type used for split-level sheet and cover presentations.
   ///   - columnVisibility: A binding to control which columns are visible.
   ///   - content: A view builder for the content (middle) column.
   ///   - detail: A view builder for the detail column.
   ///
   /// ```swift
-  /// RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: AppRoute.self, columnVisibility: $visibility) {
+  /// RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar, columnVisibility: $visibility) {
   ///   ContentView()
   /// } detail: {
-  ///   RoutingView(destination: DetailRoute.self, root: .home)
+  ///   RoutingView(destination: AppRoute.self, root: .home)
   /// }
   /// ```
   public init(
-    sidebarDestination: SidebarDestination.Type,
-    sidebarRoot: SidebarDestination.R,
     destination: Destination.Type,
+    sidebarRoot: Destination.R,
     columnVisibility: Binding<NavigationSplitViewVisibility>,
     @ViewBuilder content: () -> Content,
     @ViewBuilder detail: () -> Detail
   ) {
-    self.init(sidebarDestination: sidebarDestination, sidebarRoot: sidebarRoot, destination: destination, columnVisibility: columnVisibility, content: content(), detail: detail())
+    self.init(destination: destination, sidebarRoot: sidebarRoot, columnVisibility: columnVisibility, content: content(), detail: detail())
   }
 }

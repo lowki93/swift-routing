@@ -8,20 +8,29 @@
 import SwiftUI
 import SwiftRouting
 
+enum PlayerType: String {
+  case footballer
+  case basketballPlayer
+}
+
 enum AppRoute: Route {
   case home(name: String)
   case notifications
   case user(name: String)
   case search
   case settings
+  case sidebar
+  case players(PlayerType)
 
   var name: String {
     switch self {
     case let .home(name):  "Home(\(name))"
     case .notifications: "Notificatons"
     case let .user(name): "User(\(name))"
-    case .search: "search"
+    case .search: "Search"
     case .settings: "Settings"
+    case .sidebar: "Sidebar"
+    case let .players(type): "Players(\(type))"
     }
   }
 }
@@ -36,6 +45,8 @@ extension AppRoute: RouteDestination {
         .presentationDragIndicator(.visible)
         .presentationDetents([.medium])
     case .settings: SettingsScreen(model: SettingsScreenModel())
+    case .sidebar: SidebarView()
+    case let players(type): PlayersView(type: type)
     }
   }
 }

@@ -9,35 +9,7 @@ import SwiftUI
 struct SplitScreen: View {
 
   var body: some View {
-    RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: AppRoute.self, root: .home(name: "John"))
-  }
-}
-
-// MARK: - SidebarRoute
-
-enum PlayerType: String {
-  case footballer
-  case basketballPlayer
-}
-
-enum SidebarRoute: Route {
-  case list
-  case players(PlayerType)
-
-  var name: String {
-    switch self {
-    case .list: "list"
-    case .players(let type): type.rawValue
-    }
-  }
-}
-
-extension SidebarRoute: RouteDestination {
-  static func view(for route: SidebarRoute) -> some View {
-    switch route {
-    case .list: SidebarView()
-    case .players(let type): PlayersView(type: type)
-    }
+    RoutingSplitView(destination: AppRoute.self, sidebarRoot: .sidebar, root: .home(name: "John"))
   }
 }
 
@@ -47,8 +19,8 @@ struct SidebarView: View {
 
   var body: some View {
     List {
-      NavigationLink(route: SidebarRoute.players(.footballer)) { Text("Footballers") }
-      NavigationLink(route: SidebarRoute.players(.basketballPlayer)) { Text("Basketball Players") }
+      NavigationLink(route: AppRoute.players(.footballer)) { Text("Footballers") }
+      NavigationLink(route: AppRoute.players(.basketballPlayer)) { Text("Basketball Players") }
     }
     .navigationTitle("Sidebar")
     .onAppear {
