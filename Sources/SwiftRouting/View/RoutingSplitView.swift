@@ -137,6 +137,14 @@ extension RoutingSplitView where Content == EmptyView {
   ///   - destination: The `RouteDestination` type used for split-level sheet and cover presentations.
   ///   - sidebar: A view builder for the sidebar column.
   ///   - detail: A view builder for the detail column. Typically wraps a `RoutingView`.
+  ///
+  /// ```swift
+  /// RoutingSplitView(destination: AppRoute.self) {
+  ///   SidebarView()
+  /// } detail: {
+  ///   RoutingView(destination: DetailRoute.self, root: .home)
+  /// }
+  /// ```
   public init(
     destination: Destination.Type,
     @ViewBuilder sidebar: () -> Sidebar,
@@ -152,6 +160,14 @@ extension RoutingSplitView where Content == EmptyView {
   ///   - columnVisibility: A binding to control which columns are visible.
   ///   - sidebar: A view builder for the sidebar column.
   ///   - detail: A view builder for the detail column. Typically wraps a `RoutingView`.
+  ///
+  /// ```swift
+  /// RoutingSplitView(destination: AppRoute.self, columnVisibility: $visibility) {
+  ///   SidebarView()
+  /// } detail: {
+  ///   RoutingView(destination: DetailRoute.self, root: .home)
+  /// }
+  /// ```
   public init(
     destination: Destination.Type,
     columnVisibility: Binding<NavigationSplitViewVisibility>,
@@ -202,6 +218,12 @@ extension RoutingSplitView where Content == EmptyView, Detail == RoutingView<Des
   ///   - root: The initial route displayed in the detail column.
   ///   - columnVisibility: A binding to control which columns are visible.
   ///   - sidebar: A view builder for the sidebar column.
+  ///
+  /// ```swift
+  /// RoutingSplitView(destination: DetailRoute.self, root: .home, columnVisibility: $visibility) {
+  ///   SidebarView()
+  /// }
+  /// ```
   public init(
     destination: Destination.Type,
     root: Destination.R,
@@ -229,6 +251,16 @@ extension RoutingSplitView {
   ///   - sidebar: A view builder for the sidebar column.
   ///   - content: A view builder for the content (middle) column.
   ///   - detail: A view builder for the detail column.
+  ///
+  /// ```swift
+  /// RoutingSplitView(destination: AppRoute.self) {
+  ///   SidebarView()
+  /// } content: {
+  ///   ContentView()
+  /// } detail: {
+  ///   RoutingView(destination: DetailRoute.self, root: .home)
+  /// }
+  /// ```
   public init(
     destination: Destination.Type,
     @ViewBuilder sidebar: () -> Sidebar,
@@ -246,6 +278,16 @@ extension RoutingSplitView {
   ///   - sidebar: A view builder for the sidebar column.
   ///   - content: A view builder for the content (middle) column.
   ///   - detail: A view builder for the detail column.
+  ///
+  /// ```swift
+  /// RoutingSplitView(destination: AppRoute.self, columnVisibility: $visibility) {
+  ///   SidebarView()
+  /// } content: {
+  ///   ContentView()
+  /// } detail: {
+  ///   RoutingView(destination: DetailRoute.self, root: .home)
+  /// }
+  /// ```
   public init(
     destination: Destination.Type,
     columnVisibility: Binding<NavigationSplitViewVisibility>,
