@@ -17,6 +17,7 @@ struct ChoiceScreen: View {
       case .navigationStack: RoutingView(destination: AppRoute.self, root: .home(name: "John"))
       case .tabView: TabScreen(type: .tabView)
       case .routingTabView: TabScreen(type: .routingTabView)
+      case .splitView: SplitScreen()
     }
   }
 
@@ -25,6 +26,7 @@ struct ChoiceScreen: View {
       Button("Navigation Stack") { example = .navigationStack }
       Button("TabView") { example = .tabView }
       Button("RoutingTabView") { example = .routingTabView }
+      Button("SplitView") { example = .splitView }
     }
   }
 }
