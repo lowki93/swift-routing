@@ -29,6 +29,16 @@ public class BaseRouter: ObservableObject, Identifiable {
 
   var contexts: Set<RouterContext> = []
 
+  /// The currently visible route managed by this router.
+  ///
+  /// Subclasses override this to return their active route.
+  /// Defaults to ``DefaultRoute/main`` for base instances.
+  public var currentRoute: AnyRoute {
+    AnyRoute(wrapped: DefaultRoute.main)
+  }
+
+  public var pathCount: Int { 0 }
+
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.
   var children: [UUID: WeakContainer<BaseRouter>] = [:]
 
@@ -74,6 +84,48 @@ public class BaseRouter: ObservableObject, Identifiable {
   ///   - message: The type of message being logged.
   func log(_ message: LoggerMessage) {
     configuration.logger?(LoggerConfiguration(message: message, router: self))
+  }
+}
+
+// MARK: - ContextModel
+
+extension BaseRouter: @preconcurrency ContextModel {
+
+  @MainActor public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
+    let (inserted, element) = contexts.insert(
+      RouterContext(
+        router: self,
+        routerContext: object,
+        action: { [perform] in
+          guard let value = $0 as? R else { return }
+          perform(value)
+        }
+      )
+    )
+    if inserted {
+      log(.context(.add(element.route, context: element.routerContext)))
+    }
+  }
+
+  @MainActor public func remove<R: RouteContext>(context object: R.Type) {
+    for element in contexts.all(for: object, currentRoute: currentRoute.wrapped) {
+      contexts.remove(element)
+      log(.context(.remove(element.route, context: element.routerContext)))
+    }
+  }
+
+  @MainActor public func context(_ value: some RouteContext) {
+    let termination = Swift.type(of: value)
+
+    // Execute context in all parent routers (from root to direct parent)
+    var current = parent
+    while let router = current {
+      router.contexts.all(for: termination).forEach { $0.execute(value) }
+      current = router.parent
+    }
+
+    // Execute context in current router
+    contexts.all(for: termination).forEach { $0.execute(value) }
   }
 }
 

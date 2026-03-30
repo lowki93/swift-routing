@@ -261,7 +261,7 @@ struct TabRouterTests {
     func deeplinkWithPushType_handleTabDeeplink_return_routePushedInTargetTab() {
       let expectedHomeRouter = attachRouter(in: tabRouter, tab: .home, root: .home)
       let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
-      let deeplink = DeeplinkRoute(type: .push, route: TestRoute.details(id: "deeplink"))
+      let deeplink = DeeplinkRoute.push(TestRoute.details(id: "deeplink"))
       let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
 
       tabRouter.handle(tabDeeplink: tabDeeplink)
@@ -274,9 +274,8 @@ struct TabRouterTests {
     @Test
     func deeplinkWithPath_handleTabDeeplink_return_pathAndRouteInTargetTab() {
       let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
-      let deeplink = DeeplinkRoute(
-        type: .push,
-        route: TestRoute.details(id: "final"),
+      let deeplink = DeeplinkRoute.push(
+        TestRoute.details(id: "final"),
         path: [TestRoute.home, TestRoute.settings]
       )
       let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
@@ -293,10 +292,9 @@ struct TabRouterTests {
     @Test
     func deeplinkWithRoot_handleTabDeeplink_return_rootUpdatedInTargetTab() {
       let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
-      let deeplink = DeeplinkRoute(
+      let deeplink = DeeplinkRoute.push(
+        TestRoute.details(id: "after-root"),
         root: TestRoute.home,
-        type: .push,
-        route: TestRoute.details(id: "after-root")
       )
       let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
 
@@ -310,7 +308,7 @@ struct TabRouterTests {
     @Test
     func deeplinkWithSheetType_handleTabDeeplink_return_sheetPresentedInTargetTab() {
       let expectedSettingsRouter = attachRouter(in: tabRouter, tab: .settings, root: .settings)
-      let deeplink = DeeplinkRoute(type: .sheet(withStack: true), route: TestRoute.details(id: "sheet"))
+      let deeplink = DeeplinkRoute.present(TestRoute.details(id: "sheet"))
       let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
 
       tabRouter.handle(tabDeeplink: tabDeeplink)
@@ -326,7 +324,7 @@ struct TabRouterTests {
       expectedSettingsRouter.push(TestRoute.home)
       expectedSettingsRouter.push(TestRoute.details(id: "existing"))
       #expect(expectedSettingsRouter.path.count == 2)
-      let deeplink = DeeplinkRoute(type: .push, route: TestRoute.details(id: "new"))
+      let deeplink = DeeplinkRoute.push(TestRoute.details(id: "new"))
       let tabDeeplink = TabDeeplink(tab: TestTabRoute.settings, deeplink: deeplink)
 
       tabRouter.handle(tabDeeplink: tabDeeplink)
@@ -340,7 +338,7 @@ struct TabRouterTests {
     func tabRouterDoesNotExistForTab_handleTabDeeplink_return_tabChangedOnly() {
       let tabDeeplink = TabDeeplink(
         tab: TestTabRoute.settings,
-        deeplink: DeeplinkRoute(type: .push, route: TestRoute.details(id: "orphan"))
+        deeplink: DeeplinkRoute.push(TestRoute.details(id: "orphan"))
       )
 
       tabRouter.handle(tabDeeplink: tabDeeplink)

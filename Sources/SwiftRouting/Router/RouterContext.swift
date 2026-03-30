@@ -11,14 +11,14 @@ struct RouterContext: Hashable {
   let route: any Route
   let pathCount: Int
   let routerContext: any RouteContext.Type
-  private weak var router: Router?
+  private weak var router: BaseRouter?
   private let id: UUID
   private let action: (any RouteContext) -> Void
 
-  init(router: Router, routerContext: any RouteContext.Type, action: @escaping (any RouteContext) -> Void) {
+  init(router: BaseRouter, routerContext: any RouteContext.Type, action: @escaping (any RouteContext) -> Void) {
     self.id = router.id
     self.route = router.currentRoute.wrapped
-    self.pathCount = router.path.count
+    self.pathCount = router.pathCount
     self.routerContext = routerContext
     self.action = action
     self.router = router

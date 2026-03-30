@@ -20,7 +20,7 @@ import SwiftUI
 /// ```swift
 /// @Environment(\.router) var router
 /// ```
-public final class Router: BaseRouter, @unchecked Sendable {
+public final class Router: PresentableRouter, @unchecked Sendable {
 
   static let defaultRouter: Router = Router(configuration: .default)
 
@@ -31,19 +31,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
       removeContext(old: path, new: newValue)
     }
   }
-  @Published internal var sheet: AnyRoute? {
-    didSet {
-      guard oldValue != sheet else { return }
-      present.send((sheet != nil, self))
-    }
-  }
-  @Published internal var cover: AnyRoute? {
-    didSet {
-      guard oldValue != cover else { return }
-      present.send((cover != nil, self))
-    }
-  }
-  @Published internal var triggerClose: Bool = false
 
   /// The currently visible route in the navigation stack.
   ///
@@ -53,9 +40,11 @@ public final class Router: BaseRouter, @unchecked Sendable {
   /// ```swift
   /// print("Current route: \(router.currentRoute.name)")
   /// ```
-  public var currentRoute: AnyRoute {
+  override public var currentRoute: AnyRoute {
     path.last ?? root
   }
+
+  override public var pathCount: Int { path.count }
 
   /// Indicates whether this router is presented as a modal (sheet or cover).
   ///
@@ -69,7 +58,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   ///   Button("Close") { router.close() }
   /// }
   /// ```
-  public var isPresented: Bool {
+  override public var isPresented: Bool {
     type.isPresented
   }
 
@@ -128,54 +117,15 @@ extension Router: @preconcurrency RouterModel {
     route(to: destination, type: .push)
   }
 
-  @MainActor public func present(_ destination: some Route, withStack: Bool) {
-    route(to: destination, type: .sheet(withStack: withStack))
-  }
-
-  @MainActor public func cover(_ destination: some Route) {
-    route(to: destination, type: .cover)
-  }
-
   @MainActor public func popToRoot() {
     path.removeAll()
     log(.action(.popToRoot))
-  }
-
-  @MainActor public func close() {
-    guard type.isPresented else { return }
-
-    triggerClose = true
-    log(.action(.close))
   }
 
   @MainActor public func back() {
     guard !path.isEmpty else { return }
     path.removeLast()
     log(.action(.back()))
-  }
-
-  @MainActor public func add<R: RouteContext>(context object: R.Type, perform: @escaping (R) -> Void) {
-    let (inserted, element) = contexts.insert(
-      RouterContext(
-        router: self,
-        routerContext: object,
-        action: { [perform] in
-          guard let value = $0 as? R else { return }
-          perform(value)
-        }
-      )
-    )
-    if inserted {
-      log(.context(.add(element.route, context: element.routerContext)))
-    }
-  }
-
-  @MainActor public func remove<R: RouteContext>(context object: R.Type) {
-    // Removes observers matching the context type only for the current route.
-    for element in contexts.all(for: object, currentRoute: currentRoute.wrapped) {
-      contexts.remove(element)
-      log(.context(.remove(element.route, context: element.routerContext)))
-    }
   }
 
   @MainActor public func terminate(_ value: some RouteContext) {
@@ -196,31 +146,9 @@ extension Router: @preconcurrency RouterModel {
       back()
     }
   }
-
-  @MainActor public func context(_ value: some RouteContext) {
-    let termination = Swift.type(of: value)
-
-    // Execute context in all parent routers (from root to direct parent)
-    var current = parent
-    while let router = current {
-      router.contexts.all(for: termination).forEach { $0.execute(value) }
-      current = router.parent
-    }
-
-    // Execute context in current router
-    contexts.all(for: termination).forEach { $0.execute(value) }
-  }
-
-  @MainActor public func closeChildren() {
-    for router in children.values.compactMap({ $0.value as? Router }) where router.isPresented {
-      log(.action(.closeChildren(router)))
-      sheet = nil
-      cover = nil
-    }
-  }
 }
 
-private extension Router  {
+private extension Router {
 
   @MainActor func route(to destination: some Route, type: RoutingType) {
     log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
