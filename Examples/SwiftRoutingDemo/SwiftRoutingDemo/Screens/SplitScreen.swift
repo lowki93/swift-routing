@@ -9,11 +9,7 @@ import SwiftUI
 struct SplitScreen: View {
 
   var body: some View {
-    RoutingSplitView(destination: AppRoute.self) {
-      RoutingView(destination: SidebarRoute.self, root: .list)
-    } detail: {
-      RoutingView(destination: AppRoute.self, root: .home(name: "John"))
-    }
+    RoutingSplitView(sidebarDestination: SidebarRoute.self, sidebarRoot: .list, destination: AppRoute.self, root: .home(name: "John"))
   }
 }
 
