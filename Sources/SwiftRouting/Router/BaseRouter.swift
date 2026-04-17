@@ -24,6 +24,12 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// Publisher to know if a router is present or not
   let present: PassthroughSubject<(Bool, BaseRouter), Never>
 
+  /// Emits whenever the user taps the already-selected tab.
+  ///
+  /// Observe this publisher from any view using ``onTabReselected(_:perform:)``.
+  /// On routers not managed by a `TabRouter`, this subject never emits.
+  public let tabReselected = PassthroughSubject<AnyTabRoute, Never>()
+
   /// The parent router, if any. Used for hierarchical navigation structures.
   weak var parent: BaseRouter?
 

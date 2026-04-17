@@ -40,9 +40,7 @@ public extension Binding where Value: TabRoute {
       set: {
         if tab.wrappedValue == $0 {
           router.find(tab: $0)?.popToRoot()
-          if let tabRouter = router as? TabRouter {
-            tabRouter.tabReselected.send(AnyTabRoute(wrapped: $0))
-          }
+          router.tabReselected.send(AnyTabRoute(wrapped: $0))
           onReselected?($0)
         } else {
           tab.wrappedValue = $0

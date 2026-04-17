@@ -8,15 +8,15 @@ import SwiftUI
 
 private struct TabReselectedModifier<Tab: TabRoute>: ViewModifier {
 
+  @Environment(\.router) private var router
   @Environment(\.tabRouter) private var tabRouter
   let tab: Tab
   let action: () -> Void
 
   func body(content: Content) -> some View {
-    content
-      .onReceive(
-        tabRouter?.tabReselected.eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
-      ) { reselectedTab in
+    let source: BaseRouter = tabRouter ?? router
+    return content
+      .onReceive(source.tabReselected) { reselectedTab in
         guard reselectedTab.wrapped as? Tab == tab else { return }
         action()
       }
@@ -50,7 +50,7 @@ public extension View {
   ///
   /// - Parameters:
   ///   - tab: The tab whose reselection should trigger `action`.
-  ///   - action: A closure called when `tab` is reselected. No-op if used outside a `RoutingTabView`.
+  ///   - action: A closure called when `tab` is reselected. No-op outside a `RoutingTabView`.
   func onTabReselected<Tab: TabRoute>(_ tab: Tab, perform action: @escaping () -> Void) -> some View {
     modifier(TabReselectedModifier(tab: tab, action: action))
   }
