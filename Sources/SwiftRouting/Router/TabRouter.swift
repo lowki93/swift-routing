@@ -5,6 +5,7 @@
 //  Created by Kevin Budain on 06/03/2025.
 //
 
+import Combine
 import Foundation
 import Observation
 
@@ -30,6 +31,12 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
   /// This property is updated when the user selects a tab or when
   /// `change(tab:)` is called programmatically.
   @Published var tab: AnyTabRoute
+
+  /// Emits whenever the user taps the already-selected tab.
+  ///
+  /// Observe this publisher from any child view using ``onTabReselected(_:perform:)``,
+  /// or directly via `.onReceive(tabRouter.tabReselected)`.
+  public let tabReselected = PassthroughSubject<AnyTabRoute, Never>()
 
   /// All child routers managed by this tab router.
   ///

@@ -12,21 +12,21 @@ public extension Binding where Value: TabRoute {
   /// Clears the navigation path of the specified tab, with optional reselection handling.
   ///
   /// This function locates the router associated with the current tab and resets its navigation path.
-  /// - If the selected tab matches the new value, it triggers `popToRoot()` then calls `onReselected` if provided.
+  /// - If the selected tab matches the new value, it calls `popToRoot()`, fires
+  ///   `TabRouter.tabReselected`, then calls `onReselected` if provided.
   /// - Otherwise, it updates the tab selection.
   ///
   /// - Parameters:
   ///   - tab: A binding to the current tab.
   ///   - router: The router managing the tabview.
-  ///   - onReselected: An optional closure invoked when the user taps the already-selected tab.
-  ///     When provided, replaces the default `popToRoot()` behavior. Always called on the main actor.
+  ///   - onReselected: An optional closure invoked when the user taps the already-selected tab,
+  ///     after `popToRoot()` has been called. For child-view use cases, prefer observing
+  ///     `TabRouter.tabReselected` via ``onTabReselected(_:perform:)`` instead.
   /// - Returns: A binding that updates the tab and clears its navigation stack when reselected.
   ///
   /// ## Usage
   /// ```swift
-  /// TabView(selection: .tabToRoot(for: $tab, in: router, onReselected: { tab in
-  ///   scrollToTop(for: tab)
-  /// })) {
+  /// TabView(selection: .tabToRoot(for: $tab, in: router)) {
   ///   // tab content
   /// }
   /// ```
@@ -40,6 +40,9 @@ public extension Binding where Value: TabRoute {
       set: {
         if tab.wrappedValue == $0 {
           router.find(tab: $0)?.popToRoot()
+          if let tabRouter = router as? TabRouter {
+            tabRouter.tabReselected.send(AnyTabRoute(wrapped: $0))
+          }
           onReselected?($0)
         } else {
           tab.wrappedValue = $0
