@@ -217,6 +217,26 @@ tabRouter.push(.profile, in: .profile)
 tabRouter.popToRoot(in: .profile)
 ```
 
+## Reacting to Tab Reselection
+
+Use `.onTabReselected` from any child view to run code when the user taps the already-selected tab.
+`popToRoot` always fires first; the handler is called after.
+
+```swift
+struct HomeView: View {
+  var body: some View {
+    ScrollView { /* ... */ }
+      .onTabReselected(HomeTab.home) {
+        // e.g. scroll to top
+      }
+  }
+}
+```
+
+- Works with both `RoutingTabView` and native `TabView + .tabToRoot`.
+- Handler fires only when the reselected tab matches the tab argument.
+- No-op if used outside a tab context.
+
 ## Best Practices
 
 - Keep one `RoutingView` per tab.

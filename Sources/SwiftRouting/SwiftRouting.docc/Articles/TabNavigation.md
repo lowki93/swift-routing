@@ -188,6 +188,29 @@ Pass `nil` for the tab parameter to use the currently selected tab:
 tabRouter?.push(HomeRoute.detail(id: 42), in: nil)
 ```
 
+## Reacting to Tab Reselection
+
+Use the ``onTabReselected(_:perform:)`` modifier from any view inside a `RoutingTabView` to react to same-tab taps. The default `popToRoot` behavior always fires first; the handler is called after.
+
+```swift
+struct HomeView: View {
+    @ScrollViewProxy var scrollProxy
+
+    var body: some View {
+        ScrollView {
+            // ...
+        }
+        .onTabReselected(HomeTab.home) {
+            scrollProxy.scrollTo("top", anchor: .top)
+        }
+    }
+}
+```
+
+> Note:
+> ``onTabReselected(_:perform:)`` works with both `RoutingTabView` and native `TabView + .tabToRoot`.
+> The handler fires only when the reselected tab matches the tab you pass.
+
 ## Hiding the Tab Bar
 
 To hide the tab bar when pushing views, override `hideTabBarOnPush`:
