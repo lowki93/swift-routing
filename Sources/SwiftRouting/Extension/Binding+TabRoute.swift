@@ -12,9 +12,7 @@ public extension Binding where Value: TabRoute {
   /// Clears the navigation path of the specified tab, with optional reselection handling.
   ///
   /// This function locates the router associated with the current tab and resets its navigation path.
-  /// - If the selected tab matches the new value and `onReselected` is `nil`, it triggers `popToRoot()`.
-  /// - If the selected tab matches the new value and `onReselected` is provided, it calls `onReselected`
-  ///   instead of `popToRoot()`, giving full control over the reselection behavior.
+  /// - If the selected tab matches the new value, it triggers `popToRoot()` then calls `onReselected` if provided.
   /// - Otherwise, it updates the tab selection.
   ///
   /// - Parameters:
@@ -41,11 +39,8 @@ public extension Binding where Value: TabRoute {
       get: { tab.wrappedValue },
       set: {
         if tab.wrappedValue == $0 {
-          if let onReselected {
-            onReselected($0)
-          } else {
-            router.find(tab: $0)?.popToRoot()
-          }
+          router.find(tab: $0)?.popToRoot()
+          onReselected?($0)
         } else {
           tab.wrappedValue = $0
           if let tabRouter = router as? TabRouter {

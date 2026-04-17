@@ -65,9 +65,9 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
 
   /// Adds a handler called when the user taps the already-selected tab.
   ///
-  /// By default, tapping the currently selected tab pops the navigation stack to its root
-  /// (`popToRoot`). Use this modifier to replace that behavior with custom logic, such as
-  /// scrolling to the top of a list or dismissing a presented screen.
+  /// Tapping the currently selected tab always pops the navigation stack to its root (`popToRoot`).
+  /// Use this modifier to add custom logic on top of that behavior, such as scrolling to the top
+  /// of a list or dismissing a presented screen.
   ///
   /// The closure receives the reselected tab as its argument and is always called on the main actor.
   ///
@@ -81,7 +81,7 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
   /// }
   /// ```
   ///
-  /// - Parameter action: A closure invoked with the reselected tab. Replaces the default `popToRoot()` behavior.
+  /// - Parameter action: A closure invoked with the reselected tab, after `popToRoot()` has been called.
   /// - Returns: A `RoutingTabView` that calls `action` when the user taps the already-selected tab.
   public func onTabReselected(_ action: @escaping (Tab) -> Void) -> Self {
     var copy = self
