@@ -118,6 +118,8 @@ extension Router: @preconcurrency RouterModel {
   }
 
   @MainActor public func popToRoot() {
+    guard !path.isEmpty else { return }
+
     path.removeAll()
     log(.action(.popToRoot))
   }

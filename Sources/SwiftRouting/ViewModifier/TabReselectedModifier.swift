@@ -14,9 +14,8 @@ private struct TabReselectedModifier<Tab: TabRoute>: ViewModifier {
   let action: () -> Void
 
   func body(content: Content) -> some View {
-    let source: BaseRouter = tabRouter ?? router
-    return content
-      .onReceive(source.tabReselected) { reselectedTab in
+    content
+      .onReceive((tabRouter ?? router.parent ?? router).tabReselected) { reselectedTab in
         guard reselectedTab.wrapped as? Tab == tab else { return }
         action()
       }
