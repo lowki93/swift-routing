@@ -9,21 +9,43 @@ import SwiftUI
 
 public extension Binding where Value: TabRoute {
 
-  /// Clears the navigation path of the specified tab.
+  /// Clears the navigation path of the specified tab, with optional reselection handling.
   ///
   /// This function locates the router associated with the current tab and resets its navigation path.
-  /// If the selected tab is the same as the new value, it triggers `popToRoot()`, otherwise, it updates the tab selection.
+  /// - If the selected tab matches the new value and `onReselected` is `nil`, it triggers `popToRoot()`.
+  /// - If the selected tab matches the new value and `onReselected` is provided, it calls `onReselected`
+  ///   instead of `popToRoot()`, giving full control over the reselection behavior.
+  /// - Otherwise, it updates the tab selection.
   ///
   /// - Parameters:
   ///   - tab: A binding to the current tab.
   ///   - router: The router managing the tabview.
+  ///   - onReselected: An optional closure invoked when the user taps the already-selected tab.
+  ///     When provided, replaces the default `popToRoot()` behavior. Always called on the main actor.
   /// - Returns: A binding that updates the tab and clears its navigation stack when reselected.
-  @MainActor static func tabToRoot(for tab: Binding<Value>, in router: BaseRouter) -> Binding<Value> {
+  ///
+  /// ## Usage
+  /// ```swift
+  /// TabView(selection: .tabToRoot(for: $tab, in: router, onReselected: { tab in
+  ///   scrollToTop(for: tab)
+  /// })) {
+  ///   // tab content
+  /// }
+  /// ```
+  @MainActor static func tabToRoot(
+    for tab: Binding<Value>,
+    in router: BaseRouter,
+    onReselected: ((Value) -> Void)? = nil
+  ) -> Binding<Value> {
     Binding(
       get: { tab.wrappedValue },
       set: {
         if tab.wrappedValue == $0 {
-          router.find(tab: $0)?.popToRoot()
+          if let onReselected {
+            onReselected($0)
+          } else {
+            router.find(tab: $0)?.popToRoot()
+          }
         } else {
           tab.wrappedValue = $0
           if let tabRouter = router as? TabRouter {

@@ -24,7 +24,8 @@ import SwiftUI
 /// ```
 ///
 /// ## TabToRoot Behavior
-/// - If the user taps on the currently selected tab, the navigation stack is reset.
+/// - If the user taps on the currently selected tab, the navigation stack is reset by default.
+/// - Use ``onTabReselected(_:)`` to override this behavior with custom logic.
 ///
 /// ## Notes
 /// - You can still use `TabView` without `RoutingTabView` if `TabRouter` is not needed.
@@ -44,6 +45,7 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
   @Binding private var tab: Tab
   private let destination: Destination.Type
   private let content: (Destination.Type) -> Content
+  private var onTabReselectedAction: ((Tab) -> Void)?
 
   /// Initializes a `RoutingTabView` instance.
   ///
@@ -61,11 +63,38 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
     self.content = content
   }
 
+  /// Adds a handler called when the user taps the already-selected tab.
+  ///
+  /// By default, tapping the currently selected tab pops the navigation stack to its root
+  /// (`popToRoot`). Use this modifier to replace that behavior with custom logic, such as
+  /// scrolling to the top of a list or dismissing a presented screen.
+  ///
+  /// The closure receives the reselected tab as its argument and is always called on the main actor.
+  ///
+  /// ```swift
+  /// RoutingTabView(tab: $tab, destination: HomeRoute.self) { destination in
+  ///   RoutingView(tab: HomeTab.home, destination: destination, root: .page1)
+  ///   RoutingView(tab: HomeTab.user, destination: destination, root: .page2)
+  /// }
+  /// .onTabReselected { tab in
+  ///   scrollProxy.scrollTo(top, anchor: .top)
+  /// }
+  /// ```
+  ///
+  /// - Parameter action: A closure invoked with the reselected tab. Replaces the default `popToRoot()` behavior.
+  /// - Returns: A `RoutingTabView` that calls `action` when the user taps the already-selected tab.
+  public func onTabReselected(_ action: @escaping (Tab) -> Void) -> Self {
+    var copy = self
+    copy.onTabReselectedAction = action
+    return copy
+  }
+
   public var body: some View {
     Wrapped(
       tabRouter: TabRouter(tab: tab, parent: parent),
       currentTab: $tab,
       destination: destination,
+      onTabReselectedAction: onTabReselectedAction,
       content: content
     )
   }
@@ -75,10 +104,11 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
     @StateObject var tabRouter: TabRouter
     @Binding var currentTab: Tab
     let destination: Destination.Type
+    let onTabReselectedAction: ((Tab) -> Void)?
     let content: (Destination.Type) -> Content
 
     public var body: some View {
-      TabView(selection: .tabToRoot(for: $currentTab, in: tabRouter)) {
+      TabView(selection: .tabToRoot(for: $currentTab, in: tabRouter, onReselected: onTabReselectedAction)) {
         content(destination)
         // TODO: Try to had RoutingView for each child
 //        _VariadicView.Tree(TabViewContainer(currentTab: tab, destination: destination)) {
@@ -87,7 +117,7 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
       }
       .environment(\.tabRouter, tabRouter)
       .onReceive(tabRouter.$tab) { [$currentTab] in
-        if let tab = $0.wrapped as? Tab {
+        if let tab = $0.wrapped as? Tab, tab != $currentTab.wrappedValue {
           $currentTab.wrappedValue = tab
         }
       }
