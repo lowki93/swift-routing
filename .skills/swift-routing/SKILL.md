@@ -66,6 +66,8 @@ Then continue by use case:
   - Audit closure captures in `add(context:perform:)` and `.routerContext`.
 - "Deep link resolves but does not navigate"
   - Validate route mapping, destination type, and target router (`router` vs `tabRouter`).
+- "Need to react to tab reselection (e.g. scroll to top)"
+  - Use `.onTabReselected(tab:)` from any child view; `popToRoot` fires first, then the handler.
 
 ## TODO (This Skill)
 
