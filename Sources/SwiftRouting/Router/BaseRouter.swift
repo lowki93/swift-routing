@@ -28,7 +28,7 @@ public class BaseRouter: ObservableObject, Identifiable {
   ///
   /// Observe this publisher from any view using ``onTabReselected(_:perform:)``.
   /// On routers not managed by a `TabRouter`, this subject never emits.
-  public let tabReselected = PassthroughSubject<AnyTabRoute, Never>()
+  let tabReselected = PassthroughSubject<AnyTabRoute, Never>()
 
   /// The parent router, if any. Used for hierarchical navigation structures.
   weak var parent: BaseRouter?
