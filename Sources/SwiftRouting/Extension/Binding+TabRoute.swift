@@ -9,21 +9,34 @@ import SwiftUI
 
 public extension Binding where Value: TabRoute {
 
-  /// Clears the navigation path of the specified tab.
+  /// Clears the navigation path of the specified tab, with optional reselection handling.
   ///
   /// This function locates the router associated with the current tab and resets its navigation path.
-  /// If the selected tab is the same as the new value, it triggers `popToRoot()`, otherwise, it updates the tab selection.
+  /// - If the selected tab matches the new value, it calls `popToRoot()` and fires
+  ///   `TabRouter.tabReselected`.
+  /// - Otherwise, it updates the tab selection.
   ///
   /// - Parameters:
   ///   - tab: A binding to the current tab.
   ///   - router: The router managing the tabview.
   /// - Returns: A binding that updates the tab and clears its navigation stack when reselected.
-  @MainActor static func tabToRoot(for tab: Binding<Value>, in router: BaseRouter) -> Binding<Value> {
+  ///
+  /// ## Usage
+  /// ```swift
+  /// TabView(selection: .tabToRoot(for: $tab, in: router)) {
+  ///   // tab content
+  /// }
+  /// ```
+  @MainActor static func tabToRoot(
+    for tab: Binding<Value>,
+    in router: BaseRouter
+  ) -> Binding<Value> {
     Binding(
       get: { tab.wrappedValue },
       set: {
         if tab.wrappedValue == $0 {
           router.find(tab: $0)?.popToRoot()
+          router.tabReselected.send(AnyTabRoute(wrapped: $0))
         } else {
           tab.wrappedValue = $0
           if let tabRouter = router as? TabRouter {

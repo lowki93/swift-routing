@@ -39,6 +39,9 @@ struct HomeScreen: View {
     .routerPresent {
       print("=== HomeScreen : ", $0, $1)
     }
+    .onTabReselected(HomeTab.home) {
+      print("=== HomeTab.home")
+    }
   }
 }
 

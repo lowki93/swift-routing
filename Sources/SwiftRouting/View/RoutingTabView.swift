@@ -25,6 +25,7 @@ import SwiftUI
 ///
 /// ## TabToRoot Behavior
 /// - If the user taps on the currently selected tab, the navigation stack is reset.
+/// - To react to same-tab taps from any child view, use ``onTabReselected(_:perform:)``.
 ///
 /// ## Notes
 /// - You can still use `TabView` without `RoutingTabView` if `TabRouter` is not needed.
@@ -87,7 +88,7 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
       }
       .environment(\.tabRouter, tabRouter)
       .onReceive(tabRouter.$tab) { [$currentTab] in
-        if let tab = $0.wrapped as? Tab {
+        if let tab = $0.wrapped as? Tab, tab != $currentTab.wrappedValue {
           $currentTab.wrappedValue = tab
         }
       }
