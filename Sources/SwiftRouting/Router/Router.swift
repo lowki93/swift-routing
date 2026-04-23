@@ -33,6 +33,7 @@ public final class Router: PresentableRouter, @unchecked Sendable {
       }
     }
   }
+
   @Published internal var path: [AnyRoute] = [] {
     willSet {
       removeContext(old: path, new: newValue)
@@ -95,16 +96,14 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   ///
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
-    let defaultRoute = AnyRoute(wrapped: DefaultRoute.main)
     self.type = .app
-    self.root = defaultRoute
-    super.init(configuration: configuration, first: true)
+    super.init(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main), first: true)
   }
 
   init(root: AnyRoute, type: RouterType, parent: BaseRouter) {
-    self.root = root
     self.type = type
-    super.init(configuration: parent.configuration, parent: parent)
+    print(root.wrapped)
+    super.init(configuration: parent.configuration, root: root, parent: parent)
     parent.addChild(self)
   }
 }

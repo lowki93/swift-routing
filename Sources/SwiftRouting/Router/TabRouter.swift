@@ -52,7 +52,7 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
   ///   - parent: The parent `Router` managing this tab.
   init(tab: some TabRoute, parent: BaseRouter) {
     self.tab = AnyTabRoute(wrapped: tab)
-    super.init(configuration: parent.configuration, parent: parent)
+    super.init(configuration: parent.configuration, root: AnyRoute(wrapped: tab), parent: parent)
     /// To avoid having more thant instance of the TabRoute, we remove the previous from the parent
     if let tabRouter = parent.tabRouter(for: tab) {
       parent.removeChild(tabRouter)

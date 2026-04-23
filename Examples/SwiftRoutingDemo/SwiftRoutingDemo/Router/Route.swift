@@ -8,11 +8,6 @@
 import SwiftUI
 import SwiftRouting
 
-enum PlayerType: String {
-  case footballer
-  case basketballPlayer
-}
-
 enum AppRoute: Route {
   case home(name: String)
   case notifications
@@ -21,6 +16,7 @@ enum AppRoute: Route {
   case settings
   case sidebar
   case players(PlayerType)
+  case player(Player)
 
   var name: String {
     switch self {
@@ -31,6 +27,7 @@ enum AppRoute: Route {
     case .settings: "Settings"
     case .sidebar: "Sidebar"
     case let .players(type): "Players(\(type))"
+    case let .player(player): "Player(\(player.name))"
     }
   }
 }
@@ -45,8 +42,9 @@ extension AppRoute: RouteDestination {
         .presentationDragIndicator(.visible)
         .presentationDetents([.medium])
     case .settings: SettingsScreen(model: SettingsScreenModel())
-    case .sidebar: SidebarView()
-    case let players(type): PlayersView(type: type)
+    case .sidebar: SidebarScreen()
+    case let players(type): PlayersScreen(type: type)
+    case let .player(player): PlayerScreen(player: player)
     }
   }
 }

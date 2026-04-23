@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Player: Identifiable {
+struct Player: Identifiable, Hashable {
   let id: UUID
   let name: String
   let type: PlayerType
@@ -36,4 +36,10 @@ extension Player {
     Player(id: UUID(), name: "Devin Booker", type: .basketballPlayer),
     Player(id: UUID(), name: "Shai Gilgeous-Alexander", type: .basketballPlayer),
   ]
+}
+
+extension [Player] {
+  func `for`(type: PlayerType) -> Self {
+    filter { $0.type == type }
+  }
 }

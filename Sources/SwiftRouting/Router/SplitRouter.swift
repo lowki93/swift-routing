@@ -5,7 +5,7 @@
 //  Created by Kevin Budain on 25/03/2025.
 //
 
-import Foundation
+import SwiftUI
 
 /// A router managing sheet, cover, and context at the `RoutingSplitView` level.
 ///
@@ -31,8 +31,41 @@ import Foundation
 /// ```
 public final class SplitRouter: PresentableRouter, @unchecked Sendable {
 
-  init(parent: BaseRouter) {
-    super.init(configuration: parent.configuration, parent: parent)
+  @Published public var columVisibility: RoutingSpitViewType
+  @Published public var content: AnyRoute?
+  @Published public var detail: AnyRoute?
+
+  public override var currentRoute: AnyRoute {
+    detail ?? content ?? root
+  }
+
+  init(columVisibility: RoutingSpitViewType, root: AnyRoute, parent: BaseRouter) {
+    self.columVisibility = columVisibility
+    super.init(configuration: parent.configuration, root: root, parent: parent)
     parent.addChild(self)
   }
+
+  func route(content route: some Route) {
+    log(.navigation(from: currentRoute.wrapped, to: route, type: .push))
+
+    switch columVisibility {
+    case .detailOnly:
+      self.route(detail: route)
+    case .doubleColumn:
+      detail = nil
+      content = AnyRoute(wrapped: route)
+    }
+  }
+
+  func route(detail route: some Route) {
+    log(.navigation(from: currentRoute.wrapped, to: route, type: .push))
+    detail = AnyRoute(wrapped: route)
+  }
+}
+
+protocol SplitRouterModel: BaseRouterModel, ContextModel, PresentationModel {
+
+  func route(content route: some Route)
+  func route(detail route: some Route)
+
 }

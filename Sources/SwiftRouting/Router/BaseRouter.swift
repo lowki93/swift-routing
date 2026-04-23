@@ -21,6 +21,8 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// The configuration settings for the router, including logging behavior.
   let configuration: Configuration
 
+  @Published public var root: AnyRoute
+
   /// Publisher to know if a router is present or not
   let present: PassthroughSubject<(Bool, BaseRouter), Never>
 
@@ -40,7 +42,7 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// Subclasses override this to return their active route.
   /// Defaults to ``DefaultRoute/main`` for base instances.
   public var currentRoute: AnyRoute {
-    AnyRoute(wrapped: DefaultRoute.main)
+    root
   }
 
   public var pathCount: Int { 0 }
@@ -54,8 +56,9 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// - Parameters:
   ///   - configuration: The configuration settings to be used by the router.
   ///   - parent: The parent `Router`, if applicable.
-  init(configuration: Configuration, parent: BaseRouter? = nil, first: Bool = false) {
+  init(configuration: Configuration, root: AnyRoute, parent: BaseRouter? = nil, first: Bool = false) {
     self.configuration = configuration
+    self.root = root
     self.present = parent?.present ?? PassthroughSubject()
     self.parent = parent
     log(.create(from: parent, first ? configuration : nil))
