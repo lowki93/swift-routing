@@ -93,7 +93,6 @@ public struct RoutingSplitView<Destination: RouteDestination>: View {
         } detail: {
           detail
         }
-        .navigationDestination(destination)
       case .doubleColumn:
         NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
           sidebar
@@ -102,7 +101,6 @@ public struct RoutingSplitView<Destination: RouteDestination>: View {
         } detail: {
           detail
         }
-        .navigationDestination(destination)
       }
     }
 
@@ -121,7 +119,6 @@ public struct RoutingSplitView<Destination: RouteDestination>: View {
     @ViewBuilder
     private var detail: some View {
       if let anyRoute = splitRouter.detail, let root = anyRoute.wrapped as? Destination.R {
-//        Destination[root]
         RoutingView(destination: destination, root: root)
           .id(anyRoute.id)
       }

@@ -46,12 +46,14 @@ public final class SplitRouter: PresentableRouter, @unchecked Sendable {
   }
 
   func route(content route: some Route) {
-    log(.navigation(from: currentRoute.wrapped, to: route, type: .push))
 
     switch columVisibility {
     case .detailOnly:
+      print("==== DETAILS ONLY")
       self.route(detail: route)
     case .doubleColumn:
+      print("==== DOUBLE COLUMN")
+      log(.navigation(from: currentRoute.wrapped, to: route, type: .push))
       detail = nil
       content = AnyRoute(wrapped: route)
     }
