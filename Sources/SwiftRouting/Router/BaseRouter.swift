@@ -48,6 +48,16 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.
   var children: [UUID: WeakContainer<BaseRouter>] = [:]
 
+  /// The live child `Router` instances presented from this router.
+  ///
+  /// Children are held weakly, so this returns only routers that are still
+  /// alive. Exposed so callers can walk the presented router hierarchy from
+  /// outside the package — e.g. to find the deepest presented router and
+  /// present on top of the current stack rather than the root.
+  public var childRouters: [Router] {
+    children.values.compactMap { $0.value as? Router }
+  }
+
   /// Initializes a `BaseRouter` with a given configuration and an optional parent.
   ///
   /// - Parameters:
