@@ -14,8 +14,11 @@ struct PlayersScreen: View {
   let type: PlayerType
 
   var body: some View {
-    List(Player.players.for(type: type)) { item in
-      NavigationLink(item.name, route: AppRoute.player(item))
+    List(Player.players.for(type: type), selection: splitRouter?.detailBinding(as: Player.self) ?? .constant(nil)) { item in
+      NavigationLink(item.name, value: item)
+    }
+    .onFirstAppear {
+      splitRouter?.select(detail: Player.players.for(type: type).first)
     }
     .navigationTitle("Players")
     .toolbar {

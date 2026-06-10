@@ -14,11 +14,11 @@ struct SidebarScreen: View {
   private let array: [PlayerType] = [.footballer, .basketballPlayer]
 
   var body: some View {
-    List(array, selection: splitRouter?.detailBinding(as: PlayerType.self) ?? .constant(nil)) { item in
+    List(array, selection: splitRouter?.contentBinding(as: PlayerType.self) ?? .constant(nil)) { item in
       NavigationLink(item.rawValue.capitalized, value: item)
     }
     .onFirstAppear {
-      splitRouter?.select(detail: array.first)
+      splitRouter?.select(content: array.first)
     }
     .navigationTitle("Sidebar")
   }
