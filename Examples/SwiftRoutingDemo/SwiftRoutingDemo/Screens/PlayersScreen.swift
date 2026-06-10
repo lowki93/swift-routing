@@ -23,6 +23,9 @@ struct PlayersScreen: View {
       case nil: EmptyView()
       }
     }
+    .onAppear {
+      selection = nil
+    }
     .navigationTitle("Players")
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
@@ -42,9 +45,10 @@ struct PlayersScreen: View {
   }
 
   var detailsOnlyList: some View {
-    List(Player.players.for(type: type)) { item in
-      NavigationLink(item.name, route: AppRoute.player(item))
+    List(Player.players.for(type: type), selection: $selection) { item in
+      NavigationLink(item.name, value: item)
         .foregroundStyle(.red)
     }
+    .splitRouterPush(selection.flatMap { AppRoute.player($0) })
   }
 }

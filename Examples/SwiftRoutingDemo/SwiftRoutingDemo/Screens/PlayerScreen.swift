@@ -9,6 +9,7 @@ import SwiftUI
 
 struct PlayerScreen: View {
 
+  @Environment(\.splitRouter) private var splitRouter
   let player: Player
 
   var body: some View {
@@ -16,6 +17,13 @@ struct PlayerScreen: View {
       VStack {
         Text(player.name)
         Text(player.type.rawValue)
+      }
+    }
+    .toolbar {
+      ToolbarItem(placement: .destructiveAction) {
+        Button("Settings") {
+          splitRouter?.present(AppRoute.settings)
+        }
       }
     }
   }

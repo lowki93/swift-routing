@@ -50,51 +50,61 @@ public struct RoutingSplitView<Destination: RouteDestination>: View {
 
   @Environment(\.router) private var parent
   private let columnVisibility: RoutingSpitViewType
+  private let preferredCompactColumn: Binding<NavigationSplitViewColumn>
   private let destination: Destination.Type
   private let sidebarRoot: Destination.R
 
   public init(
     columnVisibility: RoutingSpitViewType,
+    preferredCompactColumn: Binding<NavigationSplitViewColumn>,
     destination: Destination.Type,
     sidebarRoot: Destination.R,
   ) {
     self.destination = destination
     self.sidebarRoot = sidebarRoot
     self.columnVisibility = columnVisibility
+    self.preferredCompactColumn = preferredCompactColumn
   }
 
   public var body: some View {
     Wrapped(
       splitRouter: SplitRouter(columVisibility: columnVisibility, root: AnyRoute(wrapped: sidebarRoot), parent: parent),
+      preferredCompactColumn: preferredCompactColumn,
       destination: destination,
-      sidebarRoot: sidebarRoot
     )
   }
 
   private struct Wrapped: View {
 
     @StateObject var splitRouter: SplitRouter
+    @Binding var preferredCompactColumn: NavigationSplitViewColumn
     let destination: Destination.Type
-    let sidebarRoot: Destination.R
 
     var body: some View {
       navigationView
         .sheet($splitRouter.sheet, for: destination, onDismiss: {})
         .cover($splitRouter.cover, for: destination, onDismiss: {})
         .environment(\.splitRouter, splitRouter)
+        .environment(\.currentRouter, splitRouter)
     }
 
     @ViewBuilder
     private var navigationView: some View {
       switch splitRouter.columVisibility {
       case .detailOnly:
-        NavigationSplitView(columnVisibility: .constant(.detailOnly)) {
+        NavigationSplitView(
+          columnVisibility: .constant(.detailOnly),
+          preferredCompactColumn: $preferredCompactColumn
+        ) {
           sidebar
         } detail: {
           detail
         }
       case .doubleColumn:
-        NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
+        NavigationSplitView(
+          columnVisibility: .constant(.doubleColumn),
+          preferredCompactColumn: $preferredCompactColumn
+        ) {
           sidebar
         } content: {
           content
@@ -104,8 +114,11 @@ public struct RoutingSplitView<Destination: RouteDestination>: View {
       }
     }
 
+    @ViewBuilder
     private var sidebar: some View {
-      Destination[sidebarRoot]
+      if let sidebar = splitRouter.root.wrapped as? Destination.R {
+        Destination[sidebar]
+      }
     }
 
     @ViewBuilder

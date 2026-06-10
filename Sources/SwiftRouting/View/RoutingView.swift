@@ -126,6 +126,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
       .cover($router.cover, for: destination, onDismiss: dismiss)
       .modifier(CloseModifier())
       .environment(\.router, router)
+      .environment(\.currentRouter, router)
     }
 
     @ViewBuilder

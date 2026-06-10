@@ -21,6 +21,7 @@ struct SidebarScreen: View {
     .onFirstAppear {
       selection = array.first
     }
+//    .toolbar(removing: .sidebarToggle)
     .splitRouterRouteToContent(selection.flatMap { AppRoute.players($0) })
     .navigationTitle("Sidebar")
   }

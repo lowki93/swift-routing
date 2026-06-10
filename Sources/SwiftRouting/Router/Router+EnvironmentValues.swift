@@ -37,4 +37,6 @@ extension EnvironmentValues {
   ///
   /// This provides access to the split-level router for sheet, cover, and context management.
   @Entry public var splitRouter: SplitRouter?
+
+  @Entry var currentRouter: BaseRouter?
 }
