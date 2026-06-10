@@ -32,6 +32,11 @@ public final class SplitRouter2: PresentableRouter, @unchecked Sendable {
   /// `true` when the split view was created with a content column (3-column layout).
   public let hasContentColumn: Bool
 
+  /// `true` when the host device is in compact horizontal size class (iPhone).
+  /// Set by `RoutingSplitView2` from outside the split view columns so it reflects
+  /// the actual device size class, not the column's own width.
+  @Published public internal(set) var isCompact: Bool = false
+
   public override var currentRoute: AnyRoute { root }
 
   init(root: AnyRoute, hasContentColumn: Bool, parent: BaseRouter) {

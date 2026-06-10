@@ -78,6 +78,7 @@ public struct RoutingSplitView2<
   private struct Wrapped: View {
 
     @StateObject var splitRouter: SplitRouter2
+    @Environment(\.horizontalSizeClass) private var sizeClass
     let destination: Destination.Type
     let sidebarRoot: Destination.R
     let contentRoute: ((ContentData) -> Destination.R)?
@@ -88,6 +89,8 @@ public struct RoutingSplitView2<
         .sheet($splitRouter.sheet, for: destination, onDismiss: {})
         .cover($splitRouter.cover, for: destination, onDismiss: {})
         .environment(\.splitRouter2, splitRouter)
+        .onAppear { splitRouter.isCompact = sizeClass == .compact }
+        .onChange(of: sizeClass) { new in splitRouter.isCompact = new == .compact }
     }
 
     @ViewBuilder
