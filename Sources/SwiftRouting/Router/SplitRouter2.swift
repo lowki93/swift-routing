@@ -29,9 +29,13 @@ public final class SplitRouter2: PresentableRouter, @unchecked Sendable {
   @Published internal var contentSelection: AnyHashable?
   @Published internal var detailSelection: AnyHashable?
 
+  /// `true` when the split view was created with a content column (3-column layout).
+  public let hasContentColumn: Bool
+
   public override var currentRoute: AnyRoute { root }
 
-  init(root: AnyRoute, parent: BaseRouter) {
+  init(root: AnyRoute, hasContentColumn: Bool, parent: BaseRouter) {
+    self.hasContentColumn = hasContentColumn
     super.init(configuration: parent.configuration, root: root, parent: parent)
     parent.addChild(self)
   }

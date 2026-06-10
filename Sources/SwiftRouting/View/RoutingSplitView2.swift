@@ -67,7 +67,7 @@ public struct RoutingSplitView2<
 
   public var body: some View {
     Wrapped(
-      splitRouter: SplitRouter2(root: AnyRoute(wrapped: sidebarRoot), parent: parent),
+      splitRouter: SplitRouter2(root: AnyRoute(wrapped: sidebarRoot), hasContentColumn: contentRoute != nil, parent: parent),
       destination: destination,
       sidebarRoot: sidebarRoot,
       contentRoute: contentRoute,

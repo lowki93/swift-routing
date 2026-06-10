@@ -11,15 +11,37 @@ import SwiftUI
 struct SidebarScreen: View {
 
   @Environment(\.splitRouter2) private var splitRouter
+  @Environment(\.isSplitThreeColumn) private var isThreeColumn
   private let array: [PlayerType] = [.footballer, .basketballPlayer]
 
+  private var selection: Binding<PlayerType?> {
+    guard let splitRouter else { return .constant(nil) }
+    return splitRouter.hasContentColumn
+      ? splitRouter.contentBinding(as: PlayerType.self)
+      : splitRouter.detailBinding(as: PlayerType.self)
+  }
+
   var body: some View {
-    List(array, selection: splitRouter?.contentBinding(as: PlayerType.self) ?? .constant(nil)) { item in
+    List(array, selection: selection) { item in
       NavigationLink(item.rawValue.capitalized, value: item)
     }
     .onFirstAppear {
-      splitRouter?.select(content: array.first)
+      guard let splitRouter else { return }
+      if splitRouter.hasContentColumn {
+        splitRouter.select(content: array.first)
+      } else {
+        splitRouter.select(detail: array.first)
+      }
     }
     .navigationTitle("Sidebar")
+    .toolbar {
+      ToolbarItem(placement: .primaryAction) {
+        Picker("Columns", selection: isThreeColumn) {
+          Text("2 columns").tag(false)
+          Text("3 columns").tag(true)
+        }
+        .pickerStyle(.segmented)
+      }
+    }
   }
 }
