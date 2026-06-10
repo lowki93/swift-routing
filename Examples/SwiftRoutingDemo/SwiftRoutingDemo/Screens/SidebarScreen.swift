@@ -10,19 +10,16 @@ import SwiftUI
 
 struct SidebarScreen: View {
 
-  @State private var firstAppear = false
-  @State private var selection: PlayerType?
+  @Environment(\.splitRouter2) private var splitRouter
   private let array: [PlayerType] = [.footballer, .basketballPlayer]
 
   var body: some View {
-    List(array, selection: $selection) { item in
+    List(array, selection: splitRouter?.detailBinding(as: PlayerType.self) ?? .constant(nil)) { item in
       NavigationLink(item.rawValue.capitalized, value: item)
     }
     .onFirstAppear {
-      selection = array.first
+      splitRouter?.select(detail: array.first)
     }
-//    .toolbar(removing: .sidebarToggle)
-    .splitRouterRouteToContent(selection.flatMap { AppRoute.players($0) })
     .navigationTitle("Sidebar")
   }
 }

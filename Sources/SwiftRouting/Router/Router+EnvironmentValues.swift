@@ -38,5 +38,13 @@ extension EnvironmentValues {
   /// This provides access to the split-level router for sheet, cover, and context management.
   @Entry public var splitRouter: SplitRouter?
 
-  @Entry var currentRouter: BaseRouter?
+  /// Adds a `SplitRouter2` instance to the environment values.
+  ///
+  /// This allows access to the split router from anywhere inside a `RoutingSplitView2`:
+  /// ```swift
+  /// @Environment(\.splitRouter2) var splitRouter
+  ///
+  /// splitRouter?.select(detail: PlayerType.footballer)
+  /// ```
+  @Entry public var splitRouter2: SplitRouter2?
 }

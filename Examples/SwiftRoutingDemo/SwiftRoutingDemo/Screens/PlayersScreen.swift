@@ -10,21 +10,12 @@ import SwiftUI
 
 struct PlayersScreen: View {
 
-  @Environment(\.router) private var router
-  @Environment(\.splitRouter) private var splitRouter
-  @State private var selection: Player?
+  @Environment(\.splitRouter2) private var splitRouter
   let type: PlayerType
 
   var body: some View {
-    Group {
-      switch splitRouter?.columVisibility {
-      case .detailOnly: detailsOnlyList
-      case .doubleColumn: doubleColumnList
-      case nil: EmptyView()
-      }
-    }
-    .onAppear {
-      selection = nil
+    List(Player.players.for(type: type)) { item in
+      NavigationLink(item.name, route: AppRoute.player(item))
     }
     .navigationTitle("Players")
     .toolbar {
@@ -34,21 +25,5 @@ struct PlayersScreen: View {
         }
       }
     }
-  }
-
-  var doubleColumnList: some View {
-    List(Player.players.for(type: type), selection: $selection) { item in
-      NavigationLink(item.name, value: item)
-        .foregroundStyle(.blue)
-    }
-    .splitRouterRouteToDetails(selection.flatMap { AppRoute.player($0) })
-  }
-
-  var detailsOnlyList: some View {
-    List(Player.players.for(type: type), selection: $selection) { item in
-      NavigationLink(item.name, value: item)
-        .foregroundStyle(.red)
-    }
-    .splitRouterPush(selection.flatMap { AppRoute.player($0) })
   }
 }
