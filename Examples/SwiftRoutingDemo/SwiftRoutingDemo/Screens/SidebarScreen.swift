@@ -12,6 +12,7 @@ struct SidebarScreen: View {
 
   @Environment(\.splitRouter2) private var splitRouter
   @Environment(\.isSplitThreeColumn) private var isThreeColumn
+  @Environment(\.horizontalSizeClass) private var sizeClass
   private let array: [PlayerType] = [.footballer, .basketballPlayer]
 
   private var selection: Binding<PlayerType?> {
@@ -26,7 +27,9 @@ struct SidebarScreen: View {
       NavigationLink(item.rawValue.capitalized, value: item)
     }
     .onFirstAppear {
-      guard let splitRouter else { return }
+      // On compact (iPhone), NavigationSplitView collapses — programmatic selection
+      // highlights the cell but doesn't trigger the push. Skip auto-select; user taps to navigate.
+      guard sizeClass != .compact, let splitRouter else { return }
       if splitRouter.hasContentColumn {
         splitRouter.select(content: array.first)
       } else {
