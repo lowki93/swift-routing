@@ -293,4 +293,78 @@ struct RouterContextTests {
       #expect(expectedFirstContext == expectedSecondContext)
     }
   }
+
+  @MainActor
+  struct AllForSingleRoute {
+    @Test
+    func matchingRouteExists_allForRoute_return_onlyContextsForThatRoute() {
+      let router = Router(configuration: Configuration())
+      let rootContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      router.push(TestRoute.home)
+      let homeContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      let contexts: Set<RouterContext> = [rootContext, homeContext]
+
+      let result = contexts.all(for: TestRoute.home)
+
+      #expect(result.count == 1)
+      #expect(result.contains(homeContext))
+    }
+
+    @Test
+    func noMatchingRouteExists_allForRoute_return_emptySet() {
+      let router = Router(configuration: Configuration())
+      let rootContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [rootContext]
+
+      let result = contexts.all(for: TestRoute.home)
+
+      #expect(result.isEmpty)
+    }
+
+    @Test
+    func multipleContextsOnSameRoute_allForRoute_return_allOfThem() {
+      let router = Router(configuration: Configuration())
+      router.push(TestRoute.home)
+      let firstContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let secondContext = RouterContext(
+        router: router,
+        routerContext: IntContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [firstContext, secondContext]
+
+      let result = contexts.all(for: TestRoute.home)
+
+      #expect(result.count == 2)
+      #expect(result.contains(firstContext))
+      #expect(result.contains(secondContext))
+    }
+
+    @Test
+    func emptySet_allForRoute_return_emptySet() {
+      let contexts: Set<RouterContext> = []
+
+      let result = contexts.all(for: TestRoute.home)
+
+      #expect(result.isEmpty)
+    }
+  }
 }

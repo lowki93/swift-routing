@@ -27,6 +27,7 @@ struct RouterContext: Hashable {
   func hash(into hasher: inout Hasher) {
     hasher.combine(id)
     hasher.combine(route.hashValue)
+    hasher.combine(pathCount)
     hasher.combine("\(routerContext)")
   }
 
@@ -62,5 +63,9 @@ extension Set where Element == RouterContext {
         context.route.isSame(as: route)
       }
     }
+  }
+
+  func all(for route: any Route) -> Self {
+    filter { $0.route.isSame(as: route) }
   }
 }

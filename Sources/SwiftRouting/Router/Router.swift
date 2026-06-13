@@ -25,7 +25,14 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   static let defaultRouter: Router = Router(configuration: .default)
 
   // MARK: Navigation
-  @Published internal var root: AnyRoute
+  @Published internal var root: AnyRoute {
+    willSet {
+      for context in contexts.all(for: root.wrapped) {
+        contexts.remove(context)
+        log(.context(.remove(context.route, context: context.routerContext)))
+      }
+    }
+  }
   @Published internal var path: [AnyRoute] = [] {
     willSet {
       removeContext(old: path, new: newValue)
