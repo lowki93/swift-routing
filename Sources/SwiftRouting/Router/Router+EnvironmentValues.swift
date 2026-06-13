@@ -47,4 +47,6 @@ extension EnvironmentValues {
   /// splitRouter?.select(detail: PlayerType.footballer)
   /// ```
   @Entry public var splitRouter2: SplitRouter2?
+
+  @Entry public var currentRouter: BaseRouter?
 }

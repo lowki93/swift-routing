@@ -44,7 +44,7 @@ struct SidebarScreen: View {
           Text("2 columns").tag(false)
           Text("3 columns").tag(true)
         }
-        .pickerStyle(.segmented)
+        .pickerStyle(.menu)
       }
     }
   }

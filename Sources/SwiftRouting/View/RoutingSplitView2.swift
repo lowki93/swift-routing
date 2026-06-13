@@ -49,27 +49,27 @@ public struct RoutingSplitView2<
 
   @Environment(\.router) private var parent
   private let destination: Destination.Type
-  private let sidebarRoot: Destination.R
+  private let sidebarRoute: Destination.R
   private let contentRoute: ((ContentData) -> Destination.R)?
   private let detailRoute: ((DetailData) -> Destination.R)?
 
   private init(
     destination: Destination.Type,
-    sidebarRoot: Destination.R,
-    content: ((ContentData) -> Destination.R)?,
-    detail: ((DetailData) -> Destination.R)?
+    sidebarRoute: Destination.R,
+    contentRoute: ((ContentData) -> Destination.R)?,
+    detailRoute: ((DetailData) -> Destination.R)?
   ) {
     self.destination = destination
-    self.sidebarRoot = sidebarRoot
-    self.contentRoute = content
-    self.detailRoute = detail
+    self.sidebarRoute = sidebarRoute
+    self.contentRoute = contentRoute
+    self.detailRoute = detailRoute
   }
 
   public var body: some View {
     Wrapped(
-      splitRouter: SplitRouter2(root: AnyRoute(wrapped: sidebarRoot), hasContentColumn: contentRoute != nil, parent: parent),
+      splitRouter: SplitRouter2(root: AnyRoute(wrapped: sidebarRoute), hasContentColumn: contentRoute != nil, parent: parent),
       destination: destination,
-      sidebarRoot: sidebarRoot,
+      sidebarRoute: sidebarRoute,
       contentRoute: contentRoute,
       detailRoute: detailRoute
     )
@@ -80,7 +80,7 @@ public struct RoutingSplitView2<
     @StateObject var splitRouter: SplitRouter2
     @Environment(\.horizontalSizeClass) private var sizeClass
     let destination: Destination.Type
-    let sidebarRoot: Destination.R
+    let sidebarRoute: Destination.R
     let contentRoute: ((ContentData) -> Destination.R)?
     let detailRoute: ((DetailData) -> Destination.R)?
 
@@ -116,7 +116,7 @@ public struct RoutingSplitView2<
     }
 
     private var sidebar: some View {
-      Destination[sidebarRoot]
+      Destination[sidebarRoute]
     }
 
     @ViewBuilder
@@ -137,14 +137,14 @@ extension RoutingSplitView2 where ContentData == Never {
   ///
   /// - Parameters:
   ///   - destination: Route destination type shared by all columns.
-  ///   - sidebarRoot: The route shown in the sidebar column.
+  ///   - sidebar: The route shown in the sidebar column.
   ///   - detail: Closure mapping a `DetailData` selection to the route shown in the detail column.
   public init(
     destination: Destination.Type,
-    sidebarRoot: Destination.R,
+    sidebar: Destination.R,
     detail: @escaping (DetailData) -> Destination.R
   ) {
-    self.init(destination: destination, sidebarRoot: sidebarRoot, content: nil, detail: detail)
+    self.init(destination: destination, sidebarRoute: sidebar, contentRoute: nil, detailRoute: detail)
   }
 }
 
@@ -156,15 +156,15 @@ extension RoutingSplitView2 {
   ///
   /// - Parameters:
   ///   - destination: Route destination type shared by all columns.
-  ///   - sidebarRoot: The route shown in the sidebar column.
+  ///   - sidebar: The route shown in the sidebar column.
   ///   - content: Closure mapping a `ContentData` selection to the route shown in the content column.
   ///   - detail: Closure mapping a `DetailData` selection to the route shown in the detail column.
   public init(
     destination: Destination.Type,
-    sidebarRoot: Destination.R,
+    sidebar: Destination.R,
     content: @escaping (ContentData) -> Destination.R,
     detail: @escaping (DetailData) -> Destination.R
   ) {
-    self.init(destination: destination, sidebarRoot: sidebarRoot, content: content, detail: detail)
+    self.init(destination: destination, sidebarRoute: sidebar, contentRoute: content, detailRoute: detail)
   }
 }

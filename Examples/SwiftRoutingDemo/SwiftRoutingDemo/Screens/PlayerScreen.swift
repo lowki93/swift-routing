@@ -19,12 +19,5 @@ struct PlayerScreen: View {
         Text(player.type.rawValue)
       }
     }
-    .toolbar {
-      ToolbarItem(placement: .destructiveAction) {
-        Button("Settings") {
-          splitRouter?.present(AppRoute.settings)
-        }
-      }
-    }
   }
 }
