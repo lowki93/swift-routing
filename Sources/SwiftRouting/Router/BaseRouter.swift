@@ -48,6 +48,15 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.
   var children: [UUID: WeakContainer<BaseRouter>] = [:]
 
+  /// Returns the deepest actively-presented child `Router`, or `self` if no child is currently presented.
+  ///
+  /// Use this to resolve the frontmost router at fire-time, e.g. when dispatching a deeplink
+  /// from AppDelegate so that `terminate(Context)` propagates through the correct presenter.
+  @MainActor public func deepestRouter() -> Router? {
+    let liveChildren = children.values.compactMap { $0.value as? Router }
+    return liveChildren.last?.deepestRouter() ?? self as? Router
+  }
+
   /// Initializes a `BaseRouter` with a given configuration and an optional parent.
   ///
   /// - Parameters:
