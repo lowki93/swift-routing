@@ -192,6 +192,88 @@ struct RouterTests {
   }
 
   @MainActor
+  struct RemoveContextOnRootChange {
+    @Test
+    func contextExistsOnRoot_updateRoot_return_rootContextRemovedAndLoggerCalled() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.add(context: StringContext.self) { _ in }
+      #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.update(root: TestRoute.settings)
+
+      #expect(expectedRouter.contexts.all(for: StringContext.self).isEmpty)
+      assertLogMessagesContain(
+        expectedLoggerSpy,
+        expected: .context(.remove(DefaultRoute.main, context: StringContext.self))
+      )
+    }
+
+    @Test
+    func multipleContextsOnRoot_updateRoot_return_allRootContextsRemovedAndLoggerCalled() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.add(context: StringContext.self) { _ in }
+      expectedRouter.add(context: IntContext.self) { _ in }
+      #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
+      #expect(expectedRouter.contexts.all(for: IntContext.self).count == 1)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.update(root: TestRoute.settings)
+
+      #expect(expectedRouter.contexts.all(for: StringContext.self).isEmpty)
+      #expect(expectedRouter.contexts.all(for: IntContext.self).isEmpty)
+      assertLogMessagesContain(
+        expectedLoggerSpy,
+        expected: .context(.remove(DefaultRoute.main, context: StringContext.self))
+      )
+      assertLogMessagesContain(
+        expectedLoggerSpy,
+        expected: .context(.remove(DefaultRoute.main, context: IntContext.self))
+      )
+    }
+
+    @Test
+    func noContextOnRoot_updateRoot_return_noContextRemoveLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.update(root: TestRoute.settings)
+
+      let hasContextRemoveLog = expectedLoggerSpy.receivedMessages.contains { message in
+        if case .context(.remove(_, context: _)) = message { return true }
+        return false
+      }
+      #expect(hasContextRemoveLog == false)
+    }
+
+    @Test
+    func contextExistsOnNonRootRoute_updateRoot_return_nonRootContextPreserved() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.add(context: StringContext.self) { _ in }
+      #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.update(root: TestRoute.settings)
+
+      #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
+      let hasContextRemoveLog = expectedLoggerSpy.receivedMessages.contains { message in
+        if case .context(.remove(_, context: _)) = message { return true }
+        return false
+      }
+      #expect(hasContextRemoveLog == false)
+    }
+  }
+
+  @MainActor
   struct PushRoute: RouterTestSuite {
     let router: Router
 
