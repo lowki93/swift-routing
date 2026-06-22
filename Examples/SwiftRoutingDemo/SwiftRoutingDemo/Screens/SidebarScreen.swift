@@ -26,10 +26,8 @@ struct SidebarScreen: View {
       NavigationLink(item.rawValue.capitalized, value: item)
     }
     .onFirstAppear {
-      // On iPhone (compact), NavigationSplitView collapses — programmatic selection
-      // highlights the cell but doesn't trigger the push. Skip auto-select; user taps to navigate.
-      // isCompact is set by RoutingSplitView2 from outside the column hierarchy so it
-      // correctly reads the device size class (not the sidebar column's own width).
+      // On iPhone, NavigationSplitView collapses — programmatic selection highlights the
+      // cell but doesn't push. Skip auto-select so the user taps to navigate instead.
       guard let splitRouter, !splitRouter.isCompact else { return }
       if splitRouter.hasContentColumn {
         splitRouter.select(content: array.first)

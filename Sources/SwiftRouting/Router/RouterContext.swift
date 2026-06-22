@@ -68,4 +68,8 @@ extension Set where Element == RouterContext {
   func all(for route: any Route) -> Self {
     filter { $0.route.isSame(as: route) }
   }
+
+  func first(for route: any Route) -> Self.Element? {
+    first(where: { $0.route.isSame(as: route) })
+  }
 }

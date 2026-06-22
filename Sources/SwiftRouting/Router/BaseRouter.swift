@@ -21,7 +21,14 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// The configuration settings for the router, including logging behavior.
   let configuration: Configuration
 
-  @Published public var root: AnyRoute
+  @Published public var root: AnyRoute {
+    willSet {
+      for context in contexts.all(for: root.wrapped) {
+        contexts.remove(context)
+        log(.context(.remove(context.route, context: context.routerContext)))
+      }
+    }
+  }
 
   /// Publisher to know if a router is present or not
   let present: PassthroughSubject<(Bool, BaseRouter), Never>

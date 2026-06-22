@@ -15,14 +15,14 @@ import SwiftUI
 ///
 /// ## 2-column (sidebar + detail)
 /// ```swift
-/// RoutingSplitView2(destination: AppRoute.self, sidebarRoot: .sidebar) { (type: PlayerType) in
+/// RoutingSplitView2(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
 ///   AppRoute.players(type)
 /// }
 /// ```
 ///
 /// ## 3-column (sidebar + content + detail)
 /// ```swift
-/// RoutingSplitView2(destination: AppRoute.self, sidebarRoot: .sidebar) { (type: PlayerType) in
+/// RoutingSplitView2(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
 ///   AppRoute.players(type)
 /// } detail: { (player: Player) in
 ///   AppRoute.player(player)
@@ -89,8 +89,7 @@ public struct RoutingSplitView2<
         .sheet($splitRouter.sheet, for: destination, onDismiss: {})
         .cover($splitRouter.cover, for: destination, onDismiss: {})
         .environment(\.splitRouter2, splitRouter)
-        .onAppear { splitRouter.isCompact = sizeClass == .compact }
-        .onChange(of: sizeClass) { new in splitRouter.isCompact = new == .compact }
+        .onChange(of: sizeClass) { [weak splitRouter] new in splitRouter?.isCompact = new == .compact }
     }
 
     @ViewBuilder
