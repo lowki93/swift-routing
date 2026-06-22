@@ -9,7 +9,7 @@ struct SplitRouterTests {
     @Test
     func parentProvided_init_return_splitRouterAttachedToParent() {
       let parentRouter = Router(configuration: Configuration())
-      let splitRouter = SplitRouter(parent: parentRouter)
+      let splitRouter = SplitRouter(columVisibility: .detailOnly, root: AnyRoute(wrapped: DefaultRoute.main), parent: parentRouter)
 
       #expect(parentRouter.children[splitRouter.id]?.value?.id == splitRouter.id)
     }
@@ -17,7 +17,7 @@ struct SplitRouterTests {
     @Test
     func parentProvided_init_return_sheetNil() {
       let parentRouter = Router(configuration: Configuration())
-      let splitRouter = SplitRouter(parent: parentRouter)
+      let splitRouter = SplitRouter(columVisibility: .detailOnly, root: AnyRoute(wrapped: DefaultRoute.main), parent: parentRouter)
 
       #expect(splitRouter.sheet == nil)
       #expect(splitRouter.cover == nil)

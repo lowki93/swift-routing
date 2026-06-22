@@ -11,7 +11,7 @@ protocol SplitRouterTestSuite {
 extension SplitRouterTestSuite {
   init() {
     let parentRouter = Router(configuration: Configuration())
-    let splitRouter = SplitRouter(parent: parentRouter)
+    let splitRouter = SplitRouter(columVisibility: .detailOnly, root: AnyRoute(wrapped: DefaultRoute.main), parent: parentRouter)
     self.init(parentRouter: parentRouter, splitRouter: splitRouter)
   }
 }

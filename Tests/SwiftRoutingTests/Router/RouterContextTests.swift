@@ -227,6 +227,80 @@ struct RouterContextTests {
   }
 
   @MainActor
+  struct AllForSingleRoute {
+    @Test
+    func matchingRouteExists_allForRoute_return_onlyContextsForThatRoute() {
+      let router = Router(configuration: Configuration())
+      let rootContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      router.push(TestRoute.home)
+      let homeContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      let contexts: Set<RouterContext> = [rootContext, homeContext]
+
+      let result = contexts.all(for: TestRoute.home)
+
+      #expect(result.count == 1)
+      #expect(result.contains(homeContext))
+    }
+
+    @Test
+    func noMatchingRouteExists_allForRoute_return_emptySet() {
+      let router = Router(configuration: Configuration())
+      let rootContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [rootContext]
+
+      let result = contexts.all(for: TestRoute.home)
+
+      #expect(result.isEmpty)
+    }
+
+    @Test
+    func multipleContextsOnSameRoute_allForRoute_return_allOfThem() {
+      let router = Router(configuration: Configuration())
+      router.push(TestRoute.home)
+      let firstContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let secondContext = RouterContext(
+        router: router,
+        routerContext: IntContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [firstContext, secondContext]
+
+      let result = contexts.all(for: TestRoute.home)
+
+      #expect(result.count == 2)
+      #expect(result.contains(firstContext))
+      #expect(result.contains(secondContext))
+    }
+
+    @Test
+    func emptySet_allForRoute_return_emptySet() {
+      let contexts: Set<RouterContext> = []
+
+      let result = contexts.all(for: TestRoute.home)
+
+      #expect(result.isEmpty)
+    }
+  }
+
+  @MainActor
   struct AllForRoutes {
     @Test
     func matchingRoutesExist_allForRoutes_return_onlyContextsForGivenRoutes() {
@@ -271,6 +345,79 @@ struct RouterContextTests {
       let matchingContexts = contexts.all(for: [])
 
       #expect(matchingContexts.isEmpty)
+    }
+  }
+
+  @MainActor
+  struct FirstForRoute {
+    @Test
+    func matchingRouteExists_firstForRoute_return_context() {
+      let router = Router(configuration: Configuration())
+      router.push(TestRoute.home)
+      let expectedContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [expectedContext]
+
+      let foundContext = contexts.first(for: TestRoute.home)
+
+      #expect(foundContext == expectedContext)
+    }
+
+    @Test
+    func noMatchingRouteExists_firstForRoute_return_nil() {
+      let router = Router(configuration: Configuration())
+      let expectedContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [expectedContext]
+
+      let foundContext = contexts.first(for: TestRoute.home)
+
+      #expect(foundContext == nil)
+    }
+
+    @Test
+    func multipleContextsExist_firstForRoute_return_matchingOne() {
+      let router = Router(configuration: Configuration())
+      let rootContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      router.push(TestRoute.home)
+      let homeContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      router.push(TestRoute.settings)
+      let settingsContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      let contexts: Set<RouterContext> = [rootContext, homeContext, settingsContext]
+
+      let foundContext = contexts.first(for: TestRoute.home)
+
+      #expect(foundContext == homeContext)
+    }
+
+    @Test
+    func emptySet_firstForRoute_return_nil() {
+      let contexts: Set<RouterContext> = []
+
+      let foundContext = contexts.first(for: TestRoute.home)
+
+      #expect(foundContext == nil)
     }
   }
 
