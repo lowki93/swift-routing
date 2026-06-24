@@ -102,7 +102,6 @@ public final class Router: PresentableRouter, @unchecked Sendable {
 
   init(root: AnyRoute, type: RouterType, parent: BaseRouter) {
     self.type = type
-    print(root.wrapped)
     super.init(configuration: parent.configuration, root: root, parent: parent)
     parent.addChild(self)
   }

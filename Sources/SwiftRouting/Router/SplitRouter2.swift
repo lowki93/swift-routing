@@ -34,11 +34,7 @@ public final class SplitRouter2: PresentableRouter, @unchecked Sendable {
 
   /// `true` when the app is running on a phone-idiom device (iPhone).
   /// Updated by `RoutingSplitView2` on multitasking resize via `horizontalSizeClass`.
-  @Published public internal(set) var isCompact: Bool {
-    didSet {
-      print("=== isCompact : ", isCompact)
-    }
-  }
+  @Published public internal(set) var isCompact: Bool
 
   public override var currentRoute: AnyRoute { root }
 
@@ -70,12 +66,12 @@ public final class SplitRouter2: PresentableRouter, @unchecked Sendable {
   }
 
   /// Programmatically sets the content column selection.
-  public func select<T: Hashable & Sendable>(content value: T?) {
+  @MainActor public func select<T: Hashable & Sendable>(content value: T?) {
     contentSelection = value.map(AnyHashable.init)
   }
 
   /// Programmatically sets the detail column selection.
-  public func select<T: Hashable & Sendable>(detail value: T?) {
+  @MainActor public func select<T: Hashable & Sendable>(detail value: T?) {
     detailSelection = value.map(AnyHashable.init)
   }
 }

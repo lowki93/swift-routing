@@ -9,7 +9,7 @@ struct SplitRouterTests {
     @Test
     func parentProvided_init_return_splitRouterAttachedToParent() {
       let parentRouter = Router(configuration: Configuration())
-      let splitRouter = SplitRouter(columVisibility: .detailOnly, root: AnyRoute(wrapped: DefaultRoute.main), parent: parentRouter)
+      let splitRouter = SplitRouter2(root: AnyRoute(wrapped: DefaultRoute.main), hasContentColumn: false, parent: parentRouter)
 
       #expect(parentRouter.children[splitRouter.id]?.value?.id == splitRouter.id)
     }
@@ -17,7 +17,7 @@ struct SplitRouterTests {
     @Test
     func parentProvided_init_return_sheetNil() {
       let parentRouter = Router(configuration: Configuration())
-      let splitRouter = SplitRouter(columVisibility: .detailOnly, root: AnyRoute(wrapped: DefaultRoute.main), parent: parentRouter)
+      let splitRouter = SplitRouter2(root: AnyRoute(wrapped: DefaultRoute.main), hasContentColumn: false, parent: parentRouter)
 
       #expect(splitRouter.sheet == nil)
       #expect(splitRouter.cover == nil)
@@ -27,7 +27,7 @@ struct SplitRouterTests {
   @MainActor
   struct Present: SplitRouterTestSuite {
     let parentRouter: Router
-    let splitRouter: SplitRouter
+    let splitRouter: SplitRouter2
 
     @Test
     func routeProvided_present_return_sheetSet() {
@@ -61,7 +61,7 @@ struct SplitRouterTests {
   @MainActor
   struct Cover: SplitRouterTestSuite {
     let parentRouter: Router
-    let splitRouter: SplitRouter
+    let splitRouter: SplitRouter2
 
     @Test
     func routeProvided_cover_return_coverSet() {
@@ -81,7 +81,7 @@ struct SplitRouterTests {
   @MainActor
   struct AddContext: SplitRouterTestSuite {
     let parentRouter: Router
-    let splitRouter: SplitRouter
+    let splitRouter: SplitRouter2
 
     @Test
     func contextRegistered_context_return_observerCalled() {
@@ -112,7 +112,7 @@ struct SplitRouterTests {
   @MainActor
   struct RemoveContext: SplitRouterTestSuite {
     let parentRouter: Router
-    let splitRouter: SplitRouter
+    let splitRouter: SplitRouter2
 
     @Test
     func observerRegistered_removeContext_return_observerNotCalledAfterRemoval() {
@@ -134,7 +134,7 @@ struct SplitRouterTests {
   @MainActor
   struct ContextPropagation: SplitRouterTestSuite {
     let parentRouter: Router
-    let splitRouter: SplitRouter
+    let splitRouter: SplitRouter2
 
     @Test
     func observerOnParent_contextFromSplitRouter_return_parentObserverCalled() {

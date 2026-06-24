@@ -41,7 +41,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
   @Environment(\.tabRouter) private var tabRouter
-  @Environment(\.splitRouter) private var splitRouter
+  @Environment(\.currentRouter) private var currentRouter
   private let type: RouterType
   private let inStack: Bool
   private let destination: Destination.Type
@@ -51,7 +51,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     if case .tab = type {
       return tabRouter ?? router
     }
-    return splitRouter ?? router
+    return currentRouter ?? router
   }
 
   init(

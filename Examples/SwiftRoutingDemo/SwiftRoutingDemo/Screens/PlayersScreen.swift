@@ -10,6 +10,7 @@ import SwiftUI
 
 struct PlayersScreen: View {
 
+  @Environment(\.router) private var router
   @Environment(\.splitRouter2) private var splitRouter
   @Environment(\.isSplitThreeColumn) private var isThreeColumn
   @Environment(\.columnVisibility) private var columnVisibility
