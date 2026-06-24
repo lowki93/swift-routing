@@ -6,28 +6,39 @@
 import SwiftRouting
 import SwiftUI
 
-extension EnvironmentValues {
-  @Entry var isSplitThreeColumn: Binding<Bool> = .constant(false)
-}
-
 struct SplitScreen: View {
 
   @State private var isThreeColumn = false
+  @State private var columnVisibility: ColumnVisibility = .all
+  @State private var preferredCompactColumn: NavigationSplitViewColumn = .detail
 
   var body: some View {
     Group {
       if isThreeColumn {
-        RoutingSplitView2(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
-          AppRoute.players(type)
-        } detail: { (player: Player) in
-          AppRoute.player(player)
-        }
+        RoutingSplitView2(
+          columnVisibility: Binding(
+            get: { NavigationSplitViewVisibility(from: columnVisibility) },
+            set: { columnVisibility = $0.toColumnVisibility() }
+          ),
+          preferredCompactColumn: $preferredCompactColumn,
+          destination: AppRoute.self,
+          sidebar: .sidebar) { (type: PlayerType) in
+            .players(type)
+          } detail: { (player: Player) in
+            .player(player)
+          }
       } else {
-        RoutingSplitView2(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
-          AppRoute.players(type)
+        RoutingSplitView2(
+          preferredCompactColumn: $preferredCompactColumn,
+          destination: AppRoute.self,
+          sidebar: .sidebar
+        ) { (type: PlayerType) in
+          .players(type)
         }
       }
     }
     .environment(\.isSplitThreeColumn, $isThreeColumn)
+    .environment(\.columnVisibility, $columnVisibility)
+    .environment(\.preferredCompactColumn, $preferredCompactColumn)
   }
 }

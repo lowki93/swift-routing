@@ -34,18 +34,21 @@ public final class SplitRouter2: PresentableRouter, @unchecked Sendable {
 
   /// `true` when the app is running on a phone-idiom device (iPhone).
   /// Updated by `RoutingSplitView2` on multitasking resize via `horizontalSizeClass`.
-  @Published public internal(set) var isCompact: Bool = {
-    #if os(iOS)
-    UIDevice.current.userInterfaceIdiom == .phone
-    #else
-    false
-    #endif
-  }()
+  @Published public internal(set) var isCompact: Bool {
+    didSet {
+      print("=== isCompact : ", isCompact)
+    }
+  }
 
   public override var currentRoute: AnyRoute { root }
 
   init(root: AnyRoute, hasContentColumn: Bool, parent: BaseRouter) {
     self.hasContentColumn = hasContentColumn
+    #if os(iOS)
+    self.isCompact = UIDevice.current.userInterfaceIdiom == .phone
+    #else
+    self.isCompact = false
+    #endif
     super.init(configuration: parent.configuration, root: root, parent: parent)
     parent.addChild(self)
   }

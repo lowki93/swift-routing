@@ -12,6 +12,8 @@ struct SidebarScreen: View {
 
   @Environment(\.splitRouter2) private var splitRouter
   @Environment(\.isSplitThreeColumn) private var isThreeColumn
+  @Environment(\.columnVisibility) private var columnVisibility
+  @Environment(\.preferredCompactColumn) private var preferredCompactColumn
   private let array: [PlayerType] = [.footballer, .basketballPlayer]
 
   private var selection: Binding<PlayerType?> {
@@ -28,7 +30,7 @@ struct SidebarScreen: View {
     .onFirstAppear {
       // On iPhone, NavigationSplitView collapses — programmatic selection highlights the
       // cell but doesn't push. Skip auto-select so the user taps to navigate instead.
-      guard let splitRouter, !splitRouter.isCompact else { return }
+      guard let splitRouter else { return }
       if splitRouter.hasContentColumn {
         splitRouter.select(content: array.first)
       } else {
@@ -38,12 +40,38 @@ struct SidebarScreen: View {
     .navigationTitle("Sidebar")
     .toolbar {
       ToolbarItem(placement: .primaryAction) {
-        Picker("Columns", selection: isThreeColumn) {
-          Text("2 columns").tag(false)
-          Text("3 columns").tag(true)
+        Menu("Configuration") {
+          Group {
+            columnNumberPicker
+            columnVisibilityPicker
+            preferredCompactColumnPicker
+          }
+          .pickerStyle(.menu)
         }
-        .pickerStyle(.menu)
       }
+    }
+  }
+
+  private var columnNumberPicker: some View {
+    Picker("Columns", selection: isThreeColumn) {
+      Text("2 columns").tag(false)
+      Text("3 columns").tag(true)
+    }
+  }
+
+  private var columnVisibilityPicker: some View {
+    Picker("ColumnVisibility", selection: columnVisibility) {
+      ForEach(ColumnVisibility.allCases) { columnVisibility in
+        Text(columnVisibility.rawValue.capitalized).tag(columnVisibility)
+      }
+    }
+  }
+
+  private var preferredCompactColumnPicker: some View {
+    Picker("PreferredCompactColumn", selection: preferredCompactColumn) {
+      Text("Sidebar").tag(NavigationSplitViewColumn.sidebar)
+      Text("Content").tag(NavigationSplitViewColumn.content)
+      Text("Detail").tag(NavigationSplitViewColumn.detail)
     }
   }
 }

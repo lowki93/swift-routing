@@ -15,4 +15,3 @@ enum PlayerType: String, Identifiable {
     rawValue
   }
 }
-

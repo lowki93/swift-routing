@@ -48,17 +48,23 @@ public struct RoutingSplitView2<
 >: View {
 
   @Environment(\.router) private var parent
+  private let columnVisibility: Binding<NavigationSplitViewVisibility>?
+  private let preferredCompactColumn: Binding<NavigationSplitViewColumn>
   private let destination: Destination.Type
   private let sidebarRoute: Destination.R
   private let contentRoute: ((ContentData) -> Destination.R)?
   private let detailRoute: ((DetailData) -> Destination.R)?
 
   private init(
+    columnVisibility: Binding<NavigationSplitViewVisibility>?,
+    preferredCompactColumn: Binding<NavigationSplitViewColumn>,
     destination: Destination.Type,
     sidebarRoute: Destination.R,
     contentRoute: ((ContentData) -> Destination.R)?,
     detailRoute: ((DetailData) -> Destination.R)?
   ) {
+    self.columnVisibility = columnVisibility
+    self.preferredCompactColumn = preferredCompactColumn
     self.destination = destination
     self.sidebarRoute = sidebarRoute
     self.contentRoute = contentRoute
@@ -67,7 +73,13 @@ public struct RoutingSplitView2<
 
   public var body: some View {
     Wrapped(
-      splitRouter: SplitRouter2(root: AnyRoute(wrapped: sidebarRoute), hasContentColumn: contentRoute != nil, parent: parent),
+      splitRouter: SplitRouter2(
+        root: AnyRoute(wrapped: sidebarRoute),
+        hasContentColumn: contentRoute != nil,
+        parent: parent
+      ),
+      columnVisibility: columnVisibility,
+      preferredCompactColumn: preferredCompactColumn,
       destination: destination,
       sidebarRoute: sidebarRoute,
       contentRoute: contentRoute,
@@ -79,6 +91,8 @@ public struct RoutingSplitView2<
 
     @StateObject var splitRouter: SplitRouter2
     @Environment(\.horizontalSizeClass) private var sizeClass
+    let columnVisibility: Binding<NavigationSplitViewVisibility>?
+    let preferredCompactColumn: Binding<NavigationSplitViewColumn>
     let destination: Destination.Type
     let sidebarRoute: Destination.R
     let contentRoute: ((ContentData) -> Destination.R)?
@@ -89,24 +103,28 @@ public struct RoutingSplitView2<
         .sheet($splitRouter.sheet, for: destination, onDismiss: {})
         .cover($splitRouter.cover, for: destination, onDismiss: {})
         .environment(\.splitRouter2, splitRouter)
-        .onChange(of: sizeClass) { [weak splitRouter] new in splitRouter?.isCompact = new == .compact }
+        .environment(\.currentRouter, splitRouter)
+        .onChange(of: sizeClass) { [weak splitRouter] new in
+          print("========= ", new)
+          splitRouter?.isCompact = new == .compact
+        }
     }
 
     @ViewBuilder
     private var splitView: some View {
-      if let contentRoute {
-        NavigationSplitView {
+      if let columnVisibility, let contentRoute {
+        NavigationSplitView(columnVisibility: columnVisibility, preferredCompactColumn: preferredCompactColumn) {
           sidebar
         } content: {
           if let selection = splitRouter.contentSelection as? ContentData {
-            RoutingView(destination: destination, root: contentRoute(selection))
+            Destination[contentRoute(selection)]
               .id(selection)
           }
         } detail: {
           detailColumn
         }
       } else {
-        NavigationSplitView {
+        NavigationSplitView(preferredCompactColumn: preferredCompactColumn) {
           sidebar
         } detail: {
           detailColumn
@@ -139,11 +157,19 @@ extension RoutingSplitView2 where ContentData == Never {
   ///   - sidebar: The route shown in the sidebar column.
   ///   - detail: Closure mapping a `DetailData` selection to the route shown in the detail column.
   public init(
+    preferredCompactColumn: Binding<NavigationSplitViewColumn> = .constant(.sidebar),
     destination: Destination.Type,
     sidebar: Destination.R,
     detail: @escaping (DetailData) -> Destination.R
   ) {
-    self.init(destination: destination, sidebarRoute: sidebar, contentRoute: nil, detailRoute: detail)
+    self.init(
+      columnVisibility: nil,
+      preferredCompactColumn: preferredCompactColumn,
+      destination: destination,
+      sidebarRoute: sidebar,
+      contentRoute: nil,
+      detailRoute: detail
+    )
   }
 }
 
@@ -159,11 +185,20 @@ extension RoutingSplitView2 {
   ///   - content: Closure mapping a `ContentData` selection to the route shown in the content column.
   ///   - detail: Closure mapping a `DetailData` selection to the route shown in the detail column.
   public init(
+    columnVisibility: Binding<NavigationSplitViewVisibility> = .constant(.all),
+    preferredCompactColumn: Binding<NavigationSplitViewColumn> = .constant(.sidebar),
     destination: Destination.Type,
     sidebar: Destination.R,
     content: @escaping (ContentData) -> Destination.R,
     detail: @escaping (DetailData) -> Destination.R
   ) {
-    self.init(destination: destination, sidebarRoute: sidebar, contentRoute: content, detailRoute: detail)
+    self.init(
+      columnVisibility: columnVisibility,
+      preferredCompactColumn: preferredCompactColumn,
+      destination: destination,
+      sidebarRoute: sidebar,
+      contentRoute: content,
+      detailRoute: detail
+    )
   }
 }
