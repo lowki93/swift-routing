@@ -76,7 +76,13 @@ public struct RoutingSplitView2<
       router: Router(
         root: AnyRoute(wrapped: sidebarRoute),
         type: .split(sidebarRoute.name, hasContentColumn: contentRoute != nil),
-        parent: parent
+        parent: parent,
+        detailRouteFactory: detailRoute.map { factory in
+          { sel in (sel as? DetailData).map { AnyRoute(wrapped: factory($0)) } }
+        },
+        contentRouteFactory: contentRoute.map { factory in
+          { sel in (sel as? ContentData).map { AnyRoute(wrapped: factory($0)) } }
+        }
       ),
       columnVisibility: columnVisibility,
       preferredCompactColumn: preferredCompactColumn,

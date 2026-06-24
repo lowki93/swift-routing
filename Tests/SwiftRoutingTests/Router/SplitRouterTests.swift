@@ -46,6 +46,33 @@ struct SplitRouterTests {
 
       #expect(stackRouter.hasContentColumn == false)
     }
+
+    @Test
+    func splitRouter_noSelection_currentRoute_return_root() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+
+      #expect(splitRouter.currentRoute.wrapped is DefaultRoute)
+    }
+
+    @Test
+    func splitRouter_withSelection_currentRoute_return_detailRoute() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      splitRouter.select(detail: "any")
+
+      #expect(splitRouter.currentRoute.wrapped is TestRoute)
+    }
   }
 
   @MainActor

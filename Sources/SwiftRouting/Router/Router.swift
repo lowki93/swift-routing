@@ -49,7 +49,13 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   /// print("Current route: \(router.currentRoute.name)")
   /// ```
   override public var currentRoute: AnyRoute {
-    path.last ?? root
+    switch type {
+    case .split:
+      if let sel = detailSelection, let route = detailRouteFactory?(sel) { return route }
+      return root
+    default:
+      return path.last ?? root
+    }
   }
 
   override public var pathCount: Int { path.count }
@@ -115,8 +121,19 @@ public final class Router: PresentableRouter, @unchecked Sendable {
     return false
   }
 
-  init(root: AnyRoute, type: RouterType, parent: BaseRouter) {
+  var detailRouteFactory: ((AnyHashable) -> AnyRoute?)?
+  var contentRouteFactory: ((AnyHashable) -> AnyRoute?)?
+
+  init(
+    root: AnyRoute,
+    type: RouterType,
+    parent: BaseRouter,
+    detailRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil,
+    contentRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil
+  ) {
     self.type = type
+    self.detailRouteFactory = detailRouteFactory
+    self.contentRouteFactory = contentRouteFactory
     super.init(configuration: parent.configuration, root: root, parent: parent)
     if case .split = type {
       #if os(iOS)
@@ -279,6 +296,7 @@ public extension Router {
   /// No-op when this is not a split router.
   @MainActor func select<T: Hashable & Sendable>(content value: T?) {
     guard case .split = type else { return }
+//    log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
     contentSelection = value.map(AnyHashable.init)
   }
 
