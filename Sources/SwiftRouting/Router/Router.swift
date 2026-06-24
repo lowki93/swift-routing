@@ -100,9 +100,29 @@ public final class Router: PresentableRouter, @unchecked Sendable {
     super.init(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main), first: true)
   }
 
+  // MARK: Split navigation state
+  @Published internal var detailSelection: AnyHashable?
+  @Published internal var contentSelection: AnyHashable?
+
+  /// `true` when the split view is in compact mode (e.g. iPhone).
+  /// Always `false` for non-split routers.
+  @Published public internal(set) var isCompact: Bool = false
+
+  /// `true` when this split router has a content column (3-column layout).
+  /// Always `false` for non-split routers.
+  public var hasContentColumn: Bool {
+    if case .split(_, let has) = type { return has }
+    return false
+  }
+
   init(root: AnyRoute, type: RouterType, parent: BaseRouter) {
     self.type = type
     super.init(configuration: parent.configuration, root: root, parent: parent)
+    if case .split = type {
+      #if os(iOS)
+      isCompact = UIDevice.current.userInterfaceIdiom == .phone
+      #endif
+    }
     parent.addChild(self)
   }
 }
@@ -217,5 +237,56 @@ public extension Router {
     if let targetRoute = deeplink.route {
       route(to: targetRoute, type: deeplink.type)
     }
+  }
+}
+
+// MARK: - Split navigation
+
+public extension Router {
+
+  /// Returns a typed `Binding<T?>` wired to the content column selection.
+  ///
+  /// Returns `.constant(nil)` when this is not a split router.
+  ///
+  /// ```swift
+  /// List(items, selection: router.contentBinding(as: PlayerType.self)) { ... }
+  /// ```
+  func contentBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
+    guard case .split = self.type else { return .constant(nil) }
+    return Binding(
+      get: { [weak self] in self?.contentSelection as? T },
+      set: { [weak self] in self?.contentSelection = $0.map(AnyHashable.init) }
+    )
+  }
+
+  /// Returns a typed `Binding<T?>` wired to the detail column selection.
+  ///
+  /// Returns `.constant(nil)` when this is not a split router.
+  ///
+  /// ```swift
+  /// List(items, selection: router.detailBinding(as: Player.self)) { ... }
+  /// ```
+  func detailBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
+    guard case .split = self.type else { return .constant(nil) }
+    return Binding(
+      get: { [weak self] in self?.detailSelection as? T },
+      set: { [weak self] in self?.detailSelection = $0.map(AnyHashable.init) }
+    )
+  }
+
+  /// Programmatically sets the content column selection.
+  ///
+  /// No-op when this is not a split router.
+  @MainActor func select<T: Hashable & Sendable>(content value: T?) {
+    guard case .split = type else { return }
+    contentSelection = value.map(AnyHashable.init)
+  }
+
+  /// Programmatically sets the detail column selection.
+  ///
+  /// No-op when this is not a split router.
+  @MainActor func select<T: Hashable & Sendable>(detail value: T?) {
+    guard case .split = type else { return }
+    detailSelection = value.map(AnyHashable.init)
   }
 }

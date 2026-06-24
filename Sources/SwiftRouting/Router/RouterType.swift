@@ -17,11 +17,21 @@ enum RouterType: Hashable, Sendable {
   case stack(String)
   /// A router presented as a sheet or cover.
   case presented(String)
+  /// A router managing a split view (sidebar + detail, or sidebar + content + detail).
+  case split(String, hasContentColumn: Bool)
 
   /// Indicates whether the router is presented as a sheet or cover.
   var isPresented: Bool {
     switch self {
     case .presented: true
+    default: false
+    }
+  }
+
+  /// Indicates whether the router manages a split view.
+  var isSplit: Bool {
+    switch self {
+    case .split: true
     default: false
     }
   }
@@ -34,6 +44,7 @@ extension RouterType: CustomStringConvertible {
     case let .tab(value, _): "tab(\(value))"
     case let .stack(value): "stack(\(value))"
     case let .presented(value): "presented(\(value))"
+    case let .split(value, _): "split(\(value))"
     }
   }
 }

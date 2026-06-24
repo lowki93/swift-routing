@@ -31,13 +31,13 @@ import SwiftUI
 ///
 /// ## Setting the selection from the sidebar
 /// ```swift
-/// @Environment(\.splitRouter2) var splitRouter
+/// @Environment(\.router) var router
 ///
-/// List(array, selection: splitRouter?.detailBinding(as: PlayerType.self)) { item in
+/// List(array, selection: router.detailBinding(as: PlayerType.self)) { item in
 ///   NavigationLink(item.label, value: item)
 /// }
 /// .onFirstAppear {
-///   splitRouter?.select(detail: array.first)
+///   router.select(detail: array.first)
 /// }
 /// ```
 @MainActor
@@ -73,9 +73,9 @@ public struct RoutingSplitView2<
 
   public var body: some View {
     Wrapped(
-      splitRouter: SplitRouter2(
+      router: Router(
         root: AnyRoute(wrapped: sidebarRoute),
-        hasContentColumn: contentRoute != nil,
+        type: .split(sidebarRoute.name, hasContentColumn: contentRoute != nil),
         parent: parent
       ),
       columnVisibility: columnVisibility,
@@ -89,7 +89,7 @@ public struct RoutingSplitView2<
 
   private struct Wrapped: View {
 
-    @StateObject var splitRouter: SplitRouter2
+    @StateObject var router: Router
     @Environment(\.horizontalSizeClass) private var sizeClass
     let columnVisibility: Binding<NavigationSplitViewVisibility>?
     let preferredCompactColumn: Binding<NavigationSplitViewColumn>
@@ -100,13 +100,12 @@ public struct RoutingSplitView2<
 
     var body: some View {
       splitView
-        .sheet($splitRouter.sheet, for: destination, onDismiss: {})
-        .cover($splitRouter.cover, for: destination, onDismiss: {})
-        .environment(\.splitRouter2, splitRouter)
-        .environment(\.currentRouter, splitRouter)
-        .onChange(of: sizeClass) { [weak splitRouter] new in
-          print("========= ", new)
-          splitRouter?.isCompact = new == .compact
+        .sheet($router.sheet, for: destination, onDismiss: {})
+        .cover($router.cover, for: destination, onDismiss: {})
+        .environment(\.router, router)
+        .environment(\.currentRouter, router)
+        .onChange(of: sizeClass) { [weak router] new in
+          router?.isCompact = new == .compact
         }
     }
 
@@ -116,7 +115,7 @@ public struct RoutingSplitView2<
         NavigationSplitView(columnVisibility: columnVisibility, preferredCompactColumn: preferredCompactColumn) {
           sidebar
         } content: {
-          if let selection = splitRouter.contentSelection as? ContentData {
+          if let selection = router.contentSelection as? ContentData {
             Destination[contentRoute(selection)]
               .id(selection)
           }
@@ -138,7 +137,7 @@ public struct RoutingSplitView2<
 
     @ViewBuilder
     private var detailColumn: some View {
-      if let selection = splitRouter.detailSelection as? DetailData, let detailRoute {
+      if let selection = router.detailSelection as? DetailData, let detailRoute {
         RoutingView(destination: destination, root: detailRoute(selection))
           .id(selection)
       }
@@ -193,7 +192,7 @@ extension RoutingSplitView2 {
     detail: @escaping (DetailData) -> Destination.R
   ) {
     self.init(
-      columnVisibility: columnVisibility,
+      columnVisibility: Optional(columnVisibility),
       preferredCompactColumn: preferredCompactColumn,
       destination: destination,
       sidebarRoute: sidebar,
