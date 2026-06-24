@@ -85,6 +85,9 @@ public protocol SplitModel {
   ///   NavigationLink(type.label, value: type)
   /// }
   /// ```
+  ///
+  /// - Parameter type: The `Hashable` type of the content column selection.
+  /// - Returns: A binding to the current content selection, or `.constant(nil)` for non-split routers.
   func contentBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?>
 
   /// Returns a typed `Binding<T?>` wired to the detail column selection.
@@ -98,6 +101,9 @@ public protocol SplitModel {
   ///   NavigationLink(player.name, value: player)
   /// }
   /// ```
+  ///
+  /// - Parameter type: The `Hashable` type of the detail column selection.
+  /// - Returns: A binding to the current detail selection, or `.constant(nil)` for non-split routers.
   func detailBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?>
 
   /// Programmatically drives the content column selection (3-column layout).
@@ -110,6 +116,8 @@ public protocol SplitModel {
   ///   router.select(content: playerTypes.first)
   /// }
   /// ```
+  ///
+  /// - Parameter value: The value to select, or `nil` to clear the selection.
   func select<T: Hashable & Sendable>(content value: T?)
 
   /// Programmatically drives the detail column selection.
@@ -123,5 +131,7 @@ public protocol SplitModel {
   ///   router.select(detail: players.first)
   /// }
   /// ```
+  ///
+  /// - Parameter value: The value to select, or `nil` to clear the selection.
   func select<T: Hashable & Sendable>(detail value: T?)
 }
