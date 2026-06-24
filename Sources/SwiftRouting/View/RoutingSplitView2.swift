@@ -7,20 +7,47 @@
 
 import SwiftUI
 
-/// A `NavigationSplitView` container where each column is driven by a typed route factory.
+/// A type-safe `NavigationSplitView` container driven by typed route factories.
 ///
-/// The sidebar is always a fixed route. Content and detail columns are driven by typed,
-/// hashable selections — each selection is mapped to a `Destination.R` route rendered
-/// inside its own `RoutingView`, giving every column an independent navigation stack.
+/// `RoutingSplitView2` wraps SwiftUI's `NavigationSplitView` and ties each column
+/// to a ``RouteDestination``. The sidebar is a fixed route; content and detail columns
+/// are derived from typed, `Hashable` selections — every selection is resolved through
+/// a factory closure to a ``RouteDestination/R`` route and rendered inside its own
+/// `RoutingView`, giving each column an independent navigation stack.
 ///
-/// ## 2-column (sidebar + detail)
+/// A split-type ``Router`` is created automatically and injected into the environment
+/// via `@Environment(\.router)`. Access it in any column view to drive selections or
+/// present modals:
+///
+/// ```swift
+/// @Environment(\.router) var router
+///
+/// router.select(detail: player)          // show player in the detail column
+/// router.present(AppRoute.settings)      // present a sheet from the split level
+/// ```
+///
+/// ## Compact mode (iPhone)
+///
+/// On iPhone, `NavigationSplitView` collapses into a single-column stack. Use
+/// `router.isCompact` to skip auto-selection and let the user tap to navigate:
+///
+/// ```swift
+/// .onFirstAppear {
+///   guard !router.isCompact else { return }
+///   router.select(detail: items.first)
+/// }
+/// ```
+///
+/// ## 2-column layout (sidebar + detail)
+///
 /// ```swift
 /// RoutingSplitView2(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
 ///   AppRoute.players(type)
 /// }
 /// ```
 ///
-/// ## 3-column (sidebar + content + detail)
+/// ## 3-column layout (sidebar + content + detail)
+///
 /// ```swift
 /// RoutingSplitView2(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
 ///   AppRoute.players(type)
@@ -29,15 +56,25 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// ## Setting the selection from the sidebar
-/// ```swift
-/// @Environment(\.router) var router
+/// ## Driving selections from the sidebar
 ///
-/// List(array, selection: router.detailBinding(as: PlayerType.self)) { item in
-///   NavigationLink(item.label, value: item)
-/// }
-/// .onFirstAppear {
-///   router.select(detail: array.first)
+/// Use ``Router/detailBinding(as:)`` or ``Router/contentBinding(as:)`` to wire a
+/// `List` selection binding, or call ``Router/select(detail:)`` programmatically:
+///
+/// ```swift
+/// struct SidebarScreen: View {
+///   @Environment(\.router) var router
+///   let items: [PlayerType] = PlayerType.allCases
+///
+///   var body: some View {
+///     List(items, selection: router.detailBinding(as: PlayerType.self)) { item in
+///       NavigationLink(item.label, value: item)
+///     }
+///     .onFirstAppear {
+///       guard !router.isCompact else { return }
+///       router.select(detail: items.first)
+///     }
+///   }
 /// }
 /// ```
 @MainActor
@@ -157,12 +194,31 @@ public struct RoutingSplitView2<
 
 extension RoutingSplitView2 where ContentData == Never {
 
-  /// Creates a 2-column split view where the sidebar drives the detail column directly.
+  /// Creates a 2-column split view (sidebar + detail).
+  ///
+  /// The sidebar shows a fixed route. The detail column is updated whenever
+  /// `router.select(detail:)` is called or the `List` selection binding changes.
+  ///
+  /// On iPhone the split view collapses to a single stack; `router.isCompact` reflects
+  /// this state so you can skip programmatic auto-selection when appropriate.
+  ///
+  /// ```swift
+  /// RoutingSplitView2(
+  ///   preferredCompactColumn: $compactColumn,
+  ///   destination: AppRoute.self,
+  ///   sidebar: .sidebar
+  /// ) { (type: PlayerType) in
+  ///   AppRoute.players(type)
+  /// }
+  /// ```
   ///
   /// - Parameters:
-  ///   - destination: Route destination type shared by all columns.
-  ///   - sidebar: The route shown in the sidebar column.
-  ///   - detail: Closure mapping a `DetailData` selection to the route shown in the detail column.
+  ///   - preferredCompactColumn: Controls which column is shown when the split view is
+  ///     in compact mode. Defaults to `.sidebar`. Pass `.detail` to open directly on
+  ///     the detail column (e.g. after a programmatic selection).
+  ///   - destination: The ``RouteDestination`` type shared by all columns.
+  ///   - sidebar: The route rendered in the sidebar column.
+  ///   - detail: Closure mapping a `DetailData` value to the route shown in the detail column.
   public init(
     preferredCompactColumn: Binding<NavigationSplitViewColumn> = .constant(.sidebar),
     destination: Destination.Type,
@@ -184,11 +240,31 @@ extension RoutingSplitView2 where ContentData == Never {
 
 extension RoutingSplitView2 {
 
-  /// Creates a 3-column split view where the sidebar drives content and content drives detail.
+  /// Creates a 3-column split view (sidebar + content + detail).
+  ///
+  /// The sidebar drives the content column via `router.select(content:)`, and the
+  /// content column drives the detail column via `router.select(detail:)`.
+  /// Each column renders inside its own `RoutingView` with an independent navigation stack.
+  ///
+  /// ```swift
+  /// RoutingSplitView2(
+  ///   columnVisibility: $columnVisibility,
+  ///   destination: AppRoute.self,
+  ///   sidebar: .sidebar
+  /// ) { (type: PlayerType) in
+  ///   AppRoute.players(type)
+  /// } detail: { (player: Player) in
+  ///   AppRoute.player(player)
+  /// }
+  /// ```
   ///
   /// - Parameters:
-  ///   - destination: Route destination type shared by all columns.
-  ///   - sidebar: The route shown in the sidebar column.
+  ///   - columnVisibility: Controls which columns are visible (`.all`, `.doubleColumn`,
+  ///     `.detailOnly`). Defaults to `.all`.
+  ///   - preferredCompactColumn: Controls which column is shown in compact mode.
+  ///     Defaults to `.sidebar`.
+  ///   - destination: The ``RouteDestination`` type shared by all columns.
+  ///   - sidebar: The route rendered in the sidebar column.
   ///   - content: Closure mapping a `ContentData` selection to the route shown in the content column.
   ///   - detail: Closure mapping a `DetailData` selection to the route shown in the detail column.
   public init(
