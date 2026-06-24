@@ -41,7 +41,6 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
   @Environment(\.tabRouter) private var tabRouter
-  @Environment(\.currentRouter) private var currentRouter
   private let type: RouterType
   private let inStack: Bool
   private let destination: Destination.Type
@@ -51,7 +50,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     if case .tab = type {
       return tabRouter ?? router
     }
-    return currentRouter ?? router
+    return router
   }
 
   init(
@@ -107,7 +106,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     )
   }
 
-  private struct WrappedView: View {
+  struct WrappedView: View {
 
     @StateObject var router: Router
     let inStack: Bool
@@ -126,7 +125,6 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
       .cover($router.cover, for: destination, onDismiss: dismiss)
       .modifier(CloseModifier())
       .environment(\.router, router)
-      .environment(\.currentRouter, router)
     }
 
     @ViewBuilder

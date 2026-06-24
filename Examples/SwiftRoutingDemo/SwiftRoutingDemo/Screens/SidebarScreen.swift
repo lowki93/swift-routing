@@ -10,17 +10,16 @@ import SwiftUI
 
 struct SidebarScreen: View {
 
-  @Environment(\.splitRouter2) private var splitRouter
+  @Environment(\.router) private var router
   @Environment(\.isSplitThreeColumn) private var isThreeColumn
   @Environment(\.columnVisibility) private var columnVisibility
   @Environment(\.preferredCompactColumn) private var preferredCompactColumn
   private let array: [PlayerType] = [.footballer, .basketballPlayer]
 
   private var selection: Binding<PlayerType?> {
-    guard let splitRouter else { return .constant(nil) }
-    return splitRouter.hasContentColumn
-      ? splitRouter.contentBinding(as: PlayerType.self)
-      : splitRouter.detailBinding(as: PlayerType.self)
+    router.hasContentColumn
+      ? router.contentBinding(as: PlayerType.self)
+      : router.detailBinding(as: PlayerType.self)
   }
 
   var body: some View {
@@ -28,13 +27,10 @@ struct SidebarScreen: View {
       NavigationLink(item.rawValue.capitalized, value: item)
     }
     .onFirstAppear {
-      // On iPhone, NavigationSplitView collapses — programmatic selection highlights the
-      // cell but doesn't push. Skip auto-select so the user taps to navigate instead.
-      guard let splitRouter else { return }
-      if splitRouter.hasContentColumn {
-        splitRouter.select(content: array.first)
+      if router.hasContentColumn {
+        router.select(content: array.first)
       } else {
-        splitRouter.select(detail: array.first)
+        router.select(detail: array.first)
       }
     }
     .navigationTitle("Sidebar")

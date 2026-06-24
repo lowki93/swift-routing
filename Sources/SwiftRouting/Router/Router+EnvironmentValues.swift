@@ -26,6 +26,4 @@ extension EnvironmentValues {
   /// @Environment(\.tabRouter) var tabRouter
   /// ```
   @Entry public var tabRouter: TabRouter?
-
-  @Entry public var currentRouter: BaseRouter?
 }

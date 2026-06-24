@@ -10,8 +10,6 @@ import SwiftUI
 struct PlayerScreen: View {
 
   @Environment(\.router) private var router
-  @Environment(\.splitRouter2) private var splitRouter
-  @Environment(\.currentRouter) private var currentRouter
 
   let player: Player
 
@@ -20,9 +18,8 @@ struct PlayerScreen: View {
       VStack {
         Text(player.name)
         Text(player.type.rawValue)
-        Button("Search") { splitRouter?.present(AppRoute.search, withStack: false) }
+        Button("Search") { router.present(AppRoute.search, withStack: false) }
       }
-      .onAppear { print("Router: On Appear:", router, currentRouter) }
     }
   }
 }

@@ -11,7 +11,6 @@ import SwiftUI
 struct SettingsScreen: View {
   @AppStorage("example") private var example: Example?
   @Environment(\.router) private var router
-  @Environment(\.currentRouter) private var currentRouter
   @State var model: SettingsScreenModel
 
   var body: some View {
@@ -33,9 +32,6 @@ struct SettingsScreen: View {
     }
     .routerContext(Int.self) { [weak model] context in
         model?.update(int: context)
-    }
-    .onAppear {
-      print("Router: SETTINGS:", currentRouter)
     }
   }
 }

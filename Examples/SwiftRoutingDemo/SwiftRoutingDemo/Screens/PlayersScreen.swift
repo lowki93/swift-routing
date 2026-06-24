@@ -11,7 +11,6 @@ import SwiftUI
 struct PlayersScreen: View {
 
   @Environment(\.router) private var router
-  @Environment(\.splitRouter2) private var splitRouter
   @Environment(\.isSplitThreeColumn) private var isThreeColumn
   @Environment(\.columnVisibility) private var columnVisibility
   let type: PlayerType
@@ -19,12 +18,12 @@ struct PlayersScreen: View {
   var body: some View {
     VStack(alignment: .leading) {
       Group {
-        if splitRouter?.hasContentColumn == true {
-          List(Player.players.for(type: type), selection: splitRouter?.detailBinding(as: Player.self) ?? .constant(nil)) { item in
+        if router.hasContentColumn {
+          List(Player.players.for(type: type), selection: router.detailBinding(as: Player.self)) { item in
             NavigationLink(item.name, value: item)
           }
           .onFirstAppear {
-            splitRouter?.select(detail: Player.players.for(type: type).first)
+            router.select(detail: Player.players.for(type: type).first)
           }
         } else {
           List(Player.players.for(type: type)) { item in
@@ -37,18 +36,8 @@ struct PlayersScreen: View {
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
         Button("Settings") {
-          splitRouter?.present(AppRoute.settings)
+          router.present(AppRoute.settings)
         }
-      }
-    }
-  }
-
-  @ViewBuilder
-  private var navigationSplitConfiguration: some View {
-    if splitRouter != nil {
-      VStack(spacing: 4) {
-        Text("Column number: \(isThreeColumn.wrappedValue ? "3" : "2")")
-        Text("columnVisibility: \(columnVisibility.wrappedValue.rawValue.capitalized)")
       }
     }
   }

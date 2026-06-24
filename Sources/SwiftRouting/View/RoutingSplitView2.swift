@@ -103,7 +103,6 @@ public struct RoutingSplitView2<
         .sheet($router.sheet, for: destination, onDismiss: {})
         .cover($router.cover, for: destination, onDismiss: {})
         .environment(\.router, router)
-        .environment(\.currentRouter, router)
         .onChange(of: sizeClass) { [weak router] new in
           router?.isCompact = new == .compact
         }
@@ -138,7 +137,10 @@ public struct RoutingSplitView2<
     @ViewBuilder
     private var detailColumn: some View {
       if let selection = router.detailSelection as? DetailData, let detailRoute {
-        RoutingView(destination: destination, root: detailRoute(selection))
+        NavigationStack(path: $router.path) {
+          Destination[detailRoute(selection)]
+            .navigationDestination(destination)
+        }
           .id(selection)
       }
     }

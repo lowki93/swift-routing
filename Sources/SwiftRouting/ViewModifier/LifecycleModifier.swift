@@ -10,7 +10,6 @@ import SwiftUI
 struct LifecycleModifier: ViewModifier {
 
   @Environment(\.router) private var router
-  @Environment(\.currentRouter) private var currentRouter
   @State private var lastDateLog: Date?
   let route: any Route
 
@@ -18,11 +17,11 @@ struct LifecycleModifier: ViewModifier {
     content
       .onAppear {
         guard shouldLog() else { return }
-        (currentRouter ?? router).log(.onAppear(route))
+        router.log(.onAppear(route))
       }
       .onDisappear {
         guard shouldLog() else { return }
-        (currentRouter ?? router).log(.onDisappear(route))
+        router.log(.onDisappear(route))
       }
   }
 
