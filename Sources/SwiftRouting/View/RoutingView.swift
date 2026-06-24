@@ -41,7 +41,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
   @Environment(\.tabRouter) private var tabRouter
-  @Environment(\.splitRouter) private var splitRouter
+  @Environment(\.currentRouter) private var currentRouter
   private let type: RouterType
   private let inStack: Bool
   private let destination: Destination.Type
@@ -51,7 +51,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     if case .tab = type {
       return tabRouter ?? router
     }
-    return splitRouter ?? router
+    return currentRouter ?? router
   }
 
   init(
@@ -133,9 +133,10 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     private var root: some View {
       Group {
         if let content {
-          content.modifier(LifecycleModifier(route: router.root.wrapped))
+          content.modifier(LifecycleModifier(route: router.root.wrapped, explicitRouter: router))
         } else if let root = router.root.wrapped as? Destination.R {
-          Destination[root]
+          Destination.view(for: root)
+            .modifier(LifecycleModifier(route: root, explicitRouter: router))
         }
       }
       .id(router.root.id)
@@ -144,7 +145,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     private var navigationStack: some View {
       NavigationStack(path: $router.path) {
         root
-          .navigationDestination(destination)
+          .navigationDestination(destination, router: router)
       }
     }
 

@@ -9,20 +9,25 @@ import SwiftUI
 
 struct LifecycleModifier: ViewModifier {
 
-  @Environment(\.router) private var router
+  @Environment(\.router) private var envRouter
   @Environment(\.currentRouter) private var currentRouter
   @State private var lastDateLog: Date?
   let route: any Route
+  var explicitRouter: BaseRouter?
+
+  private var effectiveRouter: BaseRouter {
+    explicitRouter ?? currentRouter ?? envRouter
+  }
 
   func body(content: Content) -> some View {
     content
       .onAppear {
         guard shouldLog() else { return }
-        (currentRouter ?? router).log(.onAppear(route))
+        effectiveRouter.log(.onAppear(route))
       }
       .onDisappear {
         guard shouldLog() else { return }
-        (currentRouter ?? router).log(.onDisappear(route))
+        effectiveRouter.log(.onDisappear(route))
       }
   }
 

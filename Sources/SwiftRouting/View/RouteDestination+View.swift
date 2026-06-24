@@ -23,7 +23,7 @@ public extension View {
   ///
   /// - Parameter destination: The `RouteDestination` type that maps routes to views.
   /// - Returns: A view configured to display navigation destinations.
-  func navigationDestination<D: RouteDestination>(_ destination: D.Type)  -> some View{
+  func navigationDestination<D: RouteDestination>(_ destination: D.Type) -> some View {
     self.navigationDestination(for: AnyRoute.self) {
       ErrorView(route: $0, destination: destination) { route, _ in
         destination[route].modifier(HideTabBarModifier())
@@ -72,9 +72,6 @@ public extension View {
   /// The presented route gets its own `RoutingView` with a `.presented` router type,
   /// allowing full navigation capabilities within the cover.
   ///
-  /// You typically don't call this directly; `RoutingView` applies it automatically
-  /// to handle `router.cover(_:)` calls.
-  ///
   /// > Note: On macOS, this falls back to a sheet presentation since `fullScreenCover` is not available.
   ///
   /// - Parameters:
@@ -109,6 +106,19 @@ public extension View {
         destination: destination,
         root: route
       )
+    }
+  }
+}
+
+extension View {
+
+  func navigationDestination<D: RouteDestination>(_ destination: D.Type, router: BaseRouter) -> some View {
+    self.navigationDestination(for: AnyRoute.self) {
+      ErrorView(route: $0, destination: destination) { route, _ in
+        destination.view(for: route)
+          .modifier(LifecycleModifier(route: route, explicitRouter: router))
+          .modifier(HideTabBarModifier())
+      }
     }
   }
 }
