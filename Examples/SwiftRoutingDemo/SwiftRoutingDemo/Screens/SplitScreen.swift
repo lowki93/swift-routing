@@ -15,7 +15,7 @@ struct SplitScreen: View {
   var body: some View {
     Group {
       if isThreeColumn {
-        RoutingSplitView2(
+        RoutingSplitView(
           columnVisibility: Binding(
             get: { NavigationSplitViewVisibility(from: columnVisibility) },
             set: { columnVisibility = $0.toColumnVisibility() }
@@ -28,7 +28,7 @@ struct SplitScreen: View {
             .player(player)
           }
       } else {
-        RoutingSplitView2(
+        RoutingSplitView(
           preferredCompactColumn: $preferredCompactColumn,
           destination: AppRoute.self,
           sidebar: .sidebar

@@ -1,5 +1,5 @@
 //
-//  RoutingSplitView2.swift
+//  RoutingSplitView.swift
 //  SwiftRouting
 //
 //  Created by Kevin Budain on 10/06/2026.
@@ -9,7 +9,7 @@ import SwiftUI
 
 /// A type-safe `NavigationSplitView` container driven by typed route factories.
 ///
-/// `RoutingSplitView2` wraps SwiftUI's `NavigationSplitView` and ties each column
+/// `RoutingSplitView` wraps SwiftUI's `NavigationSplitView` and ties each column
 /// to a ``RouteDestination``. The sidebar is a fixed route; content and detail columns
 /// are derived from typed, `Hashable` selections — every selection is resolved through
 /// a factory closure to a ``RouteDestination/R`` route and rendered inside its own
@@ -41,7 +41,7 @@ import SwiftUI
 /// ## 2-column layout (sidebar + detail)
 ///
 /// ```swift
-/// RoutingSplitView2(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
+/// RoutingSplitView(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
 ///   AppRoute.players(type)
 /// }
 /// ```
@@ -49,7 +49,7 @@ import SwiftUI
 /// ## 3-column layout (sidebar + content + detail)
 ///
 /// ```swift
-/// RoutingSplitView2(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
+/// RoutingSplitView(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
 ///   AppRoute.players(type)
 /// } detail: { (player: Player) in
 ///   AppRoute.player(player)
@@ -78,7 +78,7 @@ import SwiftUI
 /// }
 /// ```
 @MainActor
-public struct RoutingSplitView2<
+public struct RoutingSplitView<
   Destination: RouteDestination,
   ContentData: Hashable & Sendable,
   DetailData: Hashable & Sendable
@@ -132,8 +132,8 @@ public struct RoutingSplitView2<
 
   private struct Wrapped: View {
 
-    @StateObject var router: Router
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @StateObject var router: Router
     let columnVisibility: Binding<NavigationSplitViewVisibility>?
     let preferredCompactColumn: Binding<NavigationSplitViewColumn>
     let destination: Destination.Type
@@ -146,8 +146,8 @@ public struct RoutingSplitView2<
         .sheet($router.sheet, for: destination, onDismiss: {})
         .cover($router.cover, for: destination, onDismiss: {})
         .environment(\.router, router)
-        .onChange(of: sizeClass) { [weak router] new in
-          router?.isCompact = new == .compact
+        .onChange(of: sizeClass) { [weak router] in
+          router?.isCompact = sizeClass == .compact
         }
     }
 
@@ -192,7 +192,7 @@ public struct RoutingSplitView2<
 
 // MARK: - 2-column init
 
-extension RoutingSplitView2 where ContentData == Never {
+extension RoutingSplitView where ContentData == Never {
 
   /// Creates a 2-column split view (sidebar + detail).
   ///
@@ -203,7 +203,7 @@ extension RoutingSplitView2 where ContentData == Never {
   /// this state so you can skip programmatic auto-selection when appropriate.
   ///
   /// ```swift
-  /// RoutingSplitView2(
+  /// RoutingSplitView(
   ///   preferredCompactColumn: $compactColumn,
   ///   destination: AppRoute.self,
   ///   sidebar: .sidebar
@@ -238,7 +238,7 @@ extension RoutingSplitView2 where ContentData == Never {
 
 // MARK: - 3-column init
 
-extension RoutingSplitView2 {
+extension RoutingSplitView {
 
   /// Creates a 3-column split view (sidebar + content + detail).
   ///
@@ -247,7 +247,7 @@ extension RoutingSplitView2 {
   /// Each column renders inside its own `RoutingView` with an independent navigation stack.
   ///
   /// ```swift
-  /// RoutingSplitView2(
+  /// RoutingSplitView(
   ///   columnVisibility: $columnVisibility,
   ///   destination: AppRoute.self,
   ///   sidebar: .sidebar

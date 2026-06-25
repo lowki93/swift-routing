@@ -9,7 +9,7 @@ import SwiftUI
 
 /// Manages programmatic navigation for both stack-based and split-view contexts.
 ///
-/// Each `RoutingView` and `RoutingSplitView2` creates its own `Router`. The router type
+/// Each `RoutingView` and `RoutingSplitView` creates its own `Router`. The router type
 /// is encoded in ``RouterType`` — `.stack`, `.tab`, `.presented`, or `.split`.
 ///
 /// ## Stack navigation
@@ -23,7 +23,7 @@ import SwiftUI
 ///
 /// ## Split view navigation
 ///
-/// Inside a `RoutingSplitView2`, `\(router)` is the split router. Use it to drive
+/// Inside a `RoutingSplitView`, `\(router)` is the split router. Use it to drive
 /// column selections instead of push navigation:
 /// ```swift
 /// @Environment(\.router) var router
@@ -102,8 +102,15 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   /// }
   /// ```
   public var routeCount: Int {
-    // +1 for root view
-    path.count + 1
+    switch type {
+    case .split:
+      return 1
+        + (contentSelection != nil ? 1 : 0)
+        + (detailSelection != nil ? 1 : 0)
+        + path.count
+    default:
+      return path.count + 1
+    }
   }
 
   // MARK: Configuration
@@ -123,8 +130,8 @@ public final class Router: PresentableRouter, @unchecked Sendable {
 
   // MARK: Split navigation state
 
-  @Published internal var detailSelection: AnyHashable?
-  @Published internal var contentSelection: AnyHashable?
+  @Published public internal(set) var detailSelection: AnyHashable?
+  @Published public internal(set) var contentSelection: AnyHashable?
 
   /// Whether the split view is currently in compact (single-column) mode.
   ///
@@ -140,11 +147,11 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   ///   router.select(detail: items.first)
   /// }
   /// ```
-  @Published public internal(set) var isCompact: Bool = false
+  @Published public var isCompact: Bool = false
 
   /// Whether this split router was created with a content column (3-column layout).
   ///
-  /// `true` when `RoutingSplitView2` was initialised with a `content:` closure.
+  /// `true` when `RoutingSplitView` was initialised with a `content:` closure.
   /// Always `false` for 2-column layouts and non-split routers.
   ///
   /// ```swift
@@ -159,13 +166,14 @@ public final class Router: PresentableRouter, @unchecked Sendable {
     return false
   }
 
-  var detailRouteFactory: ((AnyHashable) -> AnyRoute?)?
-  var contentRouteFactory: ((AnyHashable) -> AnyRoute?)?
+  public var detailRouteFactory: ((AnyHashable) -> AnyRoute?)?
+  public var contentRouteFactory: ((AnyHashable) -> AnyRoute?)?
 
   init(
     root: AnyRoute,
     type: RouterType,
     parent: BaseRouter,
+    isCompact: Bool = false,
     detailRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil,
     contentRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil
   ) {
@@ -173,11 +181,7 @@ public final class Router: PresentableRouter, @unchecked Sendable {
     self.detailRouteFactory = detailRouteFactory
     self.contentRouteFactory = contentRouteFactory
     super.init(configuration: parent.configuration, root: root, parent: parent)
-    if case .split = type {
-      #if os(iOS)
-      isCompact = UIDevice.current.userInterfaceIdiom == .phone
-      #endif
-    }
+    self.isCompact = isCompact
     parent.addChild(self)
   }
 }
@@ -185,6 +189,7 @@ public final class Router: PresentableRouter, @unchecked Sendable {
 // MARK: - Navigation
 
 extension Router: @preconcurrency RouterModel {
+  // MARK: Stack
   @MainActor public func route(_ destination: some Route) {
     route(to: destination, type: destination.routingType)
   }
@@ -227,6 +232,43 @@ extension Router: @preconcurrency RouterModel {
     } else {
       back()
     }
+  }
+
+  // MARK: Split
+
+  public func contentBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
+    guard self.type.isSplit else { return .constant(nil) }
+    return Binding(
+      get: { [weak self] in self?.contentSelection as? T },
+      set: { [weak self] in self?.contentSelection = $0.map(AnyHashable.init) }
+    )
+  }
+
+  public func detailBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
+    guard self.type.isSplit else { return .constant(nil) }
+    return Binding(
+      get: { [weak self] in self?.detailSelection as? T },
+      set: { [weak self] in self?.detailSelection = $0.map(AnyHashable.init) }
+    )
+  }
+
+  @MainActor public func select<T: Hashable & Sendable>(content value: T?) {
+    guard type.isSplit else { return }
+
+    guard let content = value.map(AnyHashable.init), let route = contentRouteFactory?(content) else { return }
+    log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
+
+
+    contentSelection = content
+  }
+
+  @MainActor public func select<T: Hashable & Sendable>(detail value: T?) {
+    guard type.isSplit else { return }
+
+    guard let details = value.map(AnyHashable.init), let route = detailRouteFactory?(details) else { return }
+    log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
+
+    detailSelection = details
   }
 }
 
@@ -292,88 +334,5 @@ public extension Router {
     if let targetRoute = deeplink.route {
       route(to: targetRoute, type: deeplink.type)
     }
-  }
-}
-
-// MARK: - Split navigation
-
-public extension Router {
-
-  /// Returns a typed `Binding<T?>` wired to the content column selection (3-column layout).
-  ///
-  /// Intended for use in the sidebar of a 3-column `RoutingSplitView2` to drive the
-  /// content column via a `List` selection binding.
-  /// Returns `.constant(nil)` for non-split routers.
-  ///
-  /// ```swift
-  /// List(playerTypes, selection: router.contentBinding(as: PlayerType.self)) { type in
-  ///   NavigationLink(type.label, value: type)
-  /// }
-  /// ```
-  func contentBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
-    guard self.type.isSplit else { return .constant(nil) }
-    return Binding(
-      get: { [weak self] in self?.contentSelection as? T },
-      set: { [weak self] in self?.contentSelection = $0.map(AnyHashable.init) }
-    )
-  }
-
-  /// Returns a typed `Binding<T?>` wired to the detail column selection.
-  ///
-  /// Intended for use in the sidebar (2-column) or content column (3-column) of a
-  /// `RoutingSplitView2` to drive the detail column via a `List` selection binding.
-  /// Returns `.constant(nil)` for non-split routers.
-  ///
-  /// ```swift
-  /// List(players, selection: router.detailBinding(as: Player.self)) { player in
-  ///   NavigationLink(player.name, value: player)
-  /// }
-  /// ```
-  func detailBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
-    guard self.type.isSplit else { return .constant(nil) }
-    return Binding(
-      get: { [weak self] in self?.detailSelection as? T },
-      set: { [weak self] in self?.detailSelection = $0.map(AnyHashable.init) }
-    )
-  }
-
-  /// Programmatically drives the content column selection (3-column layout).
-  ///
-  /// Equivalent to the user tapping a row in the sidebar of a 3-column split view.
-  /// No-op for non-split routers or when `hasContentColumn` is `false`.
-  ///
-  /// ```swift
-  /// .onFirstAppear {
-  ///   router.select(content: playerTypes.first)
-  /// }
-  /// ```
-  @MainActor func select<T: Hashable & Sendable>(content value: T?) {
-    guard type.isSplit else { return }
-
-    guard let content = value.map(AnyHashable.init), let route = contentRouteFactory?(content) else { return }
-    log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
-
-
-    contentSelection = content
-  }
-
-  /// Programmatically drives the detail column selection.
-  ///
-  /// Equivalent to the user tapping a row in the sidebar (2-column) or content column
-  /// (3-column). No-op for non-split routers.
-  ///
-  /// ```swift
-  /// .onFirstAppear {
-  ///   guard !router.isCompact else { return }
-  ///   router.select(detail: players.first)
-  /// }
-  /// ```
-  @MainActor func select<T: Hashable & Sendable>(detail value: T?) {
-    guard type.isSplit else { return }
-
-    guard let details = value.map(AnyHashable.init), let route = detailRouteFactory?(details) else { return }
-    log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
-
-    detailSelection = details
   }
 }

@@ -190,7 +190,7 @@ public struct AnyRoute: Identifiable, Hashable {
     self.inStack = inStack
   }
 
-  subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {
+  public subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {
     wrapped[keyPath: keyPath]
   }
 

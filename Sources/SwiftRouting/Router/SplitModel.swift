@@ -54,7 +54,7 @@ public protocol SplitModel {
 
   /// Whether this router was created with a content column (3-column layout).
   ///
-  /// `true` when `RoutingSplitView2` was initialised with a `content:` closure.
+  /// `true` when `RoutingSplitView` was initialised with a `content:` closure.
   /// Always `false` for 2-column layouts.
   ///
   /// ```swift
@@ -67,16 +67,16 @@ public protocol SplitModel {
   var hasContentColumn: Bool { get }
 
   /// Type-erased factory that maps a detail selection to its `AnyRoute`.
-  /// Set by `RoutingSplitView2` at initialisation; used internally to resolve `currentRoute`.
+  /// Set by `RoutingSplitView` at initialisation; used internally to resolve `currentRoute`.
   var detailRouteFactory: ((AnyHashable) -> AnyRoute?)? { get set }
 
   /// Type-erased factory that maps a content selection to its `AnyRoute`.
-  /// Set by `RoutingSplitView2` at initialisation; used internally to resolve `currentRoute`.
+  /// Set by `RoutingSplitView` at initialisation; used internally to resolve `currentRoute`.
   var contentRouteFactory: ((AnyHashable) -> AnyRoute?)? { get set }
 
   /// Returns a typed `Binding<T?>` wired to the content column selection (3-column layout).
   ///
-  /// Intended for use in the sidebar of a 3-column `RoutingSplitView2` to drive the
+  /// Intended for use in the sidebar of a 3-column `RoutingSplitView` to drive the
   /// content column via a `List` selection binding.
   /// Returns `.constant(nil)` for non-split routers.
   ///
@@ -93,7 +93,7 @@ public protocol SplitModel {
   /// Returns a typed `Binding<T?>` wired to the detail column selection.
   ///
   /// Intended for use in the sidebar (2-column) or content column (3-column) of a
-  /// `RoutingSplitView2` to drive the detail column via a `List` selection binding.
+  /// `RoutingSplitView` to drive the detail column via a `List` selection binding.
   /// Returns `.constant(nil)` for non-split routers.
   ///
   /// ```swift

@@ -15,7 +15,7 @@ extension EnvironmentValues {
   /// @Environment(\.router) var router
   /// ```
   ///
-  /// Inside a `RoutingSplitView2`, `router` is the split router — call
+  /// Inside a `RoutingSplitView`, `router` is the split router — call
   /// `router.select(detail:)` or `router.select(content:)` to drive column selections.
   @Entry public var router: Router = .defaultRouter
 
