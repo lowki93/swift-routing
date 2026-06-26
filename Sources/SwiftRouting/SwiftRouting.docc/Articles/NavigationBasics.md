@@ -232,3 +232,37 @@ router.closeChildren()
 ```
 
 This dismisses any sheets or covers presented from this router.
+
+## Targeting the Frontmost Router
+
+Inside a `RoutingView`, `@Environment(\.router)` always gives you the router for that view.
+But at the `@main` App level — where no environment is available — you hold a reference to
+the root router directly. In that case, use ``BaseRouter/deepestRouter()`` to target whichever
+router is actually on screen at the moment the action fires:
+
+```swift
+@main
+struct MyApp: App {
+  @State var rootRouter = Router(configuration: .default)
+
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
+        .environment(rootRouter)
+        .onOpenURL { url in
+          Task { @MainActor in
+            rootRouter.deepestRouter()?.terminate(MyContext())
+          }
+        }
+    }
+  }
+}
+```
+
+`deepestRouter()` traverses the router tree depth-first, following the last live child at each
+level until it reaches a leaf with no active children. If no child is active, it returns the
+receiver itself.
+
+> Important: Call `deepestRouter()` at dispatch time, not at setup time.
+> If a modal is on screen when the action fires, `deepestRouter()` returns that modal's router
+> so `terminate(_:)` unwinds through the correct presenter.

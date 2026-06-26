@@ -48,14 +48,6 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.
   var children: [UUID: WeakContainer<BaseRouter>] = [:]
 
-  /// Returns the deepest actively-presented child `Router`, or `self` if no child is currently presented.
-  ///
-  /// Use this to resolve the frontmost router at fire-time, e.g. when dispatching a deeplink
-  /// from AppDelegate so that `terminate(Context)` propagates through the correct presenter.
-  @MainActor public func deepestRouter() -> Router? {
-    let liveChildren = children.values.compactMap { $0.value as? Router }
-    return liveChildren.last?.deepestRouter() ?? self as? Router
-  }
 
   /// Initializes a `BaseRouter` with a given configuration and an optional parent.
   ///
@@ -163,32 +155,25 @@ public extension BaseRouter {
 
 extension BaseRouter: @preconcurrency BaseRouterModel {
 
-  /// Finds and returns a `TabRouter` if there is only one `TabRouter` in children
   public var tabRouter: TabRouter? {
     let tabRouters = children.compactMap { $0.value.value as? TabRouter }
 
     return tabRouters.count == 1 ? tabRouters.first : nil
   }
 
-  /// Finds and returns a `TabRouter` instance associated with the given `TabRoute` type.
-  ///
-  /// - Parameter tabRoute: The `TabRoute` for which to find the corresponding `TabRouter`.
-  /// - Returns: The `TabRouter` associated with the given tab, or `nil` if not found.
   public func tabRouter(for tabRoute: some TabRoute) -> TabRouter? {
     let tabRouters = children.compactMap { $0.value.value as? TabRouter }
 
     return tabRouters.first { type(of: $0.tab.wrapped) == type(of: tabRoute) }
   }
 
-  /// Finds the `Router` instance managing a specific tab within a `TabRouter`.
-  ///
-  /// This method first locates the `TabRouter` corresponding to the provided `TabRoute`,
-  /// then searches inside it to find the `Router` managing that specific tab.
-  ///
-  /// - Parameter tabRoute: The `TabRoute` representing the tab to search for.
-  /// - Returns: The `Router` instance managing the specified tab, or `nil` if it is not found.
   @MainActor public func findRouterInTabRouter(for tabRoute: some TabRoute) -> Router? {
     tabRouter(for: tabRoute)?.find(tab: tabRoute)
+  }
+
+  @MainActor public func deepestRouter() -> Router? {
+    let liveChildren = children.values.compactMap { $0.value as? Router }
+    return liveChildren.last?.deepestRouter() ?? self as? Router
   }
 }
 

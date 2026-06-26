@@ -148,6 +148,34 @@ router.update(root: .home)
 Recommendation:
 - apply this only for your main app route type to keep overload resolution predictable.
 
+## Targeting the Frontmost Router (App Level)
+
+At the `@main` App level there is no `@Environment(\.router)`. Hold a reference to the root
+router and call `deepestRouter()` at dispatch time to reach the router that is actually on screen:
+
+```swift
+@main
+struct MyApp: App {
+  @State var rootRouter = Router(configuration: .default)
+
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
+        .environment(rootRouter)
+        .onOpenURL { url in
+          Task { @MainActor in
+            rootRouter.deepestRouter()?.terminate(MyContext())
+          }
+        }
+    }
+  }
+}
+```
+
+- Traverses depth-first, following the last live child at each level.
+- Returns the receiver itself if no child is active.
+- Always call it at dispatch time, not at setup time.
+
 ## Important Notes
 
 - In SwiftUI views, prefer `@Environment(\.router)` over passing router manually.
