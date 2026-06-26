@@ -37,4 +37,34 @@ public protocol BaseRouterModel: ObservableObject {
   ///
   /// Use this method to clear the router hierarchy when needed, such as during cleanup or reset operations.
   func clearChildren()
+
+  /// Returns the frontmost active `Router` in the hierarchy, or `self` if no child is currently live.
+  ///
+  /// Traverses the router tree depth-first, following the last live child at each level,
+  /// until reaching a leaf with no active children.
+  ///
+  /// Call this at dispatch time — not at setup time — so you always target the router that
+  /// is actually on screen.
+  ///
+  /// ```swift
+  /// @main
+  /// struct MyApp: App {
+  ///   @State var rootRouter = Router(configuration: .default)
+  ///
+  ///   var body: some Scene {
+  ///     WindowGroup {
+  ///       ContentView()
+  ///         .environment(rootRouter)
+  ///         .onOpenURL { url in
+  ///           Task { @MainActor in
+  ///             rootRouter.deepestRouter()?.terminate(MyContext())
+  ///           }
+  ///         }
+  ///     }
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// - Returns: The deepest active `Router` in the hierarchy, or `nil` if the receiver is not a `Router` subclass.
+  @MainActor func deepestRouter() -> Router?
 }
