@@ -36,15 +36,6 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   static let defaultRouter: Router = Router(configuration: .default)
 
   // MARK: Navigation
-  @Published internal var root: AnyRoute {
-    willSet {
-      for context in contexts.all(for: root.wrapped) {
-        contexts.remove(context)
-        log(.context(.remove(context.route, context: context.routerContext)))
-      }
-    }
-  }
-
   @Published internal var path: [AnyRoute] = [] {
     willSet {
       removeContext(old: path, new: newValue)
@@ -272,34 +263,6 @@ extension Router: @preconcurrency RouterModel {
   }
 }
 
-private extension Router {
-
-  @MainActor func route(to destination: some Route, type: RoutingType) {
-    log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
-
-    switch type {
-    case .push:
-      path.append(AnyRoute(wrapped: destination))
-    case let .sheet(withStack):
-      sheet = AnyRoute(wrapped: destination, inStack: withStack)
-    case .cover:
-      cover = AnyRoute(wrapped: destination)
-    case .root:
-      root = AnyRoute(wrapped: destination)
-    }
-  }
-
-  func removeContext(old: [AnyRoute], new: [AnyRoute]) {
-    let count = old.count - new.count
-    guard count > 0 else { return }
-
-    for element in contexts.all(for: path.suffix(count).map(\.wrapped)) {
-      contexts.remove(element)
-      log(.context(.remove(element.route, context: element.routerContext)))
-    }
-  }
-}
-
 // MARK: - Deeplink
 
 public extension Router {
@@ -333,6 +296,36 @@ public extension Router {
     // Navigate to the target route with the specified presentation type
     if let targetRoute = deeplink.route {
       route(to: targetRoute, type: deeplink.type)
+    }
+  }
+}
+
+// MARK: - Private
+
+private extension Router {
+
+  @MainActor func route(to destination: some Route, type: RoutingType) {
+    log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
+
+    switch type {
+    case .push:
+      path.append(AnyRoute(wrapped: destination))
+    case let .sheet(withStack):
+      sheet = AnyRoute(wrapped: destination, inStack: withStack)
+    case .cover:
+      cover = AnyRoute(wrapped: destination)
+    case .root:
+      root = AnyRoute(wrapped: destination)
+    }
+  }
+
+  func removeContext(old: [AnyRoute], new: [AnyRoute]) {
+    let count = old.count - new.count
+    guard count > 0 else { return }
+
+    for element in contexts.all(for: path.suffix(count).map(\.wrapped)) {
+      contexts.remove(element)
+      log(.context(.remove(element.route, context: element.routerContext)))
     }
   }
 }
