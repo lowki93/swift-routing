@@ -106,7 +106,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
     )
   }
 
-  struct WrappedView: View {
+  private struct WrappedView: View {
 
     @StateObject var router: Router
     let inStack: Bool

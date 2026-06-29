@@ -10,7 +10,6 @@ import SwiftUI
 struct PlayerScreen: View {
 
   @Environment(\.router) private var router
-
   let player: Player
 
   var body: some View {
