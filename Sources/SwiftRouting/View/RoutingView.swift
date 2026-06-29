@@ -37,7 +37,7 @@ import SwiftUI
 /// - Each tab can own an independent router stack.
 /// - Supports deep links and full programmatic navigation (`push`, `present`, `cover`, `update(root:)`).
 @MainActor
-public struct  RoutingView<Destination: RouteDestination, Content: View>: View {
+public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
   @Environment(\.router) private var router
   @Environment(\.tabRouter) private var tabRouter

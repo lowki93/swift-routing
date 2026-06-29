@@ -12,6 +12,8 @@ import Foundation
 /// `BaseRouterModel` provides common functionality for managing tab-based navigation
 /// and child router relationships. Both `RouterModel` and `TabRouterModel` inherit from this protocol.
 public protocol BaseRouterModel: ObservableObject {
+  var root: AnyRoute { get }
+
   /// Returns the `TabRouter` if there is exactly one `TabRouter` among the children.
   ///
   /// Use this property when you expect a single `TabRouter` in the hierarchy.

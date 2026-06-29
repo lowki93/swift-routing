@@ -16,9 +16,120 @@ struct RouterTests {
     }
 
     @Test
-    func pathIsNotEmpty_return_lastElementInPath() {
+    func pathHasOneElement_return_lastElementInPath() {
       router.push(TestRoute.details(id: "42"))
+
       #expect((router.currentRoute.wrapped as? TestRoute) == .details(id: "42"))
+    }
+
+    @Test
+    func pathHasMultipleElements_return_lastElementInPath() {
+      router.push(TestRoute.home)
+      router.push(TestRoute.settings)
+      router.push(TestRoute.details(id: "42"))
+
+      #expect((router.currentRoute.wrapped as? TestRoute) == .details(id: "42"))
+    }
+
+    @Test
+    func sheetPresented_return_currentRouteUnchanged() {
+      router.push(TestRoute.home)
+      router.present(TestRoute.settings)
+
+      #expect((router.currentRoute.wrapped as? TestRoute) == .home)
+    }
+
+    @Test
+    func coverPresented_return_currentRouteUnchanged() {
+      router.push(TestRoute.home)
+      router.cover(TestRoute.settings)
+
+      #expect((router.currentRoute.wrapped as? TestRoute) == .home)
+    }
+
+    @Test
+    func splitRouter_noSelection_return_root() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: parentRouter
+      )
+
+      #expect(splitRouter.currentRoute.wrapped is DefaultRoute)
+    }
+
+    @Test
+    func splitRouter_withDetailSelection_return_detailRoute() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      splitRouter.select(detail: "any")
+
+      #expect(splitRouter.currentRoute.wrapped is TestRoute)
+    }
+
+    @Test
+    func splitRouter_withContentSelection_return_contentRoute() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: parentRouter,
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.settings) }
+      )
+      splitRouter.contentSelection = AnyHashable("any")
+
+      #expect((splitRouter.currentRoute.wrapped as? TestRoute) == .settings)
+    }
+
+    @Test
+    func splitRouter_pathHasElements_return_lastPathElement() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      splitRouter.push(TestRoute.settings)
+
+      #expect((splitRouter.currentRoute.wrapped as? TestRoute) == .settings)
+    }
+
+    @Test
+    func splitRouter_pathAndDetailSelected_return_pathRoute() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      splitRouter.select(detail: "any")
+      splitRouter.push(TestRoute.settings)
+
+      #expect((splitRouter.currentRoute.wrapped as? TestRoute) == .settings)
+    }
+
+    @Test
+    func splitRouter_detailAndContentSelected_return_detailRoute() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) },
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.settings) }
+      )
+      splitRouter.contentSelection = AnyHashable("content")
+      splitRouter.select(detail: "detail")
+
+      #expect((splitRouter.currentRoute.wrapped as? TestRoute) == .home)
     }
   }
 
@@ -68,97 +179,58 @@ struct RouterTests {
       router.popToRoot()
       #expect(router.routeCount == 1)
     }
-  }
-
-  @MainActor
-  struct Sheet: RouterTestSuite {
-    let router: Router
 
     @Test
-    func presentIsCalled_return_trueWithCurrentRouter() {
-      var cancellables = Set<AnyCancellable>()
-      var receivedIsPresented: Bool?
-      var receivedRouter: BaseRouter?
+    func splitRouter_noSelection_return_one() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .split(DefaultRoute.main.name, hasContentColumn: true), parent: parentRouter)
 
-      router.present
-        .sink { isPresented, emittedRouter in
-          receivedIsPresented = isPresented
-          receivedRouter = emittedRouter
-        }
-        .store(in: &cancellables)
-
-      router.present(TestRoute.settings)
-
-      #expect(receivedIsPresented == true)
-      #expect(receivedRouter?.id == router.id)
-      #expect((router.sheet?.wrapped as? TestRoute) == .settings)
+      #expect(splitRouter.routeCount == 1)
     }
 
     @Test
-    func dismissIsCalled_return_falseWithCurrentRouter() {
-      var cancellables = Set<AnyCancellable>()
-      var receivedIsPresented: Bool?
-      var receivedRouter: BaseRouter?
+    func splitRouter_withDetailSelection_return_two() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      splitRouter.select(detail: "any")
 
-      router.present(TestRoute.settings)
-      router.present
-        .sink { isPresented, emittedRouter in
-          receivedIsPresented = isPresented
-          receivedRouter = emittedRouter
-        }
-        .store(in: &cancellables)
-
-      router.sheet = nil
-
-      #expect(receivedIsPresented == false)
-      #expect(receivedRouter?.id == router.id)
-      #expect(router.sheet == nil)
-    }
-  }
-
-  @MainActor
-  struct Cover: RouterTestSuite {
-    let router: Router
-
-    @Test
-    func presentIsCalled_return_trueWithCurrentRouter() {
-      var cancellables = Set<AnyCancellable>()
-      var receivedIsPresented: Bool?
-      var receivedRouter: BaseRouter?
-
-      router.present
-        .sink { isPresented, emittedRouter in
-          receivedIsPresented = isPresented
-          receivedRouter = emittedRouter
-        }
-        .store(in: &cancellables)
-
-      router.cover(TestRoute.settings)
-
-      #expect(receivedIsPresented == true)
-      #expect(receivedRouter?.id == router.id)
-      #expect((router.cover?.wrapped as? TestRoute) == .settings)
+      #expect(splitRouter.routeCount == 2)
     }
 
     @Test
-    func dismissIsCalled_return_falseWithCurrentRouter() {
-      var cancellables = Set<AnyCancellable>()
-      var receivedIsPresented: Bool?
-      var receivedRouter: BaseRouter?
+    func splitRouter_withContentAndDetailSelection_return_three() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) },
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.settings) }
+      )
+      splitRouter.contentSelection = AnyHashable("content")
+      splitRouter.select(detail: "detail")
 
-      router.cover(TestRoute.settings)
-      router.present
-        .sink { isPresented, emittedRouter in
-          receivedIsPresented = isPresented
-          receivedRouter = emittedRouter
-        }
-        .store(in: &cancellables)
+      #expect(splitRouter.routeCount == 3)
+    }
 
-      router.cover = nil
+    @Test
+    func splitRouter_detailSelectedAndPathPushed_return_three() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      splitRouter.select(detail: "any")
+      splitRouter.push(TestRoute.settings)
 
-      #expect(receivedIsPresented == false)
-      #expect(receivedRouter?.id == router.id)
-      #expect(router.cover == nil)
+      #expect(splitRouter.routeCount == 3)
     }
   }
 
@@ -313,71 +385,6 @@ struct RouterTests {
   }
 
   @MainActor
-  struct PresentRoute: RouterTestSuite {
-    let router: Router
-
-    @Test
-    func withStackTrue_return_sheetInStackTrue() {
-      router.present(TestRoute.settings, withStack: true)
-
-      #expect((router.sheet?.wrapped as? TestRoute) == .settings)
-      #expect(router.sheet?.inStack == true)
-    }
-
-    @Test
-    func withStackFalse_return_sheetInStackFalse() {
-      router.present(TestRoute.settings, withStack: false)
-
-      #expect((router.sheet?.wrapped as? TestRoute) == .settings)
-      #expect(router.sheet?.inStack == false)
-    }
-
-    @Test
-    func withStackTrue_return_loggerCalledWithNavigationSheet() {
-      let setup = makeRouterWithLoggerSpy()
-      let expectedRouter = setup.router
-      let expectedLoggerSpy = setup.loggerSpy
-
-      expectedRouter.present(TestRoute.settings, withStack: true)
-
-      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
-      assertLogMessageKind(
-        expectedLoggerSpy,
-        is: .navigation(from: DefaultRoute.main, to: TestRoute.settings, type: .sheet(withStack: true))
-      )
-    }
-  }
-
-  @MainActor
-  struct CoverRoute: RouterTestSuite {
-    let router: Router
-
-    @Test
-    func pathIsEmpty_cover_return_coverRouteAndKeepCurrentRouteAsRoot() {
-      router.cover(TestRoute.settings)
-
-      #expect((router.cover?.wrapped as? TestRoute) == .settings)
-      #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
-      #expect(router.path.isEmpty)
-    }
-
-    @Test
-    func pathIsEmpty_cover_return_loggerCalledWithNavigationCover() {
-      let setup = makeRouterWithLoggerSpy()
-      let expectedRouter = setup.router
-      let expectedLoggerSpy = setup.loggerSpy
-
-      expectedRouter.cover(TestRoute.settings)
-
-      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
-      assertLogMessageKind(
-        expectedLoggerSpy,
-        is: .navigation(from: DefaultRoute.main, to: TestRoute.settings, type: .cover)
-      )
-    }
-  }
-
-  @MainActor
   struct Route: RouterTestSuite {
     let router: Router
 
@@ -496,6 +503,165 @@ struct RouterTests {
     }
   }
 
+  // MARK: - Presentation
+
+  @MainActor
+  struct Sheet: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func presentIsCalled_return_trueWithCurrentRouter() {
+      var cancellables = Set<AnyCancellable>()
+      var receivedIsPresented: Bool?
+      var receivedRouter: BaseRouter?
+
+      router.present
+        .sink { isPresented, emittedRouter in
+          receivedIsPresented = isPresented
+          receivedRouter = emittedRouter
+        }
+        .store(in: &cancellables)
+
+      router.present(TestRoute.settings)
+
+      #expect(receivedIsPresented == true)
+      #expect(receivedRouter?.id == router.id)
+      #expect((router.sheet?.wrapped as? TestRoute) == .settings)
+    }
+
+    @Test
+    func dismissIsCalled_return_falseWithCurrentRouter() {
+      var cancellables = Set<AnyCancellable>()
+      var receivedIsPresented: Bool?
+      var receivedRouter: BaseRouter?
+
+      router.present(TestRoute.settings)
+      router.present
+        .sink { isPresented, emittedRouter in
+          receivedIsPresented = isPresented
+          receivedRouter = emittedRouter
+        }
+        .store(in: &cancellables)
+
+      router.sheet = nil
+
+      #expect(receivedIsPresented == false)
+      #expect(receivedRouter?.id == router.id)
+      #expect(router.sheet == nil)
+    }
+  }
+
+  @MainActor
+  struct Cover: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func presentIsCalled_return_trueWithCurrentRouter() {
+      var cancellables = Set<AnyCancellable>()
+      var receivedIsPresented: Bool?
+      var receivedRouter: BaseRouter?
+
+      router.present
+        .sink { isPresented, emittedRouter in
+          receivedIsPresented = isPresented
+          receivedRouter = emittedRouter
+        }
+        .store(in: &cancellables)
+
+      router.cover(TestRoute.settings)
+
+      #expect(receivedIsPresented == true)
+      #expect(receivedRouter?.id == router.id)
+      #expect((router.cover?.wrapped as? TestRoute) == .settings)
+    }
+
+    @Test
+    func dismissIsCalled_return_falseWithCurrentRouter() {
+      var cancellables = Set<AnyCancellable>()
+      var receivedIsPresented: Bool?
+      var receivedRouter: BaseRouter?
+
+      router.cover(TestRoute.settings)
+      router.present
+        .sink { isPresented, emittedRouter in
+          receivedIsPresented = isPresented
+          receivedRouter = emittedRouter
+        }
+        .store(in: &cancellables)
+
+      router.cover = nil
+
+      #expect(receivedIsPresented == false)
+      #expect(receivedRouter?.id == router.id)
+      #expect(router.cover == nil)
+    }
+  }
+
+  @MainActor
+  struct PresentRoute: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func withStackTrue_return_sheetInStackTrue() {
+      router.present(TestRoute.settings, withStack: true)
+
+      #expect((router.sheet?.wrapped as? TestRoute) == .settings)
+      #expect(router.sheet?.inStack == true)
+    }
+
+    @Test
+    func withStackFalse_return_sheetInStackFalse() {
+      router.present(TestRoute.settings, withStack: false)
+
+      #expect((router.sheet?.wrapped as? TestRoute) == .settings)
+      #expect(router.sheet?.inStack == false)
+    }
+
+    @Test
+    func withStackTrue_return_loggerCalledWithNavigationSheet() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.present(TestRoute.settings, withStack: true)
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .navigation(from: DefaultRoute.main, to: TestRoute.settings, type: .sheet(withStack: true))
+      )
+    }
+  }
+
+  @MainActor
+  struct CoverRoute: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func pathIsEmpty_cover_return_coverRouteAndKeepCurrentRouteAsRoot() {
+      router.cover(TestRoute.settings)
+
+      #expect((router.cover?.wrapped as? TestRoute) == .settings)
+      #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
+      #expect(router.path.isEmpty)
+    }
+
+    @Test
+    func pathIsEmpty_cover_return_loggerCalledWithNavigationCover() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.cover(TestRoute.settings)
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .navigation(from: DefaultRoute.main, to: TestRoute.settings, type: .cover)
+      )
+    }
+  }
+
   @MainActor
   struct Close: RouterTestSuite {
     let router: Router
@@ -536,6 +702,313 @@ struct RouterTests {
       assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
     }
   }
+
+  @MainActor
+  struct CloseChildren: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func noPresentedChild_closeChildren_return_noChangeAndNoLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
+      expectedRouter.cover = AnyRoute(wrapped: TestRoute.settings)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.closeChildren()
+
+      #expect((expectedRouter.sheet?.wrapped as? TestRoute) == .home)
+      #expect((expectedRouter.cover?.wrapped as? TestRoute) == .settings)
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func presentedChildrenExist_closeChildren_return_sheetAndCoverNil() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedSheetChild = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedRouter
+      )
+      let expectedPresentedCoverChild = Router(
+        root: AnyRoute(wrapped: TestRoute.settings),
+        type: .presented("cover"),
+        parent: expectedRouter
+      )
+      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
+      expectedRouter.cover = AnyRoute(wrapped: TestRoute.settings)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+      expectedLoggerSpy.receivedCallCount = 0
+
+      #expect(expectedPresentedSheetChild.id != expectedPresentedCoverChild.id)
+      expectedRouter.closeChildren()
+
+      #expect(expectedRouter.sheet == nil)
+      #expect(expectedRouter.cover == nil)
+      #expect(expectedLoggerSpy.receivedCallCount == 2)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      let expectedIsCloseChildrenLog: Bool
+      if case .action(.closeChildren(_))? = expectedLoggerSpy.receivedMessage {
+        expectedIsCloseChildrenLog = true
+      } else {
+        expectedIsCloseChildrenLog = false
+      }
+      #expect(expectedIsCloseChildrenLog)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+      expectedLoggerSpy.receivedCallCount = 0
+    }
+
+    @Test
+    func presentedChildExists_closeChildren_return_loggerCalledWithActionCloseChildren() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedChild = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedRouter
+      )
+      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.closeChildren()
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.closeChildren(expectedPresentedChild)))
+      // Clear the retained message payload before child deallocation to avoid reentrant logger writes.
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+    }
+  }
+
+  // MARK: - Split
+
+  @MainActor
+  struct Init {
+
+    @Test
+    func parentProvided_init_return_attachedToParent() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .split(DefaultRoute.main.name, hasContentColumn: false), parent: parentRouter)
+
+      #expect(parentRouter.children[splitRouter.id]?.value?.id == splitRouter.id)
+    }
+
+    @Test
+    func parentProvided_init_return_sheetAndCoverNil() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .split(DefaultRoute.main.name, hasContentColumn: false), parent: parentRouter)
+
+      #expect(splitRouter.sheet == nil)
+      #expect(splitRouter.cover == nil)
+    }
+
+    @Test
+    func hasContentColumn_return_false() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .split(DefaultRoute.main.name, hasContentColumn: false), parent: parentRouter)
+
+      #expect(splitRouter.hasContentColumn == false)
+    }
+
+    @Test
+    func withContent_hasContentColumn_return_true() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .split(DefaultRoute.main.name, hasContentColumn: true), parent: parentRouter)
+
+      #expect(splitRouter.hasContentColumn == true)
+    }
+
+    @Test
+    func stackRouter_hasContentColumn_return_false() {
+      let parentRouter = Router(configuration: Configuration())
+      let stackRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .stack(DefaultRoute.main.name), parent: parentRouter)
+
+      #expect(stackRouter.hasContentColumn == false)
+    }
+
+    @Test
+    func noSelection_currentRoute_return_root() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+
+      #expect(splitRouter.currentRoute.wrapped is DefaultRoute)
+    }
+
+    @Test
+    func withDetailSelection_currentRoute_return_detailRoute() {
+      let parentRouter = Router(configuration: Configuration())
+      let splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      splitRouter.select(detail: "any")
+
+      #expect(splitRouter.currentRoute.wrapped is TestRoute)
+    }
+  }
+
+  @MainActor
+  struct Select {
+    let parentRouter: Router
+    let splitRouter: Router
+
+    init() {
+      parentRouter = Router(configuration: Configuration())
+      splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+    }
+
+    @Test
+    func selectDetail_return_detailSelectionSet() {
+      splitRouter.select(detail: "test")
+
+      #expect(splitRouter.detailSelection == AnyHashable("test"))
+    }
+
+    @Test
+    func selectContent_return_contentSelectionSet() {
+      let router = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: parentRouter,
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      router.select(content: "test")
+
+      #expect(router.contentSelection == AnyHashable("test"))
+    }
+
+    @Test
+    func stackRouter_selectDetail_return_noOp() {
+      let stackRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .stack(DefaultRoute.main.name), parent: parentRouter)
+      stackRouter.select(detail: "test")
+
+      #expect(stackRouter.detailSelection == nil)
+    }
+  }
+
+  @MainActor
+  struct DetailBinding {
+    let parentRouter: Router
+    let splitRouter: Router
+
+    init() {
+      let pair = makeSplitRouterPair()
+      parentRouter = pair.parent
+      splitRouter = pair.split
+    }
+
+    @Test
+    func detailBinding_return_nil() {
+      let binding = splitRouter.detailBinding(as: String.self)
+
+      #expect(binding.wrappedValue == nil)
+    }
+
+    @Test
+    func detailBinding_set_return_detailSelectionUpdated() {
+      let binding = splitRouter.detailBinding(as: String.self)
+      binding.wrappedValue = "test"
+
+      #expect(splitRouter.detailSelection == AnyHashable("test"))
+    }
+
+    @Test
+    func selectionSet_detailBinding_return_selectedValue() {
+      splitRouter.detailSelection = AnyHashable("test")
+      let binding = splitRouter.detailBinding(as: String.self)
+
+      #expect(binding.wrappedValue == "test")
+    }
+
+    @Test
+    func detailBinding_setNil_return_detailSelectionNil() {
+      splitRouter.detailSelection = AnyHashable("test")
+      let binding = splitRouter.detailBinding(as: String.self)
+      binding.wrappedValue = nil
+
+      #expect(splitRouter.detailSelection == nil)
+    }
+
+    @Test
+    func stackRouter_detailBinding_return_nil() {
+      let stackRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .stack(DefaultRoute.main.name), parent: parentRouter)
+      let binding = stackRouter.detailBinding(as: String.self)
+
+      #expect(binding.wrappedValue == nil)
+    }
+  }
+
+  @MainActor
+  struct ContentBinding {
+    let parentRouter: Router
+    let splitRouter: Router
+
+    init() {
+      let pair = makeSplitRouterPair()
+      parentRouter = pair.parent
+      splitRouter = pair.split
+    }
+
+    @Test
+    func contentBinding_return_nil() {
+      let binding = splitRouter.contentBinding(as: String.self)
+
+      #expect(binding.wrappedValue == nil)
+    }
+
+    @Test
+    func contentBinding_set_return_contentSelectionUpdated() {
+      let binding = splitRouter.contentBinding(as: String.self)
+      binding.wrappedValue = "test"
+
+      #expect(splitRouter.contentSelection == AnyHashable("test"))
+    }
+
+    @Test
+    func selectionSet_contentBinding_return_selectedValue() {
+      splitRouter.contentSelection = AnyHashable("test")
+      let binding = splitRouter.contentBinding(as: String.self)
+
+      #expect(binding.wrappedValue == "test")
+    }
+
+    @Test
+    func contentBinding_setNil_return_contentSelectionNil() {
+      splitRouter.contentSelection = AnyHashable("test")
+      let binding = splitRouter.contentBinding(as: String.self)
+      binding.wrappedValue = nil
+
+      #expect(splitRouter.contentSelection == nil)
+    }
+
+    @Test
+    func stackRouter_contentBinding_return_nil() {
+      let stackRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .stack(DefaultRoute.main.name), parent: parentRouter)
+      let binding = stackRouter.contentBinding(as: String.self)
+
+      #expect(binding.wrappedValue == nil)
+    }
+  }
+
+  // MARK: - Context
 
   @MainActor
   struct AddContext: RouterTestSuite {
@@ -907,88 +1380,7 @@ struct RouterTests {
     }
   }
 
-  @MainActor
-  struct CloseChildren: RouterTestSuite {
-    let router: Router
-
-    @Test
-    func noPresentedChild_closeChildren_return_noChangeAndNoLoggerCall() {
-      let setup = makeRouterWithLoggerSpy()
-      let expectedRouter = setup.router
-      let expectedLoggerSpy = setup.loggerSpy
-      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
-      expectedRouter.cover = AnyRoute(wrapped: TestRoute.settings)
-      expectedLoggerSpy.receivedMessage = nil
-      expectedLoggerSpy.receivedRouterId = nil
-
-      expectedRouter.closeChildren()
-
-      #expect((expectedRouter.sheet?.wrapped as? TestRoute) == .home)
-      #expect((expectedRouter.cover?.wrapped as? TestRoute) == .settings)
-      #expect(expectedLoggerSpy.receivedMessage == nil)
-    }
-
-    @Test
-    func presentedChildrenExist_closeChildren_return_sheetAndCoverNil() {
-      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
-      let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
-      let expectedPresentedSheetChild = Router(
-        root: AnyRoute(wrapped: TestRoute.home),
-        type: .presented("sheet"),
-        parent: expectedRouter
-      )
-      let expectedPresentedCoverChild = Router(
-        root: AnyRoute(wrapped: TestRoute.settings),
-        type: .presented("cover"),
-        parent: expectedRouter
-      )
-      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
-      expectedRouter.cover = AnyRoute(wrapped: TestRoute.settings)
-      expectedLoggerSpy.receivedMessage = nil
-      expectedLoggerSpy.receivedRouterId = nil
-      expectedLoggerSpy.receivedCallCount = 0
-
-      #expect(expectedPresentedSheetChild.id != expectedPresentedCoverChild.id)
-      expectedRouter.closeChildren()
-
-      #expect(expectedRouter.sheet == nil)
-      #expect(expectedRouter.cover == nil)
-      #expect(expectedLoggerSpy.receivedCallCount == 2)
-      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
-      let expectedIsCloseChildrenLog: Bool
-      if case .action(.closeChildren(_))? = expectedLoggerSpy.receivedMessage {
-        expectedIsCloseChildrenLog = true
-      } else {
-        expectedIsCloseChildrenLog = false
-      }
-      #expect(expectedIsCloseChildrenLog)
-      expectedLoggerSpy.receivedMessage = nil
-      expectedLoggerSpy.receivedRouterId = nil
-      expectedLoggerSpy.receivedCallCount = 0
-    }
-
-    @Test
-    func presentedChildExists_closeChildren_return_loggerCalledWithActionCloseChildren() {
-      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
-      let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
-      let expectedPresentedChild = Router(
-        root: AnyRoute(wrapped: TestRoute.home),
-        type: .presented("sheet"),
-        parent: expectedRouter
-      )
-      expectedRouter.sheet = AnyRoute(wrapped: TestRoute.home)
-      expectedLoggerSpy.receivedMessage = nil
-      expectedLoggerSpy.receivedRouterId = nil
-
-      expectedRouter.closeChildren()
-
-      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
-      assertLogMessageKind(expectedLoggerSpy, is: .action(.closeChildren(expectedPresentedChild)))
-      // Clear the retained message payload before child deallocation to avoid reentrant logger writes.
-      expectedLoggerSpy.receivedMessage = nil
-      expectedLoggerSpy.receivedRouterId = nil
-    }
-  }
+  // MARK: - HandleDeeplink
 
   @MainActor
   struct HandleDeeplink: RouterTestSuite {
@@ -1125,4 +1517,11 @@ private func makeRouterWithLoggerSpy() -> (router: Router, loggerSpy: LoggerSpy)
   let expectedRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
   expectedLoggerSpy.clearReceivedMessages()
   return (expectedRouter, expectedLoggerSpy)
+}
+
+@MainActor
+private func makeSplitRouterPair() -> (parent: Router, split: Router) {
+  let parent = Router(configuration: Configuration())
+  let split = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .split(DefaultRoute.main.name, hasContentColumn: false), parent: parent)
+  return (parent, split)
 }

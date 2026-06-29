@@ -31,13 +31,13 @@ struct HomeScreen: View {
       }
     }
     .routerContext(String.self) {
-      print("=== String", $0)
+      print("Context String", $0)
     }
     .routerContext(Success.self) {
-      print("=== Success", $0)
+      print("Context Success", $0)
     }
     .routerPresent {
-      print("=== HomeScreen : ", $0, $1)
+      print("RouterPresent HomeScreen : ", $0, $1)
     }
     .onTabReselected(HomeTab.home) {
       print("=== HomeTab.home")

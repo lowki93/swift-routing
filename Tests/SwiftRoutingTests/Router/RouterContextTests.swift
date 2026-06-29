@@ -227,74 +227,6 @@ struct RouterContextTests {
   }
 
   @MainActor
-  struct AllForRoutes {
-    @Test
-    func matchingRoutesExist_allForRoutes_return_onlyContextsForGivenRoutes() {
-      let router = Router(configuration: Configuration())
-      let expectedRootContext = RouterContext(
-        router: router,
-        routerContext: StringContext.self,
-        action: { _ in }
-      )
-
-      router.push(TestRoute.home)
-      let expectedHomeContext = RouterContext(
-        router: router,
-        routerContext: StringContext.self,
-        action: { _ in }
-      )
-
-      router.push(TestRoute.settings)
-      let expectedSettingsContext = RouterContext(
-        router: router,
-        routerContext: StringContext.self,
-        action: { _ in }
-      )
-
-      let contexts: Set<RouterContext> = [expectedRootContext, expectedHomeContext, expectedSettingsContext]
-      let matchingContexts = contexts.all(for: [TestRoute.settings])
-
-      #expect(matchingContexts.count == 1)
-      #expect(matchingContexts.contains(expectedSettingsContext))
-    }
-
-    @Test
-    func routesAreEmpty_allForRoutes_return_emptySet() {
-      let router = Router(configuration: Configuration())
-      let expectedContext = RouterContext(
-        router: router,
-        routerContext: StringContext.self,
-        action: { _ in }
-      )
-      let contexts: Set<RouterContext> = [expectedContext]
-
-      let matchingContexts = contexts.all(for: [])
-
-      #expect(matchingContexts.isEmpty)
-    }
-  }
-
-  @MainActor
-  struct Equality {
-    @Test
-    func sameRouterRouteAndContextType_equal_return_true() {
-      let router = Router(configuration: Configuration())
-      let expectedFirstContext = RouterContext(
-        router: router,
-        routerContext: StringContext.self,
-        action: { _ in }
-      )
-      let expectedSecondContext = RouterContext(
-        router: router,
-        routerContext: StringContext.self,
-        action: { _ in }
-      )
-
-      #expect(expectedFirstContext == expectedSecondContext)
-    }
-  }
-
-  @MainActor
   struct AllForSingleRoute {
     @Test
     func matchingRouteExists_allForRoute_return_onlyContextsForThatRoute() {
@@ -365,6 +297,74 @@ struct RouterContextTests {
       let result = contexts.all(for: TestRoute.home)
 
       #expect(result.isEmpty)
+    }
+  }
+
+  @MainActor
+  struct AllForRoutes {
+    @Test
+    func matchingRoutesExist_allForRoutes_return_onlyContextsForGivenRoutes() {
+      let router = Router(configuration: Configuration())
+      let expectedRootContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      router.push(TestRoute.home)
+      let expectedHomeContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      router.push(TestRoute.settings)
+      let expectedSettingsContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      let contexts: Set<RouterContext> = [expectedRootContext, expectedHomeContext, expectedSettingsContext]
+      let matchingContexts = contexts.all(for: [TestRoute.settings])
+
+      #expect(matchingContexts.count == 1)
+      #expect(matchingContexts.contains(expectedSettingsContext))
+    }
+
+    @Test
+    func routesAreEmpty_allForRoutes_return_emptySet() {
+      let router = Router(configuration: Configuration())
+      let expectedContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [expectedContext]
+
+      let matchingContexts = contexts.all(for: [])
+
+      #expect(matchingContexts.isEmpty)
+    }
+  }
+
+  @MainActor
+  struct Equality {
+    @Test
+    func sameRouterRouteAndContextType_equal_return_true() {
+      let router = Router(configuration: Configuration())
+      let expectedFirstContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let expectedSecondContext = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+
+      #expect(expectedFirstContext == expectedSecondContext)
     }
   }
 }

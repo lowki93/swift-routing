@@ -21,15 +21,13 @@ struct UserScreen: View {
       Button("User: Ben") {
         router.push(AppRoute.user(name: "Ben"))
       }
-//      if router.canTerminate {
-        Button("Go back") {
-          router.terminate(model.name)
-        }
-//      }
+      Button("Go back") {
+        router.terminate(model.name)
+      }
     }
     .padding()
     .routerContext(String.self) { context in
-      print("=== ", context)
+      print("Context as String: ", context)
     }
   }
 }

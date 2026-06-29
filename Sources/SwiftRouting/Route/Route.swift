@@ -183,9 +183,14 @@ public struct AnyRoute: Identifiable, Hashable {
   ///
   /// When `true` (default), the route is pushed onto a `NavigationStack`.
   /// When `false`, the route is presented without a navigation stack wrapper.
-  var inStack: Bool = true
+  var inStack: Bool
 
-  subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {
+  init(wrapped: any Route, inStack: Bool = true) {
+    self.wrapped = wrapped
+    self.inStack = inStack
+  }
+
+  public subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {
     wrapped[keyPath: keyPath]
   }
 
