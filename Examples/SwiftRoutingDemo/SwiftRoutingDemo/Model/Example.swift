@@ -11,4 +11,5 @@ enum Example: String {
   case navigationStack
   case tabView
   case routingTabView
+  case splitView
 }

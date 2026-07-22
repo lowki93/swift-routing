@@ -15,7 +15,8 @@ extension EnvironmentValues {
   /// @Environment(\.router) var router
   /// ```
   ///
-  /// This provides access to the current router within the navigation stack.
+  /// Inside a `RoutingSplitView`, `router` is the split router — call
+  /// `router.select(detail:)` or `router.select(content:)` to drive column selections.
   @Entry public var router: Router = .defaultRouter
 
   /// Adds a `TabRouter` instance to the environment values.
@@ -24,7 +25,5 @@ extension EnvironmentValues {
   /// ```swift
   /// @Environment(\.tabRouter) var tabRouter
   /// ```
-  ///
-  /// This provides access to the current router within the navigation stack.
   @Entry public var tabRouter: TabRouter?
 }

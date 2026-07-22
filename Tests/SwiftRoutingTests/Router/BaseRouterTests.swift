@@ -9,7 +9,7 @@ struct BaseRouterTests {
     @Test
     func baseRouterIsDeallocated_deinit_return_loggerCalledWithDelete() {
       let loggerSpy = LoggerSpy(storesConfiguration: false)
-      var expectedBaseRouter: BaseRouter? = BaseRouter(configuration: Configuration(loggerSpy: loggerSpy))
+      var expectedBaseRouter: BaseRouter? = BaseRouter(configuration: Configuration(loggerSpy: loggerSpy), root: AnyRoute(wrapped: DefaultRoute.main))
       let expectedBaseRouterId = expectedBaseRouter?.id
 
       expectedBaseRouter = nil
@@ -27,7 +27,7 @@ struct BaseRouterTests {
     @Test
     func childExists_addChild_return_childInChildren() {
       let configuration = Configuration()
-      let expectedChild = BaseRouter(configuration: configuration)
+      let expectedChild = BaseRouter(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main))
 
       #expect(baseRouter.children[expectedChild.id] == nil)
 
@@ -45,7 +45,7 @@ struct BaseRouterTests {
     @Test
     func childExists_removeChild_return_childRemovedFromChildren() {
       let configuration = Configuration()
-      let expectedChild = BaseRouter(configuration: configuration)
+      let expectedChild = BaseRouter(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main))
       baseRouter.addChild(expectedChild)
       #expect(baseRouter.children[expectedChild.id] != nil)
 
@@ -58,7 +58,7 @@ struct BaseRouterTests {
     @Test
     func childDoesNotExist_removeChild_return_noChange() {
       let configuration = Configuration()
-      let expectedChild = BaseRouter(configuration: configuration)
+      let expectedChild = BaseRouter(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main))
       #expect(baseRouter.children.isEmpty)
 
       baseRouter.removeChild(expectedChild)
@@ -74,8 +74,8 @@ struct BaseRouterTests {
     @Test
     func childrenExist_clearChildren_return_emptyChildren() {
       let configuration = Configuration()
-      let expectedFirstChild = BaseRouter(configuration: configuration)
-      let expectedSecondChild = BaseRouter(configuration: configuration)
+      let expectedFirstChild = BaseRouter(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main))
+      let expectedSecondChild = BaseRouter(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main))
       baseRouter.addChild(expectedFirstChild)
       baseRouter.addChild(expectedSecondChild)
       #expect(baseRouter.children.count == 2)

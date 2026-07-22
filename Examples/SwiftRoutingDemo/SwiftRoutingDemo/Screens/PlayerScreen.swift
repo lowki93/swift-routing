@@ -1,0 +1,24 @@
+//
+//  PlayerScreen.swift
+//  SwiftRoutingDemo
+//
+//  Created by Kevin Budain on 05/04/2026.
+//
+
+import SwiftUI
+
+struct PlayerScreen: View {
+
+  @Environment(\.router) private var router
+  let player: Player
+
+  var body: some View {
+    ScrollView {
+      VStack {
+        Text(player.name)
+        Text(player.type.rawValue)
+        Button("Search") { router.present(AppRoute.search, withStack: false) }
+      }
+    }
+  }
+}

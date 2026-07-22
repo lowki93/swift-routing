@@ -9,6 +9,6 @@ protocol BaseRouterTestSuite {
 @MainActor
 extension BaseRouterTestSuite {
   init() {
-    self.init(baseRouter: BaseRouter(configuration: Configuration()))
+    self.init(baseRouter: BaseRouter(configuration: Configuration(), root: AnyRoute(wrapped: DefaultRoute.main)))
   }
 }

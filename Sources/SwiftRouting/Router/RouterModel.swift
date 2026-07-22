@@ -35,7 +35,7 @@ import SwiftUI
 ///
 ///   let viewModel = ViewModel(router: router)
 /// ```
-public protocol RouterModel: BaseRouterModel, ContextModel, PresentationModel {
+public protocol RouterModel: BaseRouterModel, ContextModel, PresentationModel, SplitModel {
   /// Navigates to the given destination using its associated routingType.
   ///
   /// This method examines the `routingType` property of the route and performs the appropriate navigation action (push, sheet, cover, root, etc).

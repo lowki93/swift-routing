@@ -7,48 +7,61 @@
 
 import SwiftUI
 
-/// Every `RoutingView` has his own router
+/// Manages programmatic navigation for both stack-based and split-view contexts.
 ///
-/// Router enable progamatic control of their navigation stacks
-/// ```swift
-/// Button("To page2") {
-///   router.push(HomeRoute.page2(10))
-/// }
-/// ```
+/// Each `RoutingView` and `RoutingSplitView` creates its own `Router`. The router type
+/// is encoded in ``RouterType`` — `.stack`, `.tab`, `.presented`, or `.split`.
 ///
-/// Router are accessible from the environment inside a `RoutingView`
+/// ## Stack navigation
 /// ```swift
 /// @Environment(\.router) var router
+///
+/// router.push(HomeRoute.page2)
+/// router.present(HomeRoute.settings)
+/// router.back()
+/// ```
+///
+/// ## Split view navigation
+///
+/// Inside a `RoutingSplitView`, `\(router)` is the split router. Use it to drive
+/// column selections instead of push navigation:
+/// ```swift
+/// @Environment(\.router) var router
+///
+/// router.select(detail: player)          // drives the detail column
+/// router.select(content: playerType)     // drives the content column (3-column only)
 /// ```
 public final class Router: PresentableRouter, @unchecked Sendable {
 
   static let defaultRouter: Router = Router(configuration: .default)
 
   // MARK: Navigation
-  @Published internal var root: AnyRoute {
-    willSet {
-      for context in contexts.all(for: root.wrapped) {
-        contexts.remove(context)
-        log(.context(.remove(context.route, context: context.routerContext)))
-      }
-    }
-  }
   @Published internal var path: [AnyRoute] = [] {
     willSet {
       removeContext(old: path, new: newValue)
     }
   }
 
-  /// The currently visible route in the navigation stack.
+  /// The currently visible route.
   ///
-  /// Returns the last route in the navigation path, or the root route if the path is empty.
-  /// Use this property to determine which route is currently displayed.
+  /// - For **stack** routers: the last pushed route, or the root if the stack is empty.
+  /// - For **split** routers: the active detail route resolved from `detailSelection`,
+  ///   or the active content route from `contentSelection`, or the sidebar root if
+  ///   no column is selected yet.
   ///
   /// ```swift
-  /// print("Current route: \(router.currentRoute.name)")
+  /// print(router.currentRoute.name)
   /// ```
   override public var currentRoute: AnyRoute {
-    path.last ?? root
+    switch type {
+    case .split:
+      if let route = path.last { return route }
+      if let details = detailSelection, let route = detailRouteFactory?(details) { return route }
+      if let content = contentSelection, let route = contentRouteFactory?(content) { return route }
+      return root
+    default:
+      return path.last ?? root
+    }
   }
 
   override public var pathCount: Int { path.count }
@@ -80,8 +93,15 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   /// }
   /// ```
   public var routeCount: Int {
-    // +1 for root view
-    path.count + 1
+    switch type {
+    case .split:
+      return 1
+        + (contentSelection != nil ? 1 : 0)
+        + (detailSelection != nil ? 1 : 0)
+        + path.count
+    default:
+      return path.count + 1
+    }
   }
 
   // MARK: Configuration
@@ -95,16 +115,64 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   ///
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
-    let defaultRoute = AnyRoute(wrapped: DefaultRoute.main)
     self.type = .app
-    self.root = defaultRoute
-    super.init(configuration: configuration, first: true)
+    super.init(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main), first: true)
   }
 
-  init(root: AnyRoute, type: RouterType, parent: BaseRouter) {
-    self.root = root
+  // MARK: Split navigation state
+
+  @Published public internal(set) var detailSelection: AnyHashable?
+  @Published public internal(set) var contentSelection: AnyHashable?
+
+  /// Whether the split view is currently in compact (single-column) mode.
+  ///
+  /// `true` on iPhone at launch and whenever `horizontalSizeClass` becomes `.compact`
+  /// (e.g. during iPad multitasking). Always `false` for non-split routers.
+  ///
+  /// Use this to adapt sidebar behaviour — e.g. skip auto-selection on iPhone so the
+  /// user's first tap triggers navigation rather than a silent highlight.
+  ///
+  /// ```swift
+  /// .onFirstAppear {
+  ///   guard !router.isCompact else { return }
+  ///   router.select(detail: items.first)
+  /// }
+  /// ```
+  @Published public var isCompact: Bool = false
+
+  /// Whether this split router was created with a content column (3-column layout).
+  ///
+  /// `true` when `RoutingSplitView` was initialised with a `content:` closure.
+  /// Always `false` for 2-column layouts and non-split routers.
+  ///
+  /// ```swift
+  /// if router.hasContentColumn {
+  ///   router.select(content: playerType)
+  /// } else {
+  ///   router.select(detail: playerType)
+  /// }
+  /// ```
+  public var hasContentColumn: Bool {
+    if case .split(_, let has) = type { return has }
+    return false
+  }
+
+  public var detailRouteFactory: ((AnyHashable) -> AnyRoute?)?
+  public var contentRouteFactory: ((AnyHashable) -> AnyRoute?)?
+
+  init(
+    root: AnyRoute,
+    type: RouterType,
+    parent: BaseRouter,
+    isCompact: Bool = false,
+    detailRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil,
+    contentRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil
+  ) {
     self.type = type
-    super.init(configuration: parent.configuration, parent: parent)
+    self.detailRouteFactory = detailRouteFactory
+    self.contentRouteFactory = contentRouteFactory
+    super.init(configuration: parent.configuration, root: root, parent: parent)
+    self.isCompact = isCompact
     parent.addChild(self)
   }
 }
@@ -112,6 +180,7 @@ public final class Router: PresentableRouter, @unchecked Sendable {
 // MARK: - Navigation
 
 extension Router: @preconcurrency RouterModel {
+  // MARK: Stack
   @MainActor public func route(_ destination: some Route) {
     route(to: destination, type: destination.routingType)
   }
@@ -155,33 +224,42 @@ extension Router: @preconcurrency RouterModel {
       back()
     }
   }
-}
 
-private extension Router {
+  // MARK: Split
 
-  @MainActor func route(to destination: some Route, type: RoutingType) {
-    log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
-
-    switch type {
-    case .push:
-      path.append(AnyRoute(wrapped: destination))
-    case let .sheet(withStack):
-      sheet = AnyRoute(wrapped: destination, inStack: withStack)
-    case .cover:
-      cover = AnyRoute(wrapped: destination)
-    case .root:
-      root = AnyRoute(wrapped: destination)
-    }
+  public func contentBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
+    guard self.type.isSplit else { return .constant(nil) }
+    return Binding(
+      get: { [weak self] in self?.contentSelection as? T },
+      set: { [weak self] in self?.contentSelection = $0.map(AnyHashable.init) }
+    )
   }
 
-  func removeContext(old: [AnyRoute], new: [AnyRoute]) {
-    let count = old.count - new.count
-    guard count > 0 else { return }
+  public func detailBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
+    guard self.type.isSplit else { return .constant(nil) }
+    return Binding(
+      get: { [weak self] in self?.detailSelection as? T },
+      set: { [weak self] in self?.detailSelection = $0.map(AnyHashable.init) }
+    )
+  }
 
-    for element in contexts.all(for: path.suffix(count).map(\.wrapped)) {
-      contexts.remove(element)
-      log(.context(.remove(element.route, context: element.routerContext)))
-    }
+  @MainActor public func select<T: Hashable & Sendable>(content value: T?) {
+    guard type.isSplit else { return }
+
+    guard let content = value.map(AnyHashable.init), let route = contentRouteFactory?(content) else { return }
+    log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
+
+
+    contentSelection = content
+  }
+
+  @MainActor public func select<T: Hashable & Sendable>(detail value: T?) {
+    guard type.isSplit else { return }
+
+    guard let details = value.map(AnyHashable.init), let route = detailRouteFactory?(details) else { return }
+    log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
+
+    detailSelection = details
   }
 }
 
@@ -218,6 +296,36 @@ public extension Router {
     // Navigate to the target route with the specified presentation type
     if let targetRoute = deeplink.route {
       route(to: targetRoute, type: deeplink.type)
+    }
+  }
+}
+
+// MARK: - Private
+
+private extension Router {
+
+  @MainActor func route(to destination: some Route, type: RoutingType) {
+    log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
+
+    switch type {
+    case .push:
+      path.append(AnyRoute(wrapped: destination))
+    case let .sheet(withStack):
+      sheet = AnyRoute(wrapped: destination, inStack: withStack)
+    case .cover:
+      cover = AnyRoute(wrapped: destination)
+    case .root:
+      root = AnyRoute(wrapped: destination)
+    }
+  }
+
+  func removeContext(old: [AnyRoute], new: [AnyRoute]) {
+    let count = old.count - new.count
+    guard count > 0 else { return }
+
+    for element in contexts.all(for: path.suffix(count).map(\.wrapped)) {
+      contexts.remove(element)
+      log(.context(.remove(element.route, context: element.routerContext)))
     }
   }
 }

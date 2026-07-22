@@ -14,14 +14,20 @@ enum AppRoute: Route {
   case user(name: String)
   case search
   case settings
+  case sidebar
+  case players(PlayerType)
+  case player(Player)
 
   var name: String {
     switch self {
     case let .home(name):  "Home(\(name))"
     case .notifications: "Notificatons"
     case let .user(name): "User(\(name))"
-    case .search: "search"
+    case .search: "Search"
     case .settings: "Settings"
+    case .sidebar: "Sidebar"
+    case let .players(type): "Players(\(type))"
+    case let .player(player): "Player(\(player.name))"
     }
   }
 }
@@ -36,6 +42,9 @@ extension AppRoute: RouteDestination {
         .presentationDragIndicator(.visible)
         .presentationDetents([.medium])
     case .settings: SettingsScreen(model: SettingsScreenModel())
+    case .sidebar: SidebarScreen()
+    case let players(type): PlayersScreen(type: type)
+    case let .player(player): PlayerScreen(player: player)
     }
   }
 }

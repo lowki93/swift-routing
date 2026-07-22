@@ -42,6 +42,6 @@ final class SettingsScreenModel {
   init() {}
 
   func update(int: Int) {
-    print("=====")
+    print("Updater Int: ", int)
   }
 }
