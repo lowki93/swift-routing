@@ -19,6 +19,7 @@ SwiftUI's `NavigationStack` is powerful but can become hard to manage in larger 
 | **Bidirectional Data Flow** | Pass data back from child routes with `RouteContext` |
 | **Deep Linking Ready** | Built-in support with expressive factory methods |
 | **Tab Navigation** | First-class `TabRouter` for cross-tab navigation |
+| **Split Navigation** | `RoutingSplitView` for sidebar/content/detail layouts on iPad and macOS |
 | **Testable** | Mock `RouterModel` protocol for unit testing navigation logic |
 | **Swift 6 Ready** | Full concurrency support with `@MainActor` and `Sendable` |
 
@@ -140,6 +141,26 @@ tabRouter?.push(AppRoute.profile(userId: "123"), in: .profile)
 tabRouter?.popToRoot(in: .home)
 ```
 
+### Split Navigation
+
+`RoutingSplitView` wraps `NavigationSplitView` with typed, route-driven column selection:
+
+```swift
+RoutingSplitView(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerType) in
+    AppRoute.players(type)
+} detail: { (player: Player) in
+    AppRoute.player(player)
+}
+```
+
+```swift
+@Environment(\.router) private var router
+
+List(players, selection: router.detailBinding(as: Player.self)) { player in
+    NavigationLink(player.name, value: player)
+}
+```
+
 ## Installation
 
 Add SwiftRouting via **Swift Package Manager**:
@@ -166,6 +187,7 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 | [Defining Routes](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/definingroutes) | Route customization and routing types |
 | [Navigation Basics](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/navigationbasics) | Push, present, cover, and more |
 | [Tab Navigation](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
+| [Split Navigation](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/splitnavigation) | Sidebar/content/detail layouts with `RoutingSplitView` |
 | [Deep Linking](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/deeplinks) | Handle deep links in your app |
 | [Route Context](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/routecontextguide) | Pass data between routes |
 | [Migration](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
