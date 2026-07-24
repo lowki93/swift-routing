@@ -188,6 +188,16 @@ npx skills add lowki93/swift-routing --skill swift-routing
 npx skills add lowki93/swift-routing --skill swift-routing-migration
 ```
 
+### Contributor Setup
+
+Cloning or forking this repo gets you the two skills above for free — they're committed under `.skills/`. `AGENTS.md` also references three global (machine-level, not repo-level) skills used for tests, concurrency, and DocC work. Install them once per machine:
+
+```bash
+npx skills add avdlee/swift-testing-agent-skill --skill swift-testing-expert -g
+npx skills add avdlee/swift-concurrency-agent-skill --skill swift-concurrency -g
+npx skills add nonameplum/agent-skills --skill swift-docc -g
+```
+
 ## Requirements
 
 - iOS 17.0+ / macOS 13.0+
