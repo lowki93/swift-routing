@@ -6,6 +6,7 @@ A lightweight, type-safe navigation framework built on top of `NavigationStack` 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange)](https://swift.org)
 [![iOS 17+](https://img.shields.io/badge/iOS-17+-lightgrey)](https://developer.apple.com/ios/)
 [![macOS 13+](https://img.shields.io/badge/macOS-13+-lightgrey)](https://developer.apple.com/macos/)
+[![skills.sh](https://skills.sh/b/lowki93/swift-routing)](https://skills.sh/lowki93/swift-routing)
 
 ## Why SwiftRouting?
 
@@ -173,9 +174,9 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 
 - [Stop Fighting SwiftUI Navigation — A Type-Safe Approach with Swift Routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270)
 
-## OpenSkills
+## AI Skills
 
-This project includes AI skills for assisted development via [OpenSkills](https://openskills.dev).
+This project includes AI skills for assisted development, discoverable and installable via [skills.sh](https://skills.sh/lowki93/swift-routing).
 
 | Skill | Description |
 |-------|-------------|
@@ -183,8 +184,8 @@ This project includes AI skills for assisted development via [OpenSkills](https:
 | `swift-routing-migration` | Step-by-step migration from native NavigationStack to SwiftRouting |
 
 ```bash
-npx openskills install lowki93/swift-routing
-npx openskills install lowki93/swift-routing-migration
+npx skills add lowki93/swift-routing --skill swift-routing
+npx skills add lowki93/swift-routing --skill swift-routing-migration
 ```
 
 ## Requirements

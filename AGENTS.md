@@ -7,7 +7,7 @@
 <!-- SKILLS_TABLE_START -->
 <usage>
 Load a skill only when needed:
-- `npx openskills read <skill-name>`
+- `npx skills use lowki93/swift-routing --skill <skill-name>`
 
 Auto-load guidance:
 - For Swift tests (`Swift Testing`, `#expect`, `#require`, flaky tests, XCTest migration), load `swift-testing-expert`.

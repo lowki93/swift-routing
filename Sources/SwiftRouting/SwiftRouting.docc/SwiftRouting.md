@@ -70,20 +70,20 @@ Button("View Details") {
 }
 ```
 
-## OpenSkills
+## AI Skills
 
-This project includes a project-level OpenSkills skill named `swift-routing` for AI-assisted guidance.
+This project includes a project-level skill named `swift-routing` for AI-assisted guidance, discoverable on [skills.sh](https://skills.sh/lowki93/swift-routing).
 
 Run:
 
 ```bash
-npx openskills read swift-routing
+npx skills use lowki93/swift-routing --skill swift-routing
 ```
 
-If needed, you can also install it globally:
+If needed, you can also install it:
 
 ```bash
-openskills install lowki93/swift-routing --global
+npx skills add lowki93/swift-routing --skill swift-routing -g
 ```
 
 ## Topics
