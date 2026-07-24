@@ -36,7 +36,7 @@ Auto-load:
 - Test task → `swift-testing-expert` + `ai-rules/testing.md`
 - Navigation/routing task → `swift-routing`
 - Concurrency task → `swift-concurrency`
-- DocC documentation task → `swift-docc-documentation`
+- DocC documentation task → `swift-docc`
 
 ## Linear Project
 

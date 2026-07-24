@@ -7,7 +7,8 @@
 <!-- SKILLS_TABLE_START -->
 <usage>
 Load a skill only when needed:
-- `npx skills use lowki93/swift-routing --skill <skill-name>`
+- Project skills (`location: project`): `npx skills use lowki93/swift-routing --skill <skill-name>`
+- Global skills (`location: global`): already installed at `~/.claude/skills/<skill-name>/SKILL.md` — read it directly; reinstall with `npx skills add <source> --skill <skill-name> -g` if missing (see `<source>` per skill below)
 
 Auto-load guidance:
 - For Swift tests (`Swift Testing`, `#expect`, `#require`, flaky tests, XCTest migration), load `swift-testing-expert`.
@@ -32,18 +33,21 @@ Local rules:
 <name>swift-testing-expert</name>
 <description>Expert guidance for Swift Testing, test quality, flaky tests, and XCTest migration.</description>
 <location>global</location>
+<source>avdlee/swift-testing-agent-skill</source>
 </skill>
 
 <skill>
 <name>swift-concurrency</name>
 <description>Expert guidance for Swift Concurrency patterns, safety, and Swift 6 migration.</description>
 <location>global</location>
+<source>avdlee/swift-concurrency-agent-skill</source>
 </skill>
 
 <skill>
-<name>swift-docc-documentation</name>
-<description>Guidance for writing and updating Swift-DocC documentation, including article structure, symbol documentation, and navigation curation.</description>
+<name>swift-docc</name>
+<description>Official Swift DocC documentation markup and syntax reference.</description>
 <location>global</location>
+<source>nonameplum/agent-skills</source>
 </skill>
 
 <skill>
