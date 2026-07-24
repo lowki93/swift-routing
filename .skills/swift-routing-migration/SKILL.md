@@ -10,8 +10,8 @@ description: Step-by-step guidance for migrating an existing SwiftUI app from na
 Always load `swift-routing` alongside this skill:
 
 ```
-npx openskills read swift-routing
-npx openskills read swift-routing-migration
+npx skills use lowki93/swift-routing --skill swift-routing
+npx skills use lowki93/swift-routing --skill swift-routing-migration
 ```
 
 This skill covers the migration path (before → after). The `swift-routing` skill covers the complete SwiftRouting API reference, patterns, and troubleshooting.
