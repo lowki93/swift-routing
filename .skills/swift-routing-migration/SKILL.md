@@ -19,7 +19,7 @@ This skill covers the migration path (before → after). The `swift-routing` ski
 ## When To Use This Skill
 
 Load this skill when:
-- An existing app uses `NavigationStack`, `NavigationLink(value:)`, or `.sheet(isPresented:)` and needs to adopt SwiftRouting
+- An existing app uses `NavigationStack`, `NavigationSplitView`, `NavigationLink(value:)`, or `.sheet(isPresented:)` and needs to adopt SwiftRouting
 - The task involves replacing native navigation with SwiftRouting APIs
 - A user asks how to migrate from native SwiftUI navigation
 
@@ -37,6 +37,7 @@ Do not use this skill for:
 | `.fullScreenCover(isPresented:)` | `router.cover(_:)` |
 | `@Environment(\.dismiss)` | `router.close()` |
 | Native `TabView` with `@State` int selection | `RoutingTabView` or `TabView` + `.tabToRoot` |
+| `NavigationSplitView(sidebar:content:detail:)` | `RoutingSplitView(destination:sidebar:content:detail:)` |
 | Manual `NavigationPath` mutation in `.onOpenURL` | `DeeplinkHandler` + `router.handle(deeplink:)` |
 
 ## Key Constraints

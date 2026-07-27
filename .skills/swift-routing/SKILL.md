@@ -14,6 +14,7 @@ Primary focus areas:
 - `RoutingView` and router lifecycle
 - `Router` and `RouterModel`
 - `TabRouter` and tab-based flows
+- `RoutingSplitView` and `SplitModel` for sidebar/split-view flows
 - Deep links
 - Route context patterns
 - `Configuration` and route-not-found behavior
@@ -22,9 +23,9 @@ Primary focus areas:
 
 Use this skill when the codebase includes:
 - `import SwiftRouting`
-- `RoutingView` or `RoutingTabView`
-- `Router`, `RouterModel`, `TabRouter`, or `TabRouterModel`
-- navigation issues around stack, sheet, cover, tabs, or deep links
+- `RoutingView`, `RoutingTabView`, or `RoutingSplitView`
+- `Router`, `RouterModel`, `TabRouter`, `TabRouterModel`, or `SplitModel`
+- navigation issues around stack, sheet, cover, tabs, split columns, or deep links
 
 ## When Not To Use This Skill
 
@@ -50,6 +51,7 @@ Recommended learning order:
 
 Then continue by use case:
 - Tab orchestration and per-tab routing -> `references/tab-router.md`
+- Sidebar / split-view (iPad, macOS) navigation -> `references/split-router.md`
 - External URL/app link routing -> `references/deeplinks.md`
 - Child-to-parent data passing -> `references/route-context.md`
 - Declarative row/button navigation -> `references/navigation-link.md`
@@ -68,6 +70,10 @@ Then continue by use case:
   - Validate route mapping, destination type, and target router (`router` vs `tabRouter`).
 - "Need to react to tab reselection (e.g. scroll to top)"
   - Use `.onTabReselected(tab:)` from any child view; `popToRoot` fires first, then the handler.
+- "Detail/content column doesn't update after selection"
+  - Check the binding/select generic type matches the `RoutingSplitView` init's `ContentData`/`DetailData` type exactly; mismatched types silently no-op.
+- "Split view always shows the wrong column on iPhone"
+  - Check `router.isCompact` guards around programmatic auto-selection, and `preferredCompactColumn`.
 
 ## TODO (This Skill)
 
