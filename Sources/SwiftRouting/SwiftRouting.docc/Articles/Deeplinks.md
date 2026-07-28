@@ -379,7 +379,7 @@ func deeplink(from route: DeeplinkIdentifier) async throws -> DeeplinkRoute<Home
 
 ### Related
 
-- <doc:DeeplinkRoute>
+- <doc:DeeplinkRouteGuide>
 - ``DeeplinkHandler``
 - ``TabDeeplinkHandler``
 - ``DeeplinkRoute``

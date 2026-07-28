@@ -34,8 +34,8 @@ public enum RouterError: Error, CustomStringConvertible {
 
   /// A route could not be matched to its destination.
   ///
-  /// This error occurs when ``ErrorView`` receives a route whose type does not
-  /// match the expected ``RouteDestination/R`` type of the current destination.
+  /// This error occurs when the internal error-rendering view receives a route whose
+  /// type does not match the expected ``RouteDestination/R`` type of the current destination.
   ///
   /// - Parameters:
   ///   - route: The route that could not be resolved.

@@ -11,7 +11,7 @@ import SwiftUI
 ///
 /// `SplitModel` abstracts the column-selection state and navigation methods shared by
 /// any split-view router. ``Router`` conforms to this protocol when created with a
-/// `.split` ``RouterType``.
+/// `.split` `RouterType`.
 ///
 /// Conforming types drive column selections via typed bindings or programmatic calls,
 /// and expose `isCompact` so views can adapt to compact (iPhone / multitasking) environments.
