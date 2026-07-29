@@ -11,6 +11,7 @@ Recommended order:
 
 Then by topic:
 - `tab-router.md`: Manage tab navigation with `RoutingTabView` and `TabRouter`.
+- `split-router.md`: Manage sidebar/split navigation with `RoutingSplitView` and `SplitModel`.
 - `deeplinks.md`: Convert external links into navigable routes.
 - `route-context.md`: Pass data from child flows to parent flows.
 - `navigation-link.md`: Use `NavigationLink` with route-driven navigation.

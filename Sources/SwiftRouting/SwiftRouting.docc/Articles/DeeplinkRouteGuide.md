@@ -1,4 +1,4 @@
-# DeeplinkRoute
+# Deeplink Route
 
 Define navigation instructions for deep links using factory methods.
 

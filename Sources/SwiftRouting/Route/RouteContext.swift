@@ -51,10 +51,10 @@
 /// ## Topics
 ///
 /// ### Registering Observers
-/// - ``RouterModel/add(context:perform:)``
-/// - ``RouterModel/remove(context:)``
+/// - ``BaseRouter/add(context:perform:)``
+/// - ``BaseRouter/remove(context:)``
 ///
 /// ### Triggering Contexts
-/// - ``RouterModel/context(_:)``
+/// - ``BaseRouter/context(_:)``
 /// - ``RouterModel/terminate(_:)``
 public typealias RouteContext = Hashable & Sendable

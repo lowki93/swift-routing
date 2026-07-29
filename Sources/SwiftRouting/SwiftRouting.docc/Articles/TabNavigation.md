@@ -190,7 +190,7 @@ tabRouter?.push(HomeRoute.detail(id: 42), in: nil)
 
 ## Reacting to Tab Reselection
 
-Use the ``onTabReselected(_:perform:)`` modifier from any view inside a `RoutingTabView` to react to same-tab taps. The default `popToRoot` behavior always fires first; the handler is called after.
+Use the `onTabReselected(_:perform:)` modifier from any view inside a `RoutingTabView` to react to same-tab taps. The default `popToRoot` behavior always fires first; the handler is called after.
 
 ```swift
 struct HomeView: View {
@@ -208,7 +208,7 @@ struct HomeView: View {
 ```
 
 > Note:
-> ``onTabReselected(_:perform:)`` works with both `RoutingTabView` and native `TabView + .tabToRoot`.
+> `onTabReselected(_:perform:)` works with both `RoutingTabView` and native `TabView + .tabToRoot`.
 > The handler fires only when the reselected tab matches the tab you pass.
 
 ## Hiding the Tab Bar

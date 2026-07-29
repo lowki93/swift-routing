@@ -117,6 +117,12 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 - ``RoutingTabView``
 - ``AnyTabRoute``
 
+### Split Navigation
+
+- <doc:SplitNavigation>
+- ``RoutingSplitView``
+- ``SplitModel``
+
 ### Deep Linking
 
 - <doc:Deeplinks>
