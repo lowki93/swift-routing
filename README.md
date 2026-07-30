@@ -20,7 +20,7 @@ SwiftUI's `NavigationStack` is powerful but can become hard to manage in larger 
 | **Deep Linking Ready** | Built-in support with expressive factory methods |
 | **Tab Navigation** | First-class `TabRouter` for cross-tab navigation |
 | **Split Navigation** | `RoutingSplitView` for sidebar/content/detail layouts on iPad and macOS |
-| **Testable** | Mock `RouterModel` protocol for unit testing navigation logic |
+| **Testable** | `RouterSpy`/`TabRouterSpy` test doubles ship in `SwiftRoutingTestSupport` — no hand-rolled mocks |
 | **Swift 6 Ready** | Full concurrency support with `@MainActor` and `Sendable` |
 
 ## Quick Start
@@ -175,6 +175,12 @@ Then add to your target:
 
 ```swift
 .product(name: "SwiftRouting", package: "swift-routing")
+```
+
+For test doubles (`RouterSpy`, `TabRouterSpy`), add `SwiftRoutingTestSupport` to your test target:
+
+```swift
+.product(name: "SwiftRoutingTestSupport", package: "swift-routing")
 ```
 
 ## Documentation

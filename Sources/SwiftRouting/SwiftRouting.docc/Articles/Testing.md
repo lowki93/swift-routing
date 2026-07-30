@@ -8,70 +8,40 @@ SwiftRouting is designed with testability in mind. The protocol-based architectu
 
 ## Testing Strategies
 
-### Strategy 1: Mock RouterModel
+### Strategy 1: RouterSpy
 
-Create a mock implementation of ``RouterModel`` to capture navigation calls:
+`RouterModel` has grown a fair amount of surface (push, present, cover, context handling, split selections...), so hand-rolling a mock for every test is tedious and easy to let drift out of sync with the protocol. Add the companion package instead:
 
 ```swift
-@MainActor
-final class MockRouter: RouterModel {
-    var pushedRoutes: [any Route] = []
-    var presentedRoutes: [any Route] = []
-    var coveredRoutes: [any Route] = []
-    var backCallCount = 0
-    var popToRootCallCount = 0
-    var closeCallCount = 0
-    
-    func push(_ route: some Route) {
-        pushedRoutes.append(route)
-    }
-    
-    func present(_ route: some Route, withStack: Bool = true) {
-        presentedRoutes.append(route)
-    }
-    
-    func cover(_ route: some Route) {
-        coveredRoutes.append(route)
-    }
-    
-    func back() {
-        backCallCount += 1
-    }
-    
-    func popToRoot() {
-        popToRootCallCount += 1
-    }
-    
-    func close() {
-        closeCallCount += 1
-    }
-    
-    // Implement other RouterModel requirements as needed
-    func route(_ route: some Route) {
-        push(route)
-    }
-    
-    func route(to route: some Route, type: RoutingType) {
-        switch type {
-        case .push: push(route)
-        case .sheet: present(route)
-        case .cover: cover(route)
-        case .root: break
-        }
-    }
-    
-    func update(root route: some Route) {}
-    func closeChildren() {}
-    func add<T: RouteContext>(context: T.Type, action: @escaping (T) -> Void) {}
-    func remove<T: RouteContext>(context: T.Type) {}
-    func context(_ object: some RouteContext) {}
-    func terminate(_ object: some RouteContext) {}
-}
+dependencies: [
+    .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "0.2.0"))
+]
 ```
+
+```swift
+.product(name: "SwiftRoutingTestSupport", package: "swift-routing")
+```
+
+`RouterSpy` conforms to `RouterModel` and records every call instead of performing real navigation:
+
+```swift
+import SwiftRoutingTestSupport
+
+let spy = RouterSpy(root: AppRoute.home)
+spy.push(AppRoute.profile(userId: "123"))
+
+#expect(spy.pushedRoutes.count == 1)
+#expect((spy.pushedRoutes.first as? AppRoute) == .profile(userId: "123"))
+```
+
+Available recorded state: `pushedRoutes`, `presentedRoutes`, `coveredRoutes`, `updatedRoots`, `routedDestinations`, `backCallCount`, `popToRootCallCount`, `closeCallCount`, `closeChildrenCallCount`, `terminatedContexts`, `dispatchedContexts`, `addedContextTypes`, `removedContextTypes`, `detailSelections`, `contentSelections` — plus live `currentRoute`/`pathCount`/`detailSelection`/`contentSelection` that update as calls happen.
+
+> Note:
+> `tabRouter(for:)`, `findRouterInTabRouter(for:)`, and `deepestRouter()` always return `nil` on `RouterSpy` — there's no real router hierarchy behind it. Test code that depends on those against a real `Router` instead.
 
 ### Strategy 2: Test ViewModel Navigation
 
-Inject the mock router into your ViewModel:
+Inject the spy into your ViewModel:
 
 ```swift
 @MainActor
@@ -109,38 +79,38 @@ struct ProfileViewModelTests {
     @Test
     @MainActor
     func editProfile_pushesEditRoute() {
-        let mockRouter = MockRouter()
-        let viewModel = ProfileViewModel(router: mockRouter, userId: "123")
+        let spy = RouterSpy(root: ProfileRoute.overview)
+        let viewModel = ProfileViewModel(router: spy, userId: "123")
         
         viewModel.editProfile()
         
-        #expect(mockRouter.pushedRoutes.count == 1)
-        let pushedRoute = mockRouter.pushedRoutes.first as? ProfileRoute
+        #expect(spy.pushedRoutes.count == 1)
+        let pushedRoute = spy.pushedRoutes.first as? ProfileRoute
         #expect(pushedRoute == .edit(userId: "123"))
     }
     
     @Test
     @MainActor
     func openSettings_presentsSettingsRoute() {
-        let mockRouter = MockRouter()
-        let viewModel = ProfileViewModel(router: mockRouter, userId: "123")
+        let spy = RouterSpy(root: ProfileRoute.overview)
+        let viewModel = ProfileViewModel(router: spy, userId: "123")
         
         viewModel.openSettings()
         
-        #expect(mockRouter.presentedRoutes.count == 1)
-        let presentedRoute = mockRouter.presentedRoutes.first as? ProfileRoute
+        #expect(spy.presentedRoutes.count == 1)
+        let presentedRoute = spy.presentedRoutes.first?.route as? ProfileRoute
         #expect(presentedRoute == .settings)
     }
     
     @Test
     @MainActor
     func logout_popsToRoot() {
-        let mockRouter = MockRouter()
-        let viewModel = ProfileViewModel(router: mockRouter, userId: "123")
+        let spy = RouterSpy(root: ProfileRoute.overview)
+        let viewModel = ProfileViewModel(router: spy, userId: "123")
         
         viewModel.logout()
         
-        #expect(mockRouter.popToRootCallCount == 1)
+        #expect(spy.popToRootCallCount == 1)
     }
 }
 ```
@@ -150,31 +120,17 @@ struct ProfileViewModelTests {
 ### Testing Context Sending
 
 ```swift
-@MainActor
-final class MockRouterWithContext: MockRouter {
-    var sentContexts: [any RouteContext] = []
-    var terminatedContexts: [any RouteContext] = []
-    
-    override func context(_ object: some RouteContext) {
-        sentContexts.append(object)
-    }
-    
-    override func terminate(_ object: some RouteContext) {
-        terminatedContexts.append(object)
-    }
-}
-
 @Test
 @MainActor
 func selectUser_terminatesWithContext() {
-    let mockRouter = MockRouterWithContext()
-    let viewModel = UserPickerViewModel(router: mockRouter)
+    let spy = RouterSpy(root: AppRoute.userPicker)
+    let viewModel = UserPickerViewModel(router: spy)
     let user = User(id: "1", name: "John")
     
     viewModel.selectUser(user)
     
-    #expect(mockRouter.terminatedContexts.count == 1)
-    let context = mockRouter.terminatedContexts.first as? UserSelectionContext
+    #expect(spy.terminatedContexts.count == 1)
+    let context = spy.terminatedContexts.first as? UserSelectionContext
     #expect(context?.selectedUser.id == "1")
 }
 ```
@@ -302,42 +258,27 @@ struct DeeplinkRouteFactoryTests {
 
 ## Testing TabRouter Navigation
 
+`TabRouterSpy`, from the same `SwiftRoutingTestSupport` package, conforms to `TabRouterModel` the same way:
+
 ```swift
-@MainActor
-final class MockTabRouter: TabRouterModel {
-    var selectedTab: (any TabRoute)?
-    var pushCalls: [(route: any Route, tab: (any TabRoute)?)] = []
-    var popToRootCalls: [(any TabRoute)?] = []
-    
-    func change(tab: some TabRoute) {
-        selectedTab = tab
-    }
-    
-    func push(_ route: some Route, in tab: (any TabRoute)?) {
-        pushCalls.append((route, tab))
-    }
-    
-    func popToRoot(in tab: (any TabRoute)?) {
-        popToRootCalls.append(tab)
-    }
-    
-    // Implement other TabRouterModel requirements...
-}
+import SwiftRoutingTestSupport
 
 @Test
 @MainActor
 func crossTabNavigation_pushesToCorrectTab() {
-    let mockTabRouter = MockTabRouter()
-    let viewModel = HomeViewModel(tabRouter: mockTabRouter)
+    let spy = TabRouterSpy(root: AppRoute.home)
+    let viewModel = HomeViewModel(tabRouter: spy)
     
     viewModel.goToProfile(userId: "123")
     
-    #expect(mockTabRouter.pushCalls.count == 1)
-    let call = mockTabRouter.pushCalls.first
+    #expect(spy.pushedRoutes.count == 1)
+    let call = spy.pushedRoutes.first
     #expect((call?.route as? AppRoute) == .profile(userId: "123"))
     #expect((call?.tab as? AppTab) == .profile)
 }
 ```
+
+Available recorded state: `changedTabs`, `pushedRoutes`, `presentedRoutes`, `coveredRoutes`, `updatedRoots`, `popToRootTabs`.
 
 ## Best Practices
 
@@ -359,15 +300,15 @@ Focus on *what* navigation should happen, not *how*:
 
 ```swift
 // Good: Tests the intent
-#expect(mockRouter.pushedRoutes.contains { ($0 as? AppRoute) == .profile(userId: "123") })
+#expect(spy.pushedRoutes.contains { ($0 as? AppRoute) == .profile(userId: "123") })
 
 // Avoid: Testing implementation details
-#expect(mockRouter.path.count == 2)
+#expect(spy.pathCount == 2)
 ```
 
-### Keep Mocks Simple
+### Prefer RouterSpy Over Hand-Rolled Mocks
 
-Only implement what you need for each test. Use `fatalError()` for unneeded methods during development to catch unexpected calls.
+`RouterModel`/`TabRouterModel` have grown a fair amount of surface, and a hand-rolled mock silently drifts out of sync every time the protocol changes. `RouterSpy`/`TabRouterSpy` are tested against the real protocols, so use them instead of writing your own unless a test needs custom behavior a spy can't express.
 
 ### Test Async Handlers
 

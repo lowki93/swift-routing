@@ -190,6 +190,17 @@ public struct AnyRoute: Identifiable, Hashable {
     self.inStack = inStack
   }
 
+  /// Creates a type-erased `AnyRoute` wrapping the given route.
+  ///
+  /// Use this when implementing a custom `RouterModel`, `BaseRouterModel`, or `SplitModel`
+  /// conformance outside the package — for example a test spy — since those protocols
+  /// expose `AnyRoute` in their requirements (`root`, `detailRouteFactory`, `contentRouteFactory`).
+  ///
+  /// - Parameter route: The route to wrap.
+  public init(_ route: some Route) {
+    self.init(wrapped: route)
+  }
+
   public subscript<T>(dynamicMember keyPath: KeyPath<any Route, T>) -> T {
     wrapped[keyPath: keyPath]
   }
