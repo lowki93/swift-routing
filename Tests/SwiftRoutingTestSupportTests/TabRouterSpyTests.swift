@@ -2,18 +2,6 @@ import Testing
 import SwiftRouting
 @testable import SwiftRoutingTestSupport
 
-private enum FixtureTab: TabRoute {
-  case home
-  case profile
-
-  var name: String {
-    switch self {
-    case .home: "home"
-    case .profile: "profile"
-    }
-  }
-}
-
 @MainActor
 struct TabRouterSpyTests {
   struct ChangeTab {
