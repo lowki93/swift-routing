@@ -2,22 +2,6 @@ import Testing
 import SwiftRouting
 @testable import SwiftRoutingTestSupport
 
-private enum FixtureRoute: Route {
-  case home
-  case details(id: String)
-
-  var name: String {
-    switch self {
-    case .home: "home"
-    case .details: "details"
-    }
-  }
-}
-
-private struct FixtureContext: RouteContext {
-  let value: String
-}
-
 @MainActor
 struct RouterSpyTests {
   struct Push {

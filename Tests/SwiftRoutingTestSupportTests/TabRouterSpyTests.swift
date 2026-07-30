@@ -2,18 +2,6 @@ import Testing
 import SwiftRouting
 @testable import SwiftRoutingTestSupport
 
-private enum FixtureRoute: Route {
-  case home
-  case details(id: String)
-
-  var name: String {
-    switch self {
-    case .home: "home"
-    case .details: "details"
-    }
-  }
-}
-
 private enum FixtureTab: TabRoute {
   case home
   case profile
