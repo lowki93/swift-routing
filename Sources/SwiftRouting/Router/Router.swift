@@ -9,8 +9,9 @@ import SwiftUI
 
 /// Manages programmatic navigation for both stack-based and split-view contexts.
 ///
-/// Each `RoutingView` and `RoutingSplitView` creates its own `Router`. The router type
-/// is encoded internally as `RouterType` — `.stack`, `.tab`, `.presented`, or `.split`.
+/// Each `RoutingView` and `RoutingSplitView` creates its own `Router`. Its kind —
+/// stack, tab, presented, or split — is not public API, but shows up in ``BaseRouter/description``
+/// (and therefore in log output) as `stack(...)`, `tab(...)`, `presented(...)`, or `split(...)`.
 ///
 /// ## Stack navigation
 /// ```swift
