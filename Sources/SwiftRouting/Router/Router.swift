@@ -298,6 +298,32 @@ public extension Router {
       route(to: targetRoute, type: deeplink.type)
     }
   }
+
+  /// Handles a deep link into a split-view router's columns.
+  ///
+  /// This method processes a `SplitDeeplink` by performing the following steps:
+  /// 1. Selects `content` (3-column layout only; no-op if this router has no content column).
+  /// 2. Selects `detail`.
+  /// 3. Applies `deeplink` (if present) within the detail column's own navigation stack.
+  ///
+  /// No-op if this router was not created as a `.split` router.
+  ///
+  /// - Parameter splitDeeplink: The `SplitDeeplink` containing the column selections and optional navigation path.
+  @MainActor func handle(splitDeeplink: SplitDeeplink<some Hashable & Sendable, some Hashable & Sendable, some Route>) {
+    guard type.isSplit else { return }
+
+    if let content = splitDeeplink.content {
+      select(content: content)
+    }
+
+    if let detail = splitDeeplink.detail {
+      select(detail: detail)
+    }
+
+    if let deeplink = splitDeeplink.deeplink {
+      handle(deeplink: deeplink)
+    }
+  }
 }
 
 // MARK: - Private

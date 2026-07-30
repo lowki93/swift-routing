@@ -128,8 +128,10 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 - <doc:Deeplinks>
 - ``DeeplinkHandler``
 - ``TabDeeplinkHandler``
+- ``SplitDeeplinkHandler``
 - ``DeeplinkRoute``
 - ``TabDeeplink``
+- ``SplitDeeplink``
 
 ### Route Context
 

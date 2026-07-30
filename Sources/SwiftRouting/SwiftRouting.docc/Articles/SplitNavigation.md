@@ -4,7 +4,7 @@ Learn how to implement sidebar-based split navigation with SwiftRouting.
 
 ## Overview
 
-SwiftRouting provides first-class support for `NavigationSplitView` through ``RoutingSplitView`` and ``SplitModel``. Each column (sidebar, content, detail) renders inside its own `RoutingView`, so it gets an independent navigation stack while column selection stays driven by typed, `Hashable` values.
+SwiftRouting provides first-class support for `NavigationSplitView` through ``RoutingSplitView`` and ``SplitModel``. All three columns (sidebar, content, detail) share the same split-type ``Router`` — column selection is driven by typed, `Hashable` values, and only the detail column has a navigation stack, bound directly to that shared router's `path`.
 
 A split-type ``Router`` is created automatically and injected into the environment via `@Environment(\.router)`. It conforms to ``SplitModel``, giving you typed bindings and programmatic selection alongside the regular `push`/`present`/`cover` API.
 
@@ -76,10 +76,30 @@ On iPhone, `NavigationSplitView` collapses into a single-column stack. Use ``Rou
 
 ## Navigating Within a Column
 
-Each column is its own `RoutingView`, so `router.push(_:)`, `.present(_:)`, and `.cover(_:)` work the same way they do everywhere else in SwiftRouting — a push inside the detail column only affects the detail column's stack.
+`router.push(_:)` works like everywhere else in SwiftRouting, but since all columns share the same split ``Router``, it always pushes onto the one navigation stack — rendered only in the detail column. Pushing from the sidebar or content column doesn't open a stack there; it appears in the detail column instead.
 
-> Note:
-> Split navigation does not currently integrate with ``DeeplinkHandler``. Resolve deep links to a selection value before setting it via ``Router/select(detail:)`` or a binding.
+`router.present(_:)` and `.cover(_:)` are also router-wide, not per-column: calling them from any column presents the same sheet/cover over the whole `RoutingSplitView`.
+
+## Deep Linking
+
+Use ``SplitDeeplinkHandler`` to convert an external input into a ``SplitDeeplink``, and ``Router/handle(splitDeeplink:)`` to apply it:
+
+```swift
+struct PlayerSplitDeeplinkHandler: SplitDeeplinkHandler {
+    func deeplink(from route: DeeplinkIdentifier) async throws -> SplitDeeplink<PlayerType, Player, AppRoute>? {
+        switch route {
+        case .player(let player):
+            SplitDeeplink(content: player.type, detail: player)
+        default:
+            nil
+        }
+    }
+}
+
+router.handle(splitDeeplink: splitDeeplink)
+```
+
+`handle(splitDeeplink:)` selects `content` (3-column layout only), then `detail`, then applies the optional `deeplink` within the detail column's own navigation stack — the content column has no stack of its own, so `deeplink` can only push into `detail`.
 
 ### SplitModel Reference
 

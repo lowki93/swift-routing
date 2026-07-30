@@ -1509,6 +1509,94 @@ struct RouterTests {
       #expect((router.path[1].wrapped as? TestRoute) == .details(id: "final"))
     }
   }
+
+  // MARK: - HandleSplitDeeplink
+
+  @MainActor
+  struct HandleSplitDeeplink {
+    let parentRouter: Router
+    let splitRouter: Router
+
+    init() {
+      parentRouter = Router(configuration: Configuration())
+      splitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) },
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.settings) }
+      )
+    }
+
+    @Test
+    func contentAndDetailSet_handleSplitDeeplink_return_bothSelectionsUpdated() {
+      let splitDeeplink = SplitDeeplink<String, String, TestRoute>(content: "type", detail: "player")
+
+      splitRouter.handle(splitDeeplink: splitDeeplink)
+
+      #expect(splitRouter.contentSelection == AnyHashable("type"))
+      #expect(splitRouter.detailSelection == AnyHashable("player"))
+    }
+
+    @Test
+    func detailOnlySet_handleSplitDeeplink_return_detailSelectionUpdatedOnly() {
+      let splitDeeplink = SplitDeeplink<String, String, TestRoute>(detail: "player")
+
+      splitRouter.handle(splitDeeplink: splitDeeplink)
+
+      #expect(splitRouter.contentSelection == nil)
+      #expect(splitRouter.detailSelection == AnyHashable("player"))
+    }
+
+    @Test
+    func deeplinkProvided_handleSplitDeeplink_return_pushedInDetailColumnPath() {
+      let deeplink = DeeplinkRoute.push(TestRoute.details(id: "42"))
+      let splitDeeplink = SplitDeeplink<String, String, TestRoute>(detail: "player", deeplink: deeplink)
+
+      splitRouter.handle(splitDeeplink: splitDeeplink)
+
+      #expect(splitRouter.detailSelection == AnyHashable("player"))
+      #expect((splitRouter.path.last?.wrapped as? TestRoute) == .details(id: "42"))
+    }
+
+    @Test
+    func noDeeplink_handleSplitDeeplink_return_pathUnchanged() {
+      let splitDeeplink = SplitDeeplink<String, String, TestRoute>(content: "type", detail: "player")
+
+      splitRouter.handle(splitDeeplink: splitDeeplink)
+
+      #expect(splitRouter.path.isEmpty)
+    }
+
+    @Test
+    func noContentFactory_handleSplitDeeplink_return_contentSelectionNil() {
+      let twoColumnRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: parentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      let splitDeeplink = SplitDeeplink<String, String, TestRoute>(content: "type", detail: "player")
+
+      twoColumnRouter.handle(splitDeeplink: splitDeeplink)
+
+      #expect(twoColumnRouter.contentSelection == nil)
+      #expect(twoColumnRouter.detailSelection == AnyHashable("player"))
+    }
+
+    @Test
+    func stackRouter_handleSplitDeeplink_return_noOp() {
+      let stackRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .stack(DefaultRoute.main.name), parent: parentRouter)
+      let deeplink = DeeplinkRoute.push(TestRoute.details(id: "42"))
+      let splitDeeplink = SplitDeeplink(content: "type", detail: "player", deeplink: deeplink)
+
+      stackRouter.handle(splitDeeplink: splitDeeplink)
+
+      #expect(stackRouter.contentSelection == nil)
+      #expect(stackRouter.detailSelection == nil)
+      #expect(stackRouter.path.isEmpty)
+    }
+  }
 }
 
 @MainActor

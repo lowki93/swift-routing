@@ -76,9 +76,9 @@ router.select(detail: players.first)
 
 ## Key Constraints
 
-- Each column (sidebar, content, detail) is its own `RoutingView` with an independent navigation stack.
+- All three columns (sidebar, content, detail) share the same split `Router` — there's one shared navigation stack, rendered only in the detail column. A push from the sidebar or content column lands in the detail column, not a stack of its own.
 - Use `router.detailBinding(as:)` / `router.contentBinding(as:)` for `List` selection, or `router.select(detail:)` / `router.select(content:)` programmatically.
 - `router.isCompact` replaces manual `horizontalSizeClass` checks for skipping auto-selection on iPhone.
-- Split navigation does not integrate with `DeeplinkHandler` — resolve the target value first, then call `select(detail:)`/`select(content:)`.
+- For deep links, use `SplitDeeplinkHandler` + `router.handle(splitDeeplink:)` — see `references/split-router.md`.
 
 See `references/split-router.md` in the `swift-routing` skill for the full API reference.
