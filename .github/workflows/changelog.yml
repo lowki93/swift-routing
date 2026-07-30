@@ -1,0 +1,91 @@
+name: Update Changelog
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Close out [Unreleased] section
+        id: changelog
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          DATE=$(date +%Y-%m-%d)
+
+          python3 - <<PY
+          import re
+          import sys
+
+          version = "${VERSION}"
+          date = "${DATE}"
+
+          with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+              content = f.read()
+
+          marker = "## [Unreleased]"
+          idx = content.find(marker)
+          if idx == -1:
+              print("No [Unreleased] section found, skipping.")
+              print("updated=false")
+              sys.exit(0)
+
+          body_start = idx + len(marker)
+          next_heading = content.find("\n## [", body_start)
+          body_end = next_heading if next_heading != -1 else len(content)
+          body = content[body_start:body_end]
+
+          if not body.strip():
+              print("Unreleased section is empty, skipping.")
+              print("updated=false")
+              sys.exit(0)
+
+          new_heading = f"## [Unreleased]\n\n## [{version}] - {date}"
+          new_content = content[:idx] + new_heading + body + content[body_end:]
+
+          # Maintain the compare links at the bottom of the file, if present.
+          unreleased_link = re.search(
+              r"^\[Unreleased\]: (https://\S+/compare/)([^.\s]+(?:\.[^.\s]+)*)\.\.\.HEAD$",
+              new_content,
+              re.MULTILINE,
+          )
+          if unreleased_link:
+              base_url, previous_version = unreleased_link.groups()
+              old_line = unreleased_link.group(0)
+              new_unreleased_line = f"[Unreleased]: {base_url}{version}...HEAD"
+              new_version_line = f"[{version}]: {base_url}{previous_version}...{version}"
+              new_content = new_content.replace(
+                  old_line, f"{new_unreleased_line}\n{new_version_line}"
+              )
+
+          with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+              f.write(new_content)
+
+          print(f"Closed out [Unreleased] as [{version}] - {date}")
+          print("updated=true")
+          PY
+
+      - name: Commit and push
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- CHANGELOG.md; then
+            echo "CHANGELOG.md unchanged, nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for v${GITHUB_REF_NAME}"
+          git push origin HEAD:main
