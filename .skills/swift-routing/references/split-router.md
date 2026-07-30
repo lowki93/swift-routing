@@ -35,7 +35,7 @@ RoutingSplitView(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerT
 }
 ```
 
-Each column (sidebar, content, detail) is its own `RoutingView` with an independent navigation stack — a `push`/`present`/`cover` in one column never affects another.
+All three columns (sidebar, content, detail) share the same split-type `Router` — there is one shared navigation stack (`router.path`), rendered only in the detail column. `push`/`present`/`cover` called from any column act on that same shared router, so a push from the sidebar renders in the detail column, and present/cover show the same sheet/cover regardless of which column triggered them.
 
 ## Driving Column Selections
 
@@ -97,14 +97,35 @@ final class SidebarViewModel: ObservableObject {
 }
 ```
 
+## Deep Linking
+
+Use `SplitDeeplinkHandler` to convert external input into a `SplitDeeplink`, and `Router.handle(splitDeeplink:)` to apply it:
+
+```swift
+struct PlayerSplitDeeplinkHandler: SplitDeeplinkHandler {
+  func deeplink(from route: DeeplinkIdentifier) async throws -> SplitDeeplink<PlayerType, Player, AppRoute>? {
+    switch route {
+    case .player(let player):
+      SplitDeeplink(content: player.type, detail: player)
+    default:
+      nil
+    }
+  }
+}
+
+router.handle(splitDeeplink: splitDeeplink)
+```
+
+`handle(splitDeeplink:)` selects `content` (3-column only, no-op without a content factory), then `detail`, then applies the optional `deeplink` — but only within the detail column's own navigation stack, since the content column has none.
+
 ## Constraints
 
-- Deep linking does not integrate with split routers today — resolve the target value first, then call `select(detail:)`/`select(content:)` or set the binding.
 - `detailBinding(as:)`/`contentBinding(as:)` return `.constant(nil)` for non-split routers — safe to call unconditionally, but only meaningful inside a `RoutingSplitView`.
+- `handle(splitDeeplink:)` is a no-op on non-split routers.
 
 ## Best Practices
 
-- Keep one `RoutingView` per column.
+- Remember all columns share one `Router` — pushes always land in the detail column, and present/cover are router-wide, not scoped to one column.
 - Guard programmatic selection with `!router.isCompact` unless you intend to force-navigate on iPhone.
 - Prefer protocol injection in ViewModels (`SplitModel`).
 - Use `hasContentColumn` instead of duplicating sidebar logic for 2-column vs 3-column layouts.
