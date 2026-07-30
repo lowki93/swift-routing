@@ -23,6 +23,19 @@ SwiftUI's `NavigationStack` is powerful but can become hard to manage in larger 
 | **Testable** | `RouterSpy`/`TabRouterSpy` test doubles ship in `SwiftRoutingTestSupport` — no hand-rolled mocks |
 | **Swift 6 Ready** | Full concurrency support with `@MainActor` and `Sendable` |
 
+### Why Separate Routes From Views?
+
+Routes are plain data (`Hashable & Sendable`); the mapping to views lives separately in `RouteDestination`. This is a deliberate trade-off, not an accident:
+
+| Benefit | Explanation |
+|---------|-------------|
+| **Reusability** | Routes can be used in navigation, deep links, analytics, and tests without view dependencies |
+| **Testability** | Test navigation logic by asserting on route values, not view hierarchies |
+| **Flexibility** | Change view implementations without touching route definitions |
+| **Modularity** | Routes can live in a shared module; views in feature modules |
+
+See the [Architecture guide](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/architecture) for the full rationale.
+
 ## Quick Start
 
 ### 1. Define Routes
@@ -190,6 +203,7 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 | Topic | Description |
 |-------|-------------|
 | [Getting Started](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/gettingstarted) | Installation and basic setup |
+| [Architecture](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/architecture) | Design principles — why routes are separate from views |
 | [Defining Routes](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/definingroutes) | Route customization and routing types |
 | [Navigation Basics](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/navigationbasics) | Push, present, cover, and more |
 | [Tab Navigation](https://lowki93.github.io/swift-routing/0.2.0/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
