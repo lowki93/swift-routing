@@ -5,7 +5,7 @@ A lightweight, type-safe navigation framework built on top of `NavigationStack` 
 [![Documentation](https://img.shields.io/badge/Documentation-DocC-blue)](https://lowki93.github.io/swift-routing/)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange)](https://swift.org)
 [![iOS 17+](https://img.shields.io/badge/iOS-17+-lightgrey)](https://developer.apple.com/ios/)
-[![macOS 13+](https://img.shields.io/badge/macOS-13+-lightgrey)](https://developer.apple.com/macos/)
+[![macOS 14+](https://img.shields.io/badge/macOS-14+-lightgrey)](https://developer.apple.com/macos/)
 [![skills.sh](https://skills.sh/b/lowki93/swift-routing)](https://skills.sh/lowki93/swift-routing)
 
 ## Why SwiftRouting?
@@ -242,7 +242,7 @@ npx skills add nonameplum/agent-skills --skill swift-docc -g
 
 ## Requirements
 
-- iOS 17.0+ / macOS 13.0+
+- iOS 17.0+ / macOS 14.0+
 - Swift 6.0+
 - Xcode 16.0+
 
