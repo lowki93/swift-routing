@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-changelog:
@@ -17,6 +18,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ secrets.CHANGELOG_PR_TOKEN }}
 
       - name: Close out [Unreleased] section
         id: changelog
@@ -77,15 +79,32 @@ jobs:
           print("updated=true")
           PY
 
-      - name: Commit and push
+      - name: Open PR and enable auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.CHANGELOG_PR_TOKEN }}
         run: |
           set -euo pipefail
           if git diff --quiet -- CHANGELOG.md; then
-            echo "CHANGELOG.md unchanged, nothing to commit."
+            echo "CHANGELOG.md unchanged, nothing to do."
             exit 0
           fi
+
+          VERSION="${GITHUB_REF_NAME}"
+          BRANCH="changelog/${VERSION}"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${BRANCH}"
           git add CHANGELOG.md
-          git commit -m "chore: update changelog for v${GITHUB_REF_NAME}"
-          git push origin HEAD:main
+          git commit -m "update changelog for v${VERSION}"
+          git push origin "${BRANCH}"
+
+          BODY=$'**What**:\n'"Automated changelog closeout for the ${VERSION} release, opened by \`.github/workflows/changelog.yml\`."$'\n\n**Breaking Changes**:\nNone — documentation only.'
+
+          gh pr create \
+            --base main \
+            --head "${BRANCH}" \
+            --title "update(changelog): v${VERSION} release" \
+            --body "${BODY}"
+
+          gh pr merge "${BRANCH}" --auto --squash
