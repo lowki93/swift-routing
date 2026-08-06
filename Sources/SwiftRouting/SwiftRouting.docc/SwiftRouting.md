@@ -17,7 +17,8 @@ SwiftUI's `NavigationStack` is powerful but can become hard to manage in larger 
 | **Bidirectional Data Flow** | Pass data back from child routes with ``RouteContext`` |
 | **Deep Linking Ready** | Built-in support with expressive factory methods |
 | **Tab Navigation** | First-class ``TabRouter`` for cross-tab navigation |
-| **Testable** | Mock ``RouterModel`` protocol for unit testing navigation logic |
+| **Split Navigation** | ``RoutingSplitView`` for sidebar/content/detail layouts on iPad and macOS |
+| **Testable** | `RouterSpy`/`TabRouterSpy` test doubles ship in `SwiftRoutingTestSupport` — no hand-rolled mocks |
 | **Swift 6 Ready** | Full concurrency support with `@MainActor` and `Sendable` |
 
 ### Key Features
