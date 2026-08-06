@@ -15,7 +15,7 @@ extension BaseRouter {
 
   /// Builds a human-readable, indented tree of this router's full hierarchy, starting from
   /// ``rootRouter``. Each line shows ``description``, the router's current route, and any
-  /// ``RouteContext`` types registered on it.
+  /// ``RouteContext`` types registered on it along with the route each was registered for.
   func routerTreeDescription() -> String {
     rootRouter.treeLines().joined(separator: "\n")
   }
@@ -28,9 +28,14 @@ extension BaseRouter {
 
     // `contexts` is a Set, whose iteration order is not deterministic -- sort by type name
     // for the same reason `children` is sorted below. Printed on its own line (rather than
-    // appended to `line`) so it doesn't compete for space with the route description.
-    let contextNames = contexts.map { "\($0.routerContext)" }.sorted()
-    let contextLines = contextNames.isEmpty ? [] : ["\(childPrefix)   contexts: [\(contextNames.joined(separator: ", "))]"]
+    // appended to `line`) so it doesn't compete for space with the route description. Each
+    // context is registered against a specific route (not necessarily the router's current
+    // one), which matters when a router accumulates contexts across several routes over its
+    // lifetime -- so it's shown alongside the context type rather than left implicit.
+    let contextDescriptions = contexts
+      .map { "\($0.routerContext) (\($0.route.description))" }
+      .sorted()
+    let contextLines = contextDescriptions.isEmpty ? [] : ["\(childPrefix)   contexts: [\(contextDescriptions.joined(separator: ", "))]"]
 
     // `children` is a Dictionary, whose iteration order is not deterministic --
     // sort so the printed tree is stable across calls instead of shuffling randomly.
@@ -127,7 +132,7 @@ public extension View {
   /// router(app) — current: home
   /// ├─ tabRouter(hometab) — current: home
   /// │  ├─ router(tab(home)) — current: profile(userId: "42")
-  /// │  │     contexts: [UserSelectionContext]
+  /// │  │     contexts: [UserSelectionContext (profile(userId: "42"))]
   /// │  └─ router(tab(settings)) — current: settings
   /// └─ router(presented(sheet)) — current: onboarding
   /// ```
