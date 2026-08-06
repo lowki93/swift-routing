@@ -2,6 +2,38 @@
 
 Use this guide to quickly diagnose common SwiftRouting issues.
 
+## Inspecting the Live Router Tree
+
+**When to use**
+- Unclear which router owns which tab/sheet/cover, what route is active where, or which `RouteContext` observers are registered where.
+
+**How**
+- `content.printRouter(trigger: someValue)` — prints on appear and whenever `someValue` changes.
+- `content.printRouterOnChange()` — prints on appear and whenever any router in the hierarchy logs a meaningful event (push, present, tab change, create/destroy...); noisier but needs no trigger value and works even at the very top of the app.
+- Both are `DEBUG`-only (compiled out in release) and share the same output format, e.g.:
+  ```
+  router(app) — current: home
+  ├─ tabRouter(hometab) — current: home
+  │  ├─ router(tab(home)) — current: profile(userId: "42")
+  │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
+  │  └─ router(tab(settings)) — current: settings
+  └─ router(presented(sheet)) — current: onboarding
+  ```
+
+**Common mistake**
+- These modifiers only see the router injected by an `.environment(\.router, ...)` call that comes **after** them in the modifier chain. If `.environment()` is applied first, the modifier silently observes the disconnected default router instead (no crash, just nothing meaningful printed):
+  ```swift
+  // ❌ Wrong
+  ChoiceScreen()
+      .environment(\.router, someRouter)
+      .printRouterOnChange()
+
+  // ✅ Correct — .environment() is outermost
+  ChoiceScreen()
+      .printRouterOnChange()
+      .environment(\.router, someRouter)
+  ```
+
 ## onAppear / onDisappear Called Multiple Times
 
 **Symptom**
