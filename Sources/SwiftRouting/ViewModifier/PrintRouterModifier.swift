@@ -45,7 +45,7 @@ private struct PrintRouterModifier: ViewModifier {
   }
 }
 
-private struct PrintRouterOnChangeModifier<T: Equatable>: ViewModifier {
+private struct PrintRouterOnTriggerModifier<T: Equatable>: ViewModifier {
 
   @Environment(\.router) private var router
   let trigger: T
@@ -54,6 +54,22 @@ private struct PrintRouterOnChangeModifier<T: Equatable>: ViewModifier {
     content
       .onAppear { print(router.routerTreeDescription()) }
       .onChange(of: trigger) { print(router.routerTreeDescription()) }
+  }
+}
+
+private struct PrintRouterOnEveryChangeModifier: ViewModifier {
+
+  @Environment(\.router) private var router
+
+  func body(content: Content) -> some View {
+    // Deliberately prints here rather than in `.onAppear`/`.onChange`: SwiftUI re-invokes
+    // this `body` whenever a @Published property read while building `content` changes
+    // (any router touched while walking the tree), same mechanism as `_printChanges()`.
+    // This also fires on redraws unrelated to the router, since `content` itself may
+    // depend on other state -- noisier than `printRouter()`/`printRouter(trigger:)`,
+    // but doesn't require picking a specific value to watch.
+    print(router.routerTreeDescription())
+    return content
   }
 }
 
@@ -92,6 +108,22 @@ public extension View {
   ///
   /// - Parameter trigger: A value to observe; the tree is re-printed whenever it changes.
   func printRouter<T: Equatable>(trigger: T) -> some View {
-    modifier(PrintRouterOnChangeModifier(trigger: trigger))
+    modifier(PrintRouterOnTriggerModifier(trigger: trigger))
+  }
+
+  /// Prints the full router hierarchy to the console every time this view redraws as a
+  /// result of a router's `@Published` property changing -- similar in spirit to SwiftUI's
+  /// `_printChanges()`.
+  ///
+  /// ```swift
+  /// content.printRouterOnChange()
+  /// ```
+  ///
+  /// > Note:
+  /// > This also fires on redraws unrelated to the router, since the modified view may
+  /// > depend on other state too. Prefer `printRouter()` or `printRouter(trigger:)` if that
+  /// > noise gets in the way.
+  func printRouterOnChange() -> some View {
+    modifier(PrintRouterOnEveryChangeModifier())
   }
 }

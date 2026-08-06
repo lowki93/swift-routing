@@ -108,6 +108,12 @@ Use `printRouter(trigger:)` to re-print automatically whenever a value changes, 
 content.printRouter(trigger: router.currentRoute)
 ```
 
+Use `printRouterOnChange()` to re-print on every redraw caused by a router's state changing, without picking a specific value to watch — similar in spirit to SwiftUI's `_printChanges()`. It also fires on redraws unrelated to the router, so it's noisier than `printRouter()`/`printRouter(trigger:)`:
+
+```swift
+content.printRouterOnChange()
+```
+
 ## Topics
 
 ### Related
