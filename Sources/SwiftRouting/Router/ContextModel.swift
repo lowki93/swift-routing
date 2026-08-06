@@ -50,4 +50,16 @@ public protocol ContextModel {
   ///
   /// - Parameter value: The ``RouteContext`` to dispatch.
   func context(_ value: some RouteContext)
+
+  /// Indicates whether an observer for the given ``RouteContext`` type is registered
+  /// anywhere in the router hierarchy (this router or any ancestor).
+  ///
+  /// `terminate(_:)` always performs a navigation action (pop to context, close, or back)
+  /// even when nobody observes the context — this lets you check in advance whether the
+  /// context itself will actually reach a listener, for example to disable a "Confirm"
+  /// button when no parent screen registered `add(context:perform:)` for that type.
+  ///
+  /// - Parameter type: The ``RouteContext`` type to check for.
+  /// - Returns: `true` if at least one observer is registered for `type`.
+  func canTerminate<R: RouteContext>(_ type: R.Type) -> Bool
 }

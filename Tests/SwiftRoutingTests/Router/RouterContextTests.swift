@@ -142,6 +142,42 @@ struct RouterContextTests {
   }
 
   @MainActor
+  struct ContainsForTerminationType {
+    @Test
+    func matchingContextExists_contains_return_true() {
+      let router = Router(configuration: Configuration())
+      let expectedMatching = RouterContext(
+        router: router,
+        routerContext: StringContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [expectedMatching]
+
+      #expect(contexts.contains(for: StringContext.self))
+    }
+
+    @Test
+    func noMatchingContextExists_contains_return_false() {
+      let router = Router(configuration: Configuration())
+      let expectedNonMatching = RouterContext(
+        router: router,
+        routerContext: IntContext.self,
+        action: { _ in }
+      )
+      let contexts: Set<RouterContext> = [expectedNonMatching]
+
+      #expect(contexts.contains(for: StringContext.self) == false)
+    }
+
+    @Test
+    func emptySet_contains_return_false() {
+      let contexts: Set<RouterContext> = []
+
+      #expect(contexts.contains(for: StringContext.self) == false)
+    }
+  }
+
+  @MainActor
   struct AllForTerminationTypeWithCurrentRoute {
     @Test
     func matchingContextsExistOnDifferentRoutes_allWithCurrentRoute_return_onlyCurrentRouteContexts() {

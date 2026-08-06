@@ -1380,6 +1380,51 @@ struct RouterTests {
     }
   }
 
+  @MainActor
+  struct CanTerminate: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func noObserverRegistered_canTerminate_return_false() {
+      #expect(router.canTerminate(StringContext.self) == false)
+    }
+
+    @Test
+    func observerRegisteredOnSelf_canTerminate_return_true() {
+      router.add(context: StringContext.self) { _ in }
+
+      #expect(router.canTerminate(StringContext.self) == true)
+    }
+
+    @Test
+    func observerRegisteredOnlyOnParent_canTerminate_return_true() {
+      let parentRouter = Router(configuration: Configuration())
+      let childRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: parentRouter
+      )
+      parentRouter.add(context: StringContext.self) { _ in }
+
+      #expect(childRouter.canTerminate(StringContext.self) == true)
+    }
+
+    @Test
+    func observerRegisteredForDifferentType_canTerminate_return_false() {
+      router.add(context: IntContext.self) { _ in }
+
+      #expect(router.canTerminate(StringContext.self) == false)
+    }
+
+    @Test
+    func observerRemoved_canTerminate_return_false() {
+      router.add(context: StringContext.self) { _ in }
+      router.remove(context: StringContext.self)
+
+      #expect(router.canTerminate(StringContext.self) == false)
+    }
+  }
+
   // MARK: - HandleDeeplink
 
   @MainActor
