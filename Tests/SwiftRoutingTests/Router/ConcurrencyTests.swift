@@ -1,0 +1,146 @@
+import Testing
+@testable import SwiftRouting
+
+/// Retains routers created concurrently across multiple tasks so they don't deinit (and
+/// remove themselves from their parent) before a test can assert on the parent's state.
+private actor ChildCollector {
+  private var routers: [Router] = []
+
+  func add(_ router: Router) {
+    routers.append(router)
+  }
+
+  var count: Int { routers.count }
+}
+
+/// Concurrency tests for `Router`/`BaseRouter`.
+///
+/// Most navigation methods (`push`, `back`, `add(context:)`, etc.) are `@MainActor`-isolated,
+/// so concurrent calls to them are serialized by the actor and can't race by construction --
+/// those tests below mainly guard against regressions (e.g. someone removing `@MainActor`).
+///
+/// `addChild`/`removeChild` are **not** actor-isolated (they run from `init`/`deinit`, which
+/// aren't guaranteed to execute on the main actor), and the public `TabRouter.routers` reads
+/// `children` without isolation either. Those are real potential data races, so those tests
+/// deliberately spawn work off the main actor and are meant to be run under ThreadSanitizer:
+///
+///   swift test --sanitize=thread --filter ConcurrencyTests
+@MainActor
+struct ConcurrencyTests {
+
+  @MainActor
+  struct ConcurrentPush {
+    @Test
+    func multipleTasksPushConcurrently_return_allRoutesInPath() async {
+      let router = Router(configuration: Configuration())
+
+      await withTaskGroup(of: Void.self) { group in
+        for index in 0..<50 {
+          group.addTask { @MainActor in
+            router.push(TestRoute.details(id: "\(index)"))
+          }
+        }
+      }
+
+      #expect(router.path.count == 50)
+    }
+  }
+
+  @MainActor
+  struct ConcurrentPathReadWrite {
+    @Test
+    func concurrentReadsAndWrites_return_consistentFinalCount() async {
+      let router = Router(configuration: Configuration())
+
+      await withTaskGroup(of: Void.self) { group in
+        for index in 0..<50 {
+          group.addTask { @MainActor in
+            router.push(TestRoute.details(id: "\(index)"))
+          }
+          group.addTask { @MainActor in
+            _ = router.path.count
+            _ = router.currentRoute
+          }
+        }
+      }
+
+      #expect(router.path.count == 50)
+    }
+  }
+
+  /// `addChild`/`removeChild` run from `init`/`deinit`, which are not `@MainActor`-isolated.
+  /// These tests deliberately create/release child routers off the main actor to stress that
+  /// path -- run under `swift test --sanitize=thread` to actually detect a race, since a plain
+  /// run can pass by luck even if the underlying access is unsynchronized.
+  struct ConcurrentChildAccess {
+    @Test
+    func concurrentChildCreationOffMainActor_return_allChildrenAttached() async {
+      let parentRouter = Router(configuration: Configuration())
+      let collector = ChildCollector()
+
+      await withTaskGroup(of: Void.self) { group in
+        for index in 0..<50 {
+          group.addTask {
+            // Deliberately not @MainActor: exercises addChild's actual (lack of) isolation.
+            let child = Router(
+              root: AnyRoute(TestRoute.details(id: "\(index)")),
+              type: .presented("sheet-\(index)"),
+              parent: parentRouter
+            )
+            await collector.add(child)
+          }
+        }
+      }
+
+      // Children must stay alive (retained by `collector`) until after this check --
+      // otherwise they deinit and remove themselves before the count is read.
+      let childCount = parentRouter.children.count
+      #expect(childCount == 50)
+      #expect(await collector.count == 50)
+    }
+
+    @Test
+    func concurrentChildCreationAndRemoval_return_noCrash() async {
+      let parentRouter = Router(configuration: Configuration())
+
+      await withTaskGroup(of: Void.self) { group in
+        for index in 0..<50 {
+          group.addTask {
+            // Created and released within the task: exercises addChild (init) racing with
+            // removeChild (deinit) from other concurrently-running tasks.
+            let child = Router(
+              root: AnyRoute(TestRoute.details(id: "\(index)")),
+              type: .presented("sheet-\(index)"),
+              parent: parentRouter
+            )
+            withExtendedLifetime(child) {}
+          }
+        }
+      }
+    }
+
+    @Test
+    func tabRouterRoutersReadConcurrentlyWithChildMutation_return_noCrash() async {
+      let parentRouter = Router(configuration: Configuration())
+      let tabRouter = TabRouter(tab: TestTabRoute.home, parent: parentRouter)
+
+      await withTaskGroup(of: Void.self) { group in
+        for index in 0..<50 {
+          group.addTask {
+            // Writer: mutates `children` off the main actor via a non-isolated init.
+            let child = Router(
+              root: AnyRoute(TestRoute.details(id: "\(index)")),
+              type: .stack("tab-child-\(index)"),
+              parent: tabRouter
+            )
+            withExtendedLifetime(child) {}
+          }
+          group.addTask {
+            // Reader: `TabRouter.routers` reads `children` without actor isolation.
+            _ = tabRouter.routers
+          }
+        }
+      }
+    }
+  }
+}

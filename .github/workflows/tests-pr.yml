@@ -21,3 +21,6 @@ jobs:
 
       - name: Run tests
         run: swift test
+
+      - name: Run concurrency tests under ThreadSanitizer
+        run: swift test --sanitize=thread --filter ConcurrencyTests

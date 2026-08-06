@@ -54,8 +54,18 @@ public class BaseRouter: ObservableObject, Identifiable {
 
   public var pathCount: Int { 0 }
 
+  /// Guards `_children` -- `addChild`/`removeChild` run from `init`/`deinit`, which are not
+  /// `@MainActor`-isolated, so a router's last reference can be released from any thread.
+  private let childrenLock = NSLock()
+  private var _children: [UUID: WeakContainer<BaseRouter>] = [:]
+
   /// A dictionary containing child routers, stored weakly to avoid retain cycles.
-  var children: [UUID: WeakContainer<BaseRouter>] = [:]
+  ///
+  /// Returns a locked snapshot; safe to iterate without holding any lock afterward since
+  /// `Dictionary` is a value type.
+  var children: [UUID: WeakContainer<BaseRouter>] {
+    childrenLock.withLock { _children }
+  }
 
 
   /// Initializes a `BaseRouter` with a given configuration and an optional parent.
@@ -81,18 +91,18 @@ public class BaseRouter: ObservableObject, Identifiable {
   ///
   /// - Parameter child: The child `BaseRouter` to be added.
   func addChild(_ child: BaseRouter) {
-    children[child.id] = WeakContainer(value: child)
+    childrenLock.withLock { _children[child.id] = WeakContainer(value: child) }
   }
 
   /// Removes a child router from the current router.
   ///
   /// - Parameter child: The child `BaseRouter` to be removed.
   func removeChild(_ child: BaseRouter) {
-    children.removeValue(forKey: child.id)
+    childrenLock.withLock { _ = _children.removeValue(forKey: child.id) }
   }
 
   @MainActor public func clearChildren() {
-    children.removeAll()
+    childrenLock.withLock { _children.removeAll() }
   }
 
   /// Logs an event related to the router lifecycle or navigation actions.
