@@ -45,6 +45,16 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
     children.map(\.value.value).compactMap { $0 }
   }
 
+  /// The currently selected tab.
+  ///
+  /// Overrides ``BaseRouter/currentRoute`` (which would otherwise return `root`, frozen to
+  /// whichever tab this router was created for) so it reflects the live selection instead --
+  /// used by ``SwiftUICore/View/printRouterOnChange()`` to print the active tab, not the
+  /// router's initial one.
+  override public var currentRoute: AnyRoute {
+    AnyRoute(wrapped: tab.wrapped)
+  }
+
   /// Initializes a `TabRouter` for a given tab.
   ///
   /// - Parameters:
