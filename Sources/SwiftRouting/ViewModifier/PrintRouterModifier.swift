@@ -3,6 +3,7 @@
 //  swift-routing
 //
 
+#if DEBUG
 import Combine
 import SwiftUI
 
@@ -46,16 +47,6 @@ extension BaseRouter {
     }
 
     return [line] + contextLines + childLines
-  }
-}
-
-private struct PrintRouterModifier: ViewModifier {
-
-  @Environment(\.router) private var router
-
-  func body(content: Content) -> some View {
-    content
-      .onAppear { print(router.routerTreeDescription()) }
   }
 }
 
@@ -115,33 +106,10 @@ private struct PrintRouterOnEveryChangeModifier: ViewModifier {
 
 public extension View {
 
-  /// Prints the full router hierarchy (starting from the top-most router) to the console
-  /// when this view appears. Useful for debugging navigation state.
-  ///
-  /// ```swift
-  /// struct SomeView: View {
-  ///   var body: some View {
-  ///     content
-  ///       .printRouter()
-  ///   }
-  /// }
-  /// ```
-  ///
-  /// Prints something like:
-  /// ```
-  /// router(app) — current: home
-  /// ├─ tabRouter(hometab) — current: home
-  /// │  ├─ router(tab(home)) — current: profile(userId: "42")
-  /// │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
-  /// │  └─ router(tab(settings)) — current: settings
-  /// └─ router(presented(sheet)) — current: onboarding
-  /// ```
-  func printRouter() -> some View {
-    modifier(PrintRouterModifier())
-  }
-
   /// Prints the full router hierarchy to the console when this view appears, and again
   /// every time `trigger` changes. Useful for watching navigation state evolve over time.
+  ///
+  /// Only available in `DEBUG` builds -- calls are compiled out entirely in release.
   ///
   /// ```swift
   /// content.printRouter(trigger: router.currentRoute)
@@ -157,15 +125,18 @@ public extension View {
   /// no matter where in the tree it happens or where this modifier is placed --
   /// including at the very top of the app, before any child router exists yet.
   ///
+  /// Only available in `DEBUG` builds -- calls are compiled out entirely in release.
+  ///
   /// ```swift
   /// content.printRouterOnChange()
   /// ```
   ///
   /// > Note:
-  /// > Doesn't require picking a specific value to watch, but is the noisiest of the three
+  /// > Doesn't require picking a specific value to watch, but is the noisiest of the two
   /// > variants since it reprints on every logged event anywhere in the hierarchy. Prefer
-  /// > `printRouter()` or `printRouter(trigger:)` if that's too much.
+  /// > `printRouter(trigger:)` if that's too much.
   func printRouterOnChange() -> some View {
     modifier(PrintRouterOnEveryChangeModifier())
   }
 }
+#endif

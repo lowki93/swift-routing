@@ -81,15 +81,12 @@ Observers registered outside of a view lifecycle (e.g., in a ViewModel) must be 
 
 ## Visualizing the Router Hierarchy
 
-When it's unclear which router owns which tab/sheet/cover, what route is active where, or which `RouteContext` observers are registered on which router, print the whole hierarchy to the console with `printRouter()`:
+When it's unclear which router owns which tab/sheet/cover, what route is active where, or which `RouteContext` observers are registered on which router, print the whole hierarchy to the console. Both variants are only available in `DEBUG` builds -- calls are compiled out entirely in release, so there's no need to remove them before shipping.
+
+Use `printRouter(trigger:)` to print the tree on appear and again whenever a value changes, for example the current route:
 
 ```swift
-struct SomeView: View {
-    var body: some View {
-        content
-            .printRouter()
-    }
-}
+content.printRouter(trigger: router.currentRoute)
 ```
 
 This prints the tree starting from the top-most router, for example:
@@ -103,13 +100,7 @@ router(app) — current: home
 └─ router(presented(sheet)) — current: onboarding
 ```
 
-Use `printRouter(trigger:)` to re-print automatically whenever a value changes, for example the current route:
-
-```swift
-content.printRouter(trigger: router.currentRoute)
-```
-
-Use `printRouterOnChange()` to re-print whenever a router in the hierarchy logs a meaningful event (push, present, tab change, router creation/destruction...), without picking a specific value to watch — including at the very top of the app, before any child router exists yet. This is the noisiest of the three variants; routine or redundant events (view appearance, going back, context execution...) are filtered out to keep it from firing multiple times for the same conceptual change:
+Use `printRouterOnChange()` to re-print whenever a router in the hierarchy logs a meaningful event (push, present, tab change, router creation/destruction...), without picking a specific value to watch — including at the very top of the app, before any child router exists yet. This is the noisier of the two variants; routine or redundant events (view appearance, going back, context execution...) are filtered out to keep it from firing multiple times for the same conceptual change:
 
 ```swift
 content.printRouterOnChange()

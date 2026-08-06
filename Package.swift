@@ -19,7 +19,11 @@ let package = Package(
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.
     // Targets can depend on other targets in this package and products from dependencies.
-    .target(name: "SwiftRouting", resources: [.process("SwiftRouting.docc")]),
+    .target(
+      name: "SwiftRouting",
+      resources: [.process("SwiftRouting.docc")],
+      swiftSettings: [.define("DEBUG", .when(configuration: .debug))]
+    ),
     .target(name: "SwiftRoutingTestSupport", dependencies: ["SwiftRouting"]),
     .testTarget(name: "SwiftRoutingTests", dependencies: ["SwiftRouting"]),
     .testTarget(name: "SwiftRoutingTestSupportTests", dependencies: ["SwiftRoutingTestSupport"]),
