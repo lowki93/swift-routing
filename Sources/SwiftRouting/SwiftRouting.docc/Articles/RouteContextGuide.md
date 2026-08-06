@@ -138,6 +138,32 @@ App Router
 
 When context is sent from Detail Router, it reaches the observer in Home Router.
 
+## Checking for Observers Before Terminating
+
+`terminate(_:)` always performs a navigation action (pop to context, close, or back), even if
+nobody actually observes the context — it can't tell you in advance whether the payload will
+reach a listener. Use `canTerminate(_:)` to check first, for example to disable a "Confirm"
+button when no parent screen registered an observer:
+
+```swift
+struct UserPickerView: View {
+    @Environment(\.router) private var router
+    let users: [User]
+
+    var body: some View {
+        List(users) { user in
+            Button(user.name) {
+                router.terminate(UserSelectionContext(selectedUser: user))
+            }
+            .disabled(!router.canTerminate(UserSelectionContext.self))
+        }
+    }
+}
+```
+
+`canTerminate(_:)` searches the same hierarchy as `context(_:)` — the current router and every
+ancestor — without executing anything.
+
 ## Removing Observers
 
 Observers are automatically removed when their route is popped. You can also remove them manually:

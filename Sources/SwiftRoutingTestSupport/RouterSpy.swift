@@ -139,6 +139,10 @@ public final class RouterSpy: ObservableObject, RouterModel, @unchecked Sendable
     contextHandlers[ObjectIdentifier(type(of: value))]?(value)
   }
 
+  public func canTerminate<R: RouteContext>(_ type: R.Type) -> Bool {
+    contextHandlers[ObjectIdentifier(type)] != nil
+  }
+
   // MARK: - SplitModel
 
   public func contentBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {

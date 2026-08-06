@@ -141,6 +141,30 @@ struct RouterSpyTests {
       #expect(spy.terminatedContexts.count == 1)
       #expect(spy.terminatedContexts.first as? FixtureContext == FixtureContext(value: "42"))
     }
+
+    @Test
+    func noObserverRegistered_canTerminate_return_false() {
+      let spy = RouterSpy(root: FixtureRoute.home)
+
+      #expect(spy.canTerminate(FixtureContext.self) == false)
+    }
+
+    @Test
+    func observerRegistered_canTerminate_return_true() {
+      let spy = RouterSpy(root: FixtureRoute.home)
+      spy.add(context: FixtureContext.self) { _ in }
+
+      #expect(spy.canTerminate(FixtureContext.self) == true)
+    }
+
+    @Test
+    func observerRemoved_canTerminate_return_false() {
+      let spy = RouterSpy(root: FixtureRoute.home)
+      spy.add(context: FixtureContext.self) { _ in }
+      spy.remove(context: FixtureContext.self)
+
+      #expect(spy.canTerminate(FixtureContext.self) == false)
+    }
   }
 
   struct Split {

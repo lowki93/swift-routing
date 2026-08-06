@@ -144,6 +144,22 @@ extension BaseRouter: @preconcurrency ContextModel {
     // Execute context in current router
     contexts.all(for: termination).forEach { $0.execute(value) }
   }
+
+  @MainActor public func canTerminate<R: RouteContext>(_ type: R.Type) -> Bool {
+    if !contexts.all(for: type).isEmpty {
+      return true
+    }
+
+    var current = parent
+    while let router = current {
+      if !router.contexts.all(for: type).isEmpty {
+        return true
+      }
+      current = router.parent
+    }
+
+    return false
+  }
 }
 
 // MARK: - Tab Management

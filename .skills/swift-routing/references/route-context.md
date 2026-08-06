@@ -86,6 +86,19 @@ Behavior:
 3. Otherwise, closes the modal if the router is presented
 4. Otherwise, performs a single back navigation
 
+### Checking for Observers: `canTerminate(_:)`
+
+`terminate(_:)` always pops/closes/backs even if nobody observes the context. Use `canTerminate(_:)` to check first — e.g. to disable a confirm button when no parent registered an observer:
+
+```swift
+Button("Confirm") {
+  router.terminate(UserSelectionContext(selectedUser: user))
+}
+.disabled(!router.canTerminate(UserSelectionContext.self))
+```
+
+Searches the same hierarchy as `context(_:)` (current router + every ancestor) without executing anything.
+
 ## Hierarchy Behavior
 
 `context(_:)` searches and executes observers across the router hierarchy (parents + current router).
