@@ -79,6 +79,35 @@ router.add(context: MyContext.self) { [weak self] context in
 
 Observers registered outside of a view lifecycle (e.g., in a ViewModel) must be removed explicitly. See <doc:RouteContextGuide> for the full memory management guide.
 
+## Visualizing the Router Hierarchy
+
+When it's unclear which router owns which tab/sheet/cover, or what route is active where, print the whole hierarchy to the console with `printRouter()`:
+
+```swift
+struct SomeView: View {
+    var body: some View {
+        content
+            .printRouter()
+    }
+}
+```
+
+This prints the tree starting from the top-most router, for example:
+
+```
+router(app) — current: home
+├─ tabRouter(hometab) — current: home
+│  ├─ router(tab(home)) — current: profile(userId: "42")
+│  └─ router(tab(settings)) — current: settings
+└─ router(presented(sheet)) — current: onboarding
+```
+
+Use `printRouter(trigger:)` to re-print automatically whenever a value changes, for example the current route:
+
+```swift
+content.printRouter(trigger: router.currentRoute)
+```
+
 ## Topics
 
 ### Related

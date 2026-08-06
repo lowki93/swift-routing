@@ -165,6 +165,82 @@ struct BaseRouterTests {
   }
 
   @MainActor
+  struct RootRouter: BaseRouterTestSuite {
+    let baseRouter: BaseRouter
+
+    @Test
+    func noParent_rootRouter_return_self() {
+      #expect(baseRouter.rootRouter.id == baseRouter.id)
+    }
+
+    @Test
+    func hasAncestors_rootRouter_return_topMostAncestor() {
+      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
+      let grandchild = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("sheet2"), parent: child)
+
+      #expect(grandchild.rootRouter.id == baseRouter.id)
+      #expect(child.rootRouter.id == baseRouter.id)
+    }
+  }
+
+  @MainActor
+  struct RouterTreeDescription: BaseRouterTestSuite {
+    let baseRouter: BaseRouter
+
+    @Test
+    func noChildren_routerTreeDescription_return_singleLine() {
+      #expect(baseRouter.routerTreeDescription() == "baseRouter — current: main")
+    }
+
+    @Test
+    func oneChild_routerTreeDescription_return_childOnLastConnector() {
+      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 2)
+      #expect(lines[0] == "baseRouter — current: main")
+      #expect(lines[1] == "└─ \(child.description) — current: home")
+    }
+
+    @Test
+    func multipleChildren_routerTreeDescription_return_allButLastOnBranchConnector() {
+      let childA = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
+      let childB = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("sheet2"), parent: baseRouter)
+      // `children` is a Dictionary with no defined iteration order -- the tree sorts by
+      // `id.uuidString`, so compute the expected order the same way instead of assuming
+      // insertion order.
+      let ordered = [childA, childB].sorted { $0.id.uuidString < $1.id.uuidString }
+      let expectedRoute: (Router) -> String = { $0.id == childA.id ? "home" : "settings" }
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 3)
+      #expect(lines[1] == "├─ \(ordered[0].description) — current: \(expectedRoute(ordered[0]))")
+      #expect(lines[2] == "└─ \(ordered[1].description) — current: \(expectedRoute(ordered[1]))")
+    }
+
+    @Test
+    func calledFromNestedChild_routerTreeDescription_return_fullTreeFromRoot() {
+      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
+
+      #expect(child.routerTreeDescription() == baseRouter.routerTreeDescription())
+    }
+
+    @Test
+    func nestedGrandchild_routerTreeDescription_return_indentedTwice() {
+      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
+      let grandchild = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("sheet2"), parent: child)
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 3)
+      #expect(lines[1] == "└─ \(child.description) — current: home")
+      #expect(lines[2] == "   └─ \(grandchild.description) — current: settings")
+    }
+  }
+
+  @MainActor
   struct FindRouterInTabRouter: BaseRouterTestSuite {
     let baseRouter: BaseRouter
 
