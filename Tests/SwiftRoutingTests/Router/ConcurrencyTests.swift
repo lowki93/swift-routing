@@ -88,7 +88,7 @@ struct ConcurrencyTests {
     }
 
     @Test
-    func concurrentChildCreationAndRemoval_return_noCrash() async {
+    func concurrentChildCreationAndRemoval_return_allChildrenRemoved() async {
       let parentRouter = Router(configuration: Configuration())
 
       await withTaskGroup(of: Void.self) { group in
@@ -105,10 +105,14 @@ struct ConcurrencyTests {
           }
         }
       }
+
+      // Every child was released inside its own task, so removeChild should have run for
+      // all 50 -- if any add/remove pair raced and got lost, this count would be off.
+      #expect(parentRouter.children.isEmpty)
     }
 
     @Test
-    func tabRouterRoutersReadConcurrentlyWithChildMutation_return_noCrash() async {
+    func tabRouterRoutersReadConcurrentlyWithChildMutation_return_allChildrenRemoved() async {
       let parentRouter = Router(configuration: Configuration())
       let tabRouter = TabRouter(tab: TestTabRoute.home, parent: parentRouter)
 
@@ -129,6 +133,8 @@ struct ConcurrencyTests {
           }
         }
       }
+
+      #expect(tabRouter.routers.isEmpty)
     }
   }
 }
