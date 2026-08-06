@@ -61,6 +61,7 @@ private struct PrintRouterOnTriggerModifier<T: Equatable>: ViewModifier {
 private struct PrintRouterOnEveryChangeModifier: ViewModifier {
 
   @Environment(\.router) private var router
+  @State private var cancellable: AnyCancellable?
 
   func body(content: Content) -> some View {
     // Uses `configuration.events` rather than relying on SwiftUI's automatic @Published
@@ -72,10 +73,20 @@ private struct PrintRouterOnEveryChangeModifier: ViewModifier {
     // `events` is shared by reference across every router in the hierarchy (`Configuration`
     // is copied by value, but the underlying `PassthroughSubject` is a reference type), so
     // it fires for an event anywhere in the tree regardless of where this modifier sits.
+    //
+    // Subscribed manually into `@State` (once, in `onAppear`) rather than via `.onReceive`:
+    // `.onReceive` tears down and recreates its subscription on every `body` re-evaluation
+    // of the modified view, and printing the tree here reads `@Published` properties across
+    // several routers, which itself triggers a re-render of this view. That re-render
+    // recreates the `.onReceive` subscription, and any `events.send()` firing in that gap
+    // is lost forever since `PassthroughSubject` doesn't replay/buffer -- observed as an
+    // increasing mismatch between event sends and printed logs the busier the app got.
+    // A `@State`-held subscription is set up exactly once and survives body re-evaluations.
     content
-      .onAppear { print(router.routerTreeDescription()) }
-      .onReceive(router.configuration.events) { _ in
+      .onAppear {
         print(router.routerTreeDescription())
+        cancellable = router.configuration.events
+          .sink { _ in print(router.routerTreeDescription()) }
       }
   }
 }
