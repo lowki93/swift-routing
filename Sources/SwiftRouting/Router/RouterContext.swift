@@ -50,6 +50,10 @@ extension Set where Element == RouterContext {
     filter { $0.routerContext == termination }
   }
 
+  func contains<T: RouteContext>(for termination: T.Type) -> Bool {
+    contains { $0.routerContext == termination }
+  }
+
   func all<T: RouteContext>(for termination: T.Type, currentRoute: any Route) -> Self {
     filter {
       $0.routerContext == termination

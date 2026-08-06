@@ -146,18 +146,13 @@ extension BaseRouter: @preconcurrency ContextModel {
   }
 
   @MainActor public func canTerminate<R: RouteContext>(_ type: R.Type) -> Bool {
-    if !contexts.all(for: type).isEmpty {
-      return true
-    }
-
-    var current = parent
+    var current: BaseRouter? = self
     while let router = current {
-      if !router.contexts.all(for: type).isEmpty {
+      if router.contexts.contains(for: type) {
         return true
       }
       current = router.parent
     }
-
     return false
   }
 }
