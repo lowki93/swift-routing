@@ -111,6 +111,24 @@ public class BaseRouter: ObservableObject, Identifiable {
   ///   - message: The type of message being logged.
   func log(_ message: LoggerMessage) {
     configuration.logger?(LoggerConfiguration(message: message, router: self))
+
+    // Notify `events` that *something* happened, without passing `self`/`router` into the
+    // escaping closure below: `log` can run from `deinit` (e.g. for `.delete`), and
+    // capturing a strong reference to `self` there -- even indirectly, e.g. via a
+    // `LoggerConfiguration` holding `router: self` -- would keep the router alive until
+    // this deferred block runs, delaying (or in non-`.delete` cases, silently extending)
+    // its deinitialization for every router in the app. `events` only needs to signal
+    // "re-check the tree", so it carries no payload at all.
+    //
+    // Deferred rather than sent synchronously: `events` is a single PassthroughSubject
+    // shared across the whole router hierarchy, and calling `send` synchronously from
+    // `deinit` can reenter the same subject if a related router also logs around the same
+    // time, which crashes Combine. Dispatching to the next run loop tick guarantees `send`
+    // never runs nested inside another `log` call.
+    nonisolated(unsafe) let events = configuration.events
+    Task { @MainActor in
+      events.send()
+    }
   }
 }
 

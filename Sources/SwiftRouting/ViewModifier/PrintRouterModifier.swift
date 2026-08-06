@@ -3,6 +3,7 @@
 //  swift-routing
 //
 
+import Combine
 import SwiftUI
 
 extension BaseRouter {
@@ -62,14 +63,20 @@ private struct PrintRouterOnEveryChangeModifier: ViewModifier {
   @Environment(\.router) private var router
 
   func body(content: Content) -> some View {
-    // Deliberately prints here rather than in `.onAppear`/`.onChange`: SwiftUI re-invokes
-    // this `body` whenever a @Published property read while building `content` changes
-    // (any router touched while walking the tree), same mechanism as `_printChanges()`.
-    // This also fires on redraws unrelated to the router, since `content` itself may
-    // depend on other state -- noisier than `printRouter()`/`printRouter(trigger:)`,
-    // but doesn't require picking a specific value to watch.
-    print(router.routerTreeDescription())
-    return content
+    // Uses `configuration.events` rather than relying on SwiftUI's automatic @Published
+    // tracking: that mechanism only re-invokes `body` for routers whose properties were
+    // already read during a previous render, so a router created *after* this view last
+    // rendered (e.g. one added deep in the tree by a `RoutingView` the user just navigated
+    // into) would never be picked up -- especially fatal when this modifier sits at the
+    // very top of the app, where the root router has no children yet on first render.
+    // `events` is shared by reference across every router in the hierarchy (`Configuration`
+    // is copied by value, but the underlying `PassthroughSubject` is a reference type), so
+    // it fires for an event anywhere in the tree regardless of where this modifier sits.
+    content
+      .onAppear { print(router.routerTreeDescription()) }
+      .onReceive(router.configuration.events) { _ in
+        print(router.routerTreeDescription())
+      }
   }
 }
 
@@ -111,18 +118,19 @@ public extension View {
     modifier(PrintRouterOnTriggerModifier(trigger: trigger))
   }
 
-  /// Prints the full router hierarchy to the console every time this view redraws as a
-  /// result of a router's `@Published` property changing -- similar in spirit to SwiftUI's
-  /// `_printChanges()`.
+  /// Prints the full router hierarchy to the console every time any router in the
+  /// hierarchy logs an event (push, present, context, tab change, router creation...),
+  /// no matter where in the tree it happens or where this modifier is placed --
+  /// including at the very top of the app, before any child router exists yet.
   ///
   /// ```swift
   /// content.printRouterOnChange()
   /// ```
   ///
   /// > Note:
-  /// > This also fires on redraws unrelated to the router, since the modified view may
-  /// > depend on other state too. Prefer `printRouter()` or `printRouter(trigger:)` if that
-  /// > noise gets in the way.
+  /// > Doesn't require picking a specific value to watch, but is the noisiest of the three
+  /// > variants since it reprints on every logged event anywhere in the hierarchy. Prefer
+  /// > `printRouter()` or `printRouter(trigger:)` if that's too much.
   func printRouterOnChange() -> some View {
     modifier(PrintRouterOnEveryChangeModifier())
   }
