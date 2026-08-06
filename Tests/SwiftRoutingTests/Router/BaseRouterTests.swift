@@ -247,7 +247,7 @@ struct BaseRouterTests {
 
       #expect(lines.count == 2)
       #expect(lines[0] == "baseRouter — current: main")
-      #expect(lines[1] == "   contexts: [StringContext (main)]")
+      #expect(lines[1] == "   contexts: [StringContext(main)]")
     }
 
     @Test
@@ -258,7 +258,7 @@ struct BaseRouterTests {
       let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
 
       #expect(lines.count == 2)
-      #expect(lines[1] == "   contexts: [IntContext (main), StringContext (main)]")
+      #expect(lines[1] == "   contexts: [IntContext(main), StringContext(main)]")
     }
 
     @Test
@@ -275,7 +275,7 @@ struct BaseRouterTests {
 
       #expect(lines.count == 3)
       #expect(lines[1] == "└─ \(child.description) — current: home")
-      #expect(lines[2] == "      contexts: [StringContext (home)]")
+      #expect(lines[2] == "      contexts: [StringContext(home)]")
     }
   }
 

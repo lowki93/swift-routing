@@ -33,7 +33,7 @@ extension BaseRouter {
     // one), which matters when a router accumulates contexts across several routes over its
     // lifetime -- so it's shown alongside the context type rather than left implicit.
     let contextDescriptions = contexts
-      .map { "\($0.routerContext) (\($0.route.description))" }
+      .map { "\($0.routerContext)(\($0.route.description))" }
       .sorted()
     let contextLines = contextDescriptions.isEmpty ? [] : ["\(childPrefix)   contexts: [\(contextDescriptions.joined(separator: ", "))]"]
 
@@ -132,7 +132,7 @@ public extension View {
   /// router(app) — current: home
   /// ├─ tabRouter(hometab) — current: home
   /// │  ├─ router(tab(home)) — current: profile(userId: "42")
-  /// │  │     contexts: [UserSelectionContext (profile(userId: "42"))]
+  /// │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
   /// │  └─ router(tab(settings)) — current: settings
   /// └─ router(presented(sheet)) — current: onboarding
   /// ```
