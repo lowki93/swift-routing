@@ -93,8 +93,17 @@ private struct PrintRouterOnEveryChangeModifier: ViewModifier {
     content
       .onAppear {
         print(router.routerTreeDescription())
+        // `BaseRouter.log(_:)` defers `events.send()` to the next run loop tick (to avoid
+        // reentering the shared subject from `deinit`), so a burst of several synchronous
+        // log calls -- e.g. presenting a sheet logs both `.create` and `.navigation` --
+        // schedules one deferred send per call. By the time any of them fire, every
+        // underlying state change has already happened, so they'd otherwise print the same
+        // resulting tree multiple times in a row. Deduping by content (rather than time)
+        // collapses those into a single print with no added latency.
         cancellable = router.configuration.events
-          .sink { _ in print(router.routerTreeDescription()) }
+          .map { _ in router.routerTreeDescription() }
+          .removeDuplicates()
+          .sink { print($0) }
       }
   }
 }
