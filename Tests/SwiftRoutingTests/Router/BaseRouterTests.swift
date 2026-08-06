@@ -238,6 +238,45 @@ struct BaseRouterTests {
       #expect(lines[1] == "└─ \(child.description) — current: home")
       #expect(lines[2] == "   └─ \(grandchild.description) — current: settings")
     }
+
+    @Test
+    func routerHasRegisteredContext_routerTreeDescription_return_contextOnOwnLine() {
+      baseRouter.add(context: StringContext.self) { _ in }
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 2)
+      #expect(lines[0] == "baseRouter — current: main")
+      #expect(lines[1] == "   contexts: [StringContext]")
+    }
+
+    @Test
+    func routerHasMultipleRegisteredContexts_routerTreeDescription_return_contextsSortedAlphabetically() {
+      baseRouter.add(context: IntContext.self) { _ in }
+      baseRouter.add(context: StringContext.self) { _ in }
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 2)
+      #expect(lines[1] == "   contexts: [IntContext, StringContext]")
+    }
+
+    @Test
+    func noRegisteredContext_routerTreeDescription_return_noContextsLine() {
+      #expect(baseRouter.routerTreeDescription().contains("contexts:") == false)
+    }
+
+    @Test
+    func childHasRegisteredContext_routerTreeDescription_return_contextIndentedUnderChild() {
+      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
+      child.add(context: StringContext.self) { _ in }
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 3)
+      #expect(lines[1] == "└─ \(child.description) — current: home")
+      #expect(lines[2] == "      contexts: [StringContext]")
+    }
   }
 
   @MainActor

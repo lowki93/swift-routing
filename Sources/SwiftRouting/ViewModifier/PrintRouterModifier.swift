@@ -14,7 +14,8 @@ extension BaseRouter {
   }
 
   /// Builds a human-readable, indented tree of this router's full hierarchy, starting from
-  /// ``rootRouter``. Each line shows ``description`` plus the router's current route.
+  /// ``rootRouter``. Each line shows ``description``, the router's current route, and any
+  /// ``RouteContext`` types registered on it.
   func routerTreeDescription() -> String {
     rootRouter.treeLines().joined(separator: "\n")
   }
@@ -24,6 +25,13 @@ extension BaseRouter {
     let line = "\(prefix)\(connector)\(description) — current: \(currentRoute.wrapped.description)"
 
     let childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ")
+
+    // `contexts` is a Set, whose iteration order is not deterministic -- sort by type name
+    // for the same reason `children` is sorted below. Printed on its own line (rather than
+    // appended to `line`) so it doesn't compete for space with the route description.
+    let contextNames = contexts.map { "\($0.routerContext)" }.sorted()
+    let contextLines = contextNames.isEmpty ? [] : ["\(childPrefix)   contexts: [\(contextNames.joined(separator: ", "))]"]
+
     // `children` is a Dictionary, whose iteration order is not deterministic --
     // sort so the printed tree is stable across calls instead of shuffling randomly.
     let sortedChildren = children.values.compactMap(\.value).sorted { $0.id.uuidString < $1.id.uuidString }
@@ -32,7 +40,7 @@ extension BaseRouter {
       child.treeLines(prefix: childPrefix, isRoot: false, isLast: index == sortedChildren.count - 1)
     }
 
-    return [line] + childLines
+    return [line] + contextLines + childLines
   }
 }
 
@@ -110,6 +118,7 @@ public extension View {
   /// router(app) — current: home
   /// ├─ tabRouter(hometab) — current: home
   /// │  ├─ router(tab(home)) — current: profile(userId: "42")
+  /// │  │     contexts: [UserSelectionContext]
   /// │  └─ router(tab(settings)) — current: settings
   /// └─ router(presented(sheet)) — current: onboarding
   /// ```

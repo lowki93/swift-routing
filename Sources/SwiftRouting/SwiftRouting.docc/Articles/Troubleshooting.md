@@ -81,7 +81,7 @@ Observers registered outside of a view lifecycle (e.g., in a ViewModel) must be 
 
 ## Visualizing the Router Hierarchy
 
-When it's unclear which router owns which tab/sheet/cover, or what route is active where, print the whole hierarchy to the console with `printRouter()`:
+When it's unclear which router owns which tab/sheet/cover, what route is active where, or which `RouteContext` observers are registered on which router, print the whole hierarchy to the console with `printRouter()`:
 
 ```swift
 struct SomeView: View {
@@ -98,6 +98,7 @@ This prints the tree starting from the top-most router, for example:
 router(app) — current: home
 ├─ tabRouter(hometab) — current: home
 │  ├─ router(tab(home)) — current: profile(userId: "42")
+│  │     contexts: [UserSelectionContext]
 │  └─ router(tab(settings)) — current: settings
 └─ router(presented(sheet)) — current: onboarding
 ```
