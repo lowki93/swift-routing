@@ -108,10 +108,28 @@ Use `printRouter(trigger:)` to re-print automatically whenever a value changes, 
 content.printRouter(trigger: router.currentRoute)
 ```
 
-Use `printRouterOnChange()` to re-print whenever *any* router in the hierarchy logs an event (push, present, context, tab change, router creation...), without picking a specific value to watch and no matter where this modifier sits — including at the very top of the app, before any child router exists yet. This is the noisiest of the three variants, since it reprints on every logged event anywhere in the tree:
+Use `printRouterOnChange()` to re-print whenever a router in the hierarchy logs a meaningful event (push, present, tab change, router creation/destruction...), without picking a specific value to watch — including at the very top of the app, before any child router exists yet. This is the noisiest of the three variants; routine or redundant events (view appearance, going back, context execution...) are filtered out to keep it from firing multiple times for the same conceptual change:
 
 ```swift
 content.printRouterOnChange()
+```
+
+### Placement relative to `.environment(\.router, ...)`
+
+Like any modifier reading `@Environment(\.router)`, `printRouter*()` only sees the router injected by an `.environment(\.router, ...)` call that comes **after** it in the modifier chain (i.e. applied further out). If `.environment()` comes first, the modifier is outside its reach and silently falls back to the disconnected default router — it never crashes, it just never prints anything meaningful:
+
+```swift
+// ❌ Wrong — .environment() is "inside" printRouterOnChange(); the modifier
+// never sees the real router and instead observes the inert default one.
+ChoiceScreen()
+    .environment(\.router, Router(configuration: .default))
+    .printRouterOnChange()
+
+// ✅ Correct — .environment() is the outermost modifier, so it covers
+// printRouterOnChange() too.
+ChoiceScreen()
+    .printRouterOnChange()
+    .environment(\.router, Router(configuration: .default))
 ```
 
 ## Topics

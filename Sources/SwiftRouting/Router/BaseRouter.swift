@@ -112,6 +112,8 @@ public class BaseRouter: ObservableObject, Identifiable {
   func log(_ message: LoggerMessage) {
     configuration.logger?(LoggerConfiguration(message: message, router: self))
 
+    guard message.shouldTriggerEvent else { return }
+
     // Notify `events` that *something* happened, without passing `self`/`router` into the
     // escaping closure below: `log` can run from `deinit` (e.g. for `.delete`), and
     // capturing a strong reference to `self` there -- even indirectly, e.g. via a

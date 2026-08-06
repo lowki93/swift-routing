@@ -73,6 +73,38 @@ struct ConfigurationTests {
     }
 
     @Test
+    func onAppearLogged_events_return_notFired() async throws {
+      var cancellables = Set<AnyCancellable>()
+      let router = Router(configuration: Configuration())
+      try await flushPendingEvents()
+      var fireCount = 0
+      router.configuration.events
+        .sink { fireCount += 1 }
+        .store(in: &cancellables)
+
+      router.log(.onAppear(TestRoute.home))
+      try await flushPendingEvents()
+
+      #expect(fireCount == 0)
+    }
+
+    @Test
+    func onDisappearLogged_events_return_notFired() async throws {
+      var cancellables = Set<AnyCancellable>()
+      let router = Router(configuration: Configuration())
+      try await flushPendingEvents()
+      var fireCount = 0
+      router.configuration.events
+        .sink { fireCount += 1 }
+        .store(in: &cancellables)
+
+      router.log(.onDisappear(TestRoute.home))
+      try await flushPendingEvents()
+
+      #expect(fireCount == 0)
+    }
+
+    @Test
     func routerDeallocated_events_return_doesNotDelayDeinit() {
       // Regression test: `events` must not capture `router`/`self` anywhere reachable from
       // `log(_:)`'s deferred Task, or every router's deinit would be delayed until that

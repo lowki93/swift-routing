@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `ContextModel.canTerminate(_:)` to check for a registered `RouteContext` observer before calling `terminate(_:)`
 - `Set<RouterContext>.contains(for:)`
 - `printRouter()`/`printRouter(trigger:)`/`printRouterOnChange()` view modifiers to print the full router hierarchy to the console for debugging
-- `Configuration.events`, a payload-less signal fired whenever any router in the hierarchy logs an event -- powers `printRouterOnChange()`, usable independently of whatever `Configuration.logger` is already configured
+- `Configuration.events`, a payload-less signal fired when any router in the hierarchy logs a meaningful event (routine/redundant ones like view appearance or going back are filtered out) -- powers `printRouterOnChange()`, usable independently of whatever `Configuration.logger` is already configured
 
 ### Fixed
 

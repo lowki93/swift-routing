@@ -42,10 +42,14 @@ public struct Configuration {
 
   let shouldCrashOnRouteNotFound: Bool
 
-  /// Fires every time any router sharing this configuration logs an event, regardless of
-  /// where that router sits in the hierarchy. Carries no payload -- it's a "something
-  /// changed, re-check the tree" signal, not the event itself (see `BaseRouter.log(_:)`
-  /// for why the event's `LoggerConfiguration`/router is deliberately not forwarded here).
+  /// Fires when a router sharing this configuration logs a message that's worth re-checking
+  /// the tree for, regardless of where that router sits in the hierarchy. Carries no payload
+  /// -- it's a "something changed, re-check the tree" signal, not the event itself (see
+  /// `BaseRouter.log(_:)` for why the event's `LoggerConfiguration`/router is deliberately
+  /// not forwarded here).
+  ///
+  /// Not every logged message fires this signal -- see `LoggerMessage.shouldTriggerEvent`
+  /// for exactly which ones are filtered out to avoid noisy or duplicate signals.
   ///
   /// `Configuration` is a value type, but `PassthroughSubject` is a reference type, so every
   /// router created from this configuration (directly or via a parent) shares the same

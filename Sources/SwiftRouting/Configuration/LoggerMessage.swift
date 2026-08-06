@@ -86,6 +86,29 @@ public enum LoggerMessage {
   case error(RouterError)
 }
 
+extension LoggerMessage {
+  /// Whether this message should notify ``Configuration/events`` observers, such as
+  /// ``SwiftUICore/View/printRouterOnChange()``.
+  ///
+  /// `.onAppear`/`.onDisappear` are excluded: they fire right after the `.navigation`
+  /// event that caused the appearance in the first place, so notifying for both would just
+  /// duplicate the same signal without adding new information. `.error` is excluded since
+  /// it doesn't reflect a change to the router tree. `.action` and `.context` delegate to
+  /// their own nested `shouldTriggerEvent`, since only some of their cases are worth it.
+  var shouldTriggerEvent: Bool {
+    switch self {
+    case .onAppear, .onDisappear, .error:
+      false
+    case .create, .delete, .navigation:
+      true
+    case let .action(action):
+      action.shouldTriggerEvent
+    case let .context(context):
+      context.shouldTriggerEvent
+    }
+  }
+}
+
 public extension LoggerMessage {
   /// Represents user-initiated navigation actions that can be logged.
   ///
@@ -117,6 +140,19 @@ public extension LoggerMessage {
     ///
     /// - Parameter tab: The newly selected tab route.
     case changeTab(any TabRoute)
+
+    /// `.changeTab` activates a different tab's subtree, which is worth re-printing. The
+    /// other actions only pop/dismiss what's already visible in the tree -- `.close` and
+    /// `.closeChildren` are followed by the closed router's own `.delete` once it
+    /// deinitializes, so notifying here too would just duplicate that signal.
+    var shouldTriggerEvent: Bool {
+      switch self {
+      case .popToRoot, .close, .back, .closeChildren:
+        false
+      case .changeTab:
+        true
+      }
+    }
   }
 }
 
@@ -146,5 +182,16 @@ public extension LoggerMessage {
     ///   - route: The route where the context observer was removed.
     ///   - context: The type of `RouteContext` that was being observed.
     case remove(any Route, context: any RouteContext.Type)
+
+    /// `.add`/`.remove` change which contexts are registered. `.execute` only invokes an
+    /// already-registered observer's closure -- nothing about the tree itself changes.
+    var shouldTriggerEvent: Bool {
+      switch self {
+      case .execute:
+        false
+      case .add, .remove:
+        true
+      }
+    }
   }
 }
