@@ -89,15 +89,16 @@ Use `printRouter(trigger:)` to print the tree on appear and again whenever a val
 content.printRouter(trigger: router.currentRoute)
 ```
 
-This prints the tree starting from the top-most router, for example. Stack routers show their whole navigation stack (root through the current route), not just the current one; routers with no stack concept (`TabRouter`, or a `Router` driving a split view) show `current:` instead:
+This prints the tree starting from the top-most router, for example. A router with pushed routes gets an extra `path:` line listing its whole stack, so you're not just seeing the current route in isolation:
 
 ```
-router(app) — routes: [home]
+router(app) — current: home
 ├─ tabRouter(hometab) — current: home
-│  ├─ router(tab(home)) — routes: [home → profile(userId: "42")]
+│  ├─ router(tab(home)) — current: profile(userId: "42")
+│  │     path: [profile(userId: "42")]
 │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
-│  └─ router(tab(settings)) — routes: [settings]
-└─ router(presented(sheet)) — routes: [onboarding]
+│  └─ router(tab(settings)) — current: settings
+└─ router(presented(sheet)) — current: onboarding
 ```
 
 Use `printRouterOnChange()` to re-print whenever a router in the hierarchy logs a meaningful event (push, present, tab change, router creation/destruction...), without picking a specific value to watch — including at the very top of the app, before any child router exists yet. This is the noisier of the two variants; routine or redundant events (view appearance, going back, context execution...) are filtered out to keep it from firing multiple times for the same conceptual change:

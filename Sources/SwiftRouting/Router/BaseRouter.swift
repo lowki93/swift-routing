@@ -254,30 +254,24 @@ extension BaseRouter {
   }
 
   /// Builds a human-readable, indented tree of this router's full hierarchy, starting from
-  /// ``rootRouter``. Each line shows ``description``, the router's full navigation stack (or
-  /// just the current route for routers with no stack concept), and any ``RouteContext``
-  /// types registered on it along with the route each was registered for.
+  /// ``rootRouter``. Each line shows ``description``, the router's current route, its full
+  /// push stack (if any), and any ``RouteContext`` types registered on it along with the
+  /// route each was registered for.
   func routerTreeDescription() -> String {
     rootRouter.treeLines().joined(separator: "\n")
   }
 
-  /// `root` alone only reflects the current route for `BaseRouter`/`TabRouter`, and for a
-  /// `.split` `Router` (whose "stack" is really content/detail column selections, not a
-  /// linear push history). For a regular stack `Router`, `root` is just the bottom of the
-  /// stack -- showing only `currentRoute` there would hide every intermediate pushed route.
-  private var routesDescription: String {
-    guard let router = self as? Router, !router.type.isSplit else {
-      return "current: \(currentRoute.wrapped.description)"
-    }
-    let routes = ([router.root] + router.path).map { $0.wrapped.description }
-    return "routes: [\(routes.joined(separator: " → "))]"
-  }
-
   private func treeLines(prefix: String = "", isRoot: Bool = true, isLast: Bool = true) -> [String] {
     let connector = isRoot ? "" : (isLast ? "└─ " : "├─ ")
-    let line = "\(prefix)\(connector)\(description) — \(routesDescription)"
+    let line = "\(prefix)\(connector)\(description) — current: \(currentRoute.wrapped.description)"
 
     let childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ")
+
+    // Only `Router` has a push stack at all -- `BaseRouter`/`TabRouter` have no `path`, and
+    // an empty `path` means `currentRoute` already shows everything there is (the root), so
+    // the line is skipped rather than printed as an uninformative `path: []`.
+    let pathDescriptions = (self as? Router)?.path.map(\.wrapped.description) ?? []
+    let pathLines = pathDescriptions.isEmpty ? [] : ["\(childPrefix)   path: [\(pathDescriptions.joined(separator: ", "))]"]
 
     // `contexts` is a Set, whose iteration order is not deterministic -- sort by type name
     // for the same reason `children` is sorted below. Printed on its own line (rather than
@@ -298,7 +292,7 @@ extension BaseRouter {
       child.treeLines(prefix: childPrefix, isRoot: false, isLast: index == sortedChildren.count - 1)
     }
 
-    return [line] + contextLines + childLines
+    return [line] + pathLines + contextLines + childLines
   }
 }
 #endif

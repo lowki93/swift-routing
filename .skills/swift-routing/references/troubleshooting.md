@@ -12,14 +12,15 @@ Use this guide to quickly diagnose common SwiftRouting issues.
 - `content.printRouterOnChange()` — prints on appear and whenever any router in the hierarchy logs a meaningful event (push, present, tab change, create/destroy...); noisier but needs no trigger value and works even at the very top of the app.
 - Both are `DEBUG`-only (compiled out in release) and share the same output format, e.g.:
   ```
-  router(app) — routes: [home]
+  router(app) — current: home
   ├─ tabRouter(hometab) — current: home
-  │  ├─ router(tab(home)) — routes: [home → profile(userId: "42")]
+  │  ├─ router(tab(home)) — current: profile(userId: "42")
+  │  │     path: [profile(userId: "42")]
   │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
-  │  └─ router(tab(settings)) — routes: [settings]
-  └─ router(presented(sheet)) — routes: [onboarding]
+  │  └─ router(tab(settings)) — current: settings
+  └─ router(presented(sheet)) — current: onboarding
   ```
-  Stack routers show root through the current route as `routes: [...]`; `TabRouter` and split-view routers (no linear stack) show `current:` instead.
+  A `path:` line appears only when the router has pushed routes, listing the whole stack (root not included, mirroring the router's own `path` property).
 
 **Common mistake**
 - These modifiers only see the router injected by an `.environment(\.router, ...)` call that comes **after** them in the modifier chain. If `.environment()` is applied first, the modifier silently observes the disconnected default router instead (no crash, just nothing meaningful printed):
