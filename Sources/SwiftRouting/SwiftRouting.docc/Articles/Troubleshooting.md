@@ -95,7 +95,7 @@ This prints the tree starting from the top-most router, for example. A router wi
 router(app) — current: home
 ├─ tabRouter(hometab) — current: home
 │  ├─ router(tab(home)) — current: profile(userId: "42")
-│  │     path: [profile(userId: "42")]
+│  │     path: [home, profile(userId: "42")]
 │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
 │  └─ router(tab(settings)) — current: settings
 └─ router(presented(sheet)) — current: onboarding

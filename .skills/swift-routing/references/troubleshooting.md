@@ -15,12 +15,12 @@ Use this guide to quickly diagnose common SwiftRouting issues.
   router(app) — current: home
   ├─ tabRouter(hometab) — current: home
   │  ├─ router(tab(home)) — current: profile(userId: "42")
-  │  │     path: [profile(userId: "42")]
+  │  │     path: [home, profile(userId: "42")]
   │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
   │  └─ router(tab(settings)) — current: settings
   └─ router(presented(sheet)) — current: onboarding
   ```
-  A `path:` line appears only when the router has pushed routes, listing the whole stack (root not included, mirroring the router's own `path` property).
+  A `path:` line appears only when the router has pushed routes, listing the whole stack including the root (omitted when there's nothing pushed, since `current:` alone already shows the root in that case).
 
 **Common mistake**
 - These modifiers only see the router injected by an `.environment(\.router, ...)` call that comes **after** them in the modifier chain. If `.environment()` is applied first, the modifier silently observes the disconnected default router instead (no crash, just nothing meaningful printed):

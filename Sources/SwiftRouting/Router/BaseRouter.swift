@@ -267,11 +267,16 @@ extension BaseRouter {
 
     let childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ")
 
-    // Only `Router` has a push stack at all -- `BaseRouter`/`TabRouter` have no `path`, and
-    // an empty `path` means `currentRoute` already shows everything there is (the root), so
-    // the line is skipped rather than printed as an uninformative `path: []`.
-    let pathDescriptions = (self as? Router)?.path.map(\.wrapped.description) ?? []
-    let pathLines = pathDescriptions.isEmpty ? [] : ["\(childPrefix)   path: [\(pathDescriptions.joined(separator: ", "))]"]
+    // Only `Router` has a push stack at all -- `BaseRouter`/`TabRouter` have no `path`. `root`
+    // is prepended since it's the bottom of the stack and omitting it would make `path:` an
+    // incomplete/misleading picture of what's actually been navigated through. An empty
+    // `path` means `currentRoute` already shows everything there is (the root alone), so the
+    // line is skipped rather than printed as a redundant single-element `path: [root]`.
+    var pathLines: [String] = []
+    if let router = self as? Router, !router.path.isEmpty {
+      let descriptions = ([router.root] + router.path).map(\.wrapped.description)
+      pathLines = ["\(childPrefix)   path: [\(descriptions.joined(separator: ", "))]"]
+    }
 
     // `contexts` is a Set, whose iteration order is not deterministic -- sort by type name
     // for the same reason `children` is sorted below. Printed on its own line (rather than

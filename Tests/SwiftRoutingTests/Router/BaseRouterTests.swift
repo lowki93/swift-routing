@@ -230,7 +230,7 @@ struct BaseRouterTests {
 
       #expect(lines.count == 3)
       #expect(lines[1] == "└─ \(child.description) — current: settings")
-      #expect(lines[2] == "      path: [details, settings]")
+      #expect(lines[2] == "      path: [home, details, settings]")
     }
 
     @Test
