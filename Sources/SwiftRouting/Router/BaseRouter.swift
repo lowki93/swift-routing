@@ -267,6 +267,12 @@ extension BaseRouter {
 
     let childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ")
 
+    // Only `Router` has a `root`/push stack at all -- `BaseRouter`/`TabRouter` have neither.
+    var rootLines: [String] = []
+    if let router = self as? Router {
+      rootLines = ["\(childPrefix)   root: \(router.root.wrapped.description)"]
+    }
+
     // For a split router, `currentRoute` collapses path/detail/content into a single value
     // (an explicit push wins over detail, which wins over content), so an active content
     // selection can be entirely hidden by `current:` once a detail is also selected. Shown
@@ -281,12 +287,11 @@ extension BaseRouter {
       }
     }
 
-    // Only `Router` has a push stack at all -- `BaseRouter`/`TabRouter` have no `path`. `root`
-    // is prepended since it's the bottom of the stack and omitting it would make `path:` an
-    // incomplete/misleading picture of what's actually been navigated through.
+    // `root` is reported on its own line above, so `path` here is just the pushed routes --
+    // omitted entirely when empty, since `root:` already covers that case.
     var pathLines: [String] = []
-    if let router = self as? Router {
-      let descriptions = ([router.root] + router.path).map(\.wrapped.description)
+    if let router = self as? Router, !router.path.isEmpty {
+      let descriptions = router.path.map(\.wrapped.description)
       pathLines = ["\(childPrefix)   path: [\(descriptions.joined(separator: ", "))]"]
     }
 
@@ -309,7 +314,7 @@ extension BaseRouter {
       child.treeLines(prefix: childPrefix, isRoot: false, isLast: index == sortedChildren.count - 1)
     }
 
-    return [line] + splitLines + pathLines + contextLines + childLines
+    return [line] + rootLines + splitLines + pathLines + contextLines + childLines
   }
 }
 #endif

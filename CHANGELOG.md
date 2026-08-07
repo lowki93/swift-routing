@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Public `AnyRoute.init(_:)` initializer, enabling external `RouterModel`/`SplitModel` conformances (#102)
 - `ContextModel.canTerminate(_:)` to check for a registered `RouteContext` observer before calling `terminate(_:)`
 - `Set<RouterContext>.contains(for:)`
-- `printRouter(trigger:)`/`printRouterOnChange()` view modifiers to print the full router hierarchy to the console for debugging (`DEBUG` builds only) -- every stack-based router gets a `path:` line listing its whole navigation stack, and a split router gets `content:`/`detail:` lines for its column selections
+- `printRouter(trigger:)`/`printRouterOnChange()` view modifiers to print the full router hierarchy to the console for debugging (`DEBUG` builds only) -- every router gets a `root:` line, a `path:` line for anything pushed on top of it (omitted when nothing's been pushed), and a split router gets `content:`/`detail:` lines for its column selections
 - `Configuration.events`, a payload-less signal fired when any router in the hierarchy logs a meaningful event (routine/redundant ones like view appearance or going back are filtered out) -- powers `printRouterOnChange()`, usable independently of whatever `Configuration.logger` is already configured
 
 ### Fixed
