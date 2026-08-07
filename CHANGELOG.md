@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Data race in `BaseRouter.addChild`/`removeChild` (called from non-`@MainActor` `init`/`deinit`) that could corrupt or crash on concurrent router creation/teardown off the main actor -- now guarded by a lock
 - `Router.detailBinding(as:)`/`contentBinding(as:)` wrote the selection directly instead of going through `select(detail:)`/`select(content:)`, so selecting a `List` row never logged a `.navigation` event -- `Configuration.logger` and `Configuration.events` (and therefore `printRouterOnChange()`) silently never fired for that path
+- `NavigationLink(route:)` pushes bypassed `push(_:)`/`route(to:type:)` entirely (SwiftUI mutates the `NavigationStack(path:)` binding directly), so they were never logged either -- now logged from `path`'s own change instead, catching both origins
 
 ### Documentation
 

@@ -41,6 +41,18 @@ public final class Router: PresentableRouter, @unchecked Sendable {
     willSet {
       removeContext(old: path, new: newValue)
     }
+    didSet {
+      // `NavigationStack(path: $router.path)` (in `RoutingView`/`RoutingSplitView`) lets
+      // SwiftUI mutate `path` directly through the binding when a native `NavigationLink`
+      // is activated -- bypassing `push(_:)`/`route(to:type:)` entirely, so their explicit
+      // `log(.navigation(...))` call never runs for that push. Logging here instead, keyed
+      // on a clean single-element growth, catches both origins (`push(_:)` and a native
+      // link) in one place. Anything else -- `back()`/`popToRoot()`/`terminate(_:)` shrinking
+      // the stack, or a bulk reset -- already logs explicitly by those call sites, so this
+      // only fires on growth to avoid double-logging a normal `push(_:)`.
+      guard path.count == oldValue.count + 1, let pushed = path.last else { return }
+      log(.navigation(from: oldValue.last?.wrapped ?? root.wrapped, to: pushed.wrapped, type: .push))
+    }
   }
 
   /// The currently visible route.
@@ -339,16 +351,18 @@ public extension Router {
 private extension Router {
 
   @MainActor func route(to destination: some Route, type: RoutingType) {
-    log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
-
     switch type {
     case .push:
+      // Logged by `path`'s `didSet` instead -- see its comment for why.
       path.append(AnyRoute(wrapped: destination))
     case let .sheet(withStack):
+      log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
       sheet = AnyRoute(wrapped: destination, inStack: withStack)
     case .cover:
+      log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
       cover = AnyRoute(wrapped: destination)
     case .root:
+      log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
       root = AnyRoute(wrapped: destination)
     }
   }

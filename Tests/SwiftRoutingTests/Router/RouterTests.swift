@@ -382,6 +382,57 @@ struct RouterTests {
         is: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push)
       )
     }
+
+    @Test
+    func pathMutatedDirectly_return_loggerCalledWithNavigationPush() {
+      // Regression test: `NavigationStack(path: $router.path)` lets SwiftUI append to `path`
+      // directly via the binding when a native `NavigationLink` is activated, bypassing
+      // push(_:)/route(to:type:) entirely. Simulates that by mutating `path` directly instead
+      // of calling push(_:).
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.path.append(AnyRoute(wrapped: TestRoute.home))
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push)
+      )
+    }
+
+    @Test
+    func pathMutatedWithMultipleRoutes_return_loggerCalledOncePerRoute() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.path.append(AnyRoute(wrapped: TestRoute.home))
+      expectedRouter.path.append(AnyRoute(wrapped: TestRoute.details(id: "42")))
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 2)
+      assertLogMessagesContain(
+        expectedLoggerSpy,
+        expected: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push)
+      )
+      assertLogMessagesContain(
+        expectedLoggerSpy,
+        expected: .navigation(from: TestRoute.home, to: TestRoute.details(id: "42"), type: .push)
+      )
+    }
+
+    @Test
+    func pushCalled_return_loggerCalledOnceNotTwice() {
+      // Regression test: push(_:) must not be double-logged now that path's didSet also logs.
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.push(TestRoute.home)
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+    }
   }
 
   @MainActor
@@ -499,6 +550,22 @@ struct RouterTests {
       expectedRouter.back()
 
       #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
+    }
+
+    @Test
+    func pathHasElements_back_return_onlyActionBackLoggedNotNavigation() {
+      // Regression test: path's didSet only logs .navigation on growth -- back() shrinking
+      // the path must not also trigger a spurious .navigation log alongside .action(.back()).
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.back()
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
     }
   }
