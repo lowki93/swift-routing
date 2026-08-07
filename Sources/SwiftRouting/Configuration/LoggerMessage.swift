@@ -141,15 +141,15 @@ public extension LoggerMessage {
     /// - Parameter tab: The newly selected tab route.
     case changeTab(any TabRoute)
 
-    /// `.changeTab` activates a different tab's subtree, which is worth re-printing. The
-    /// other actions only pop/dismiss what's already visible in the tree -- `.close` and
-    /// `.closeChildren` are followed by the closed router's own `.delete` once it
+    /// `.changeTab` activates a different tab's subtree, and `.back`/`.popToRoot` change
+    /// which route is current, both worth re-printing. `.close`/`.closeChildren` are
+    /// excluded since they're followed by the closed router's own `.delete` once it
     /// deinitializes, so notifying here too would just duplicate that signal.
     var shouldTriggerEvent: Bool {
       switch self {
-      case .popToRoot, .close, .back, .closeChildren:
+      case .close, .closeChildren:
         false
-      case .changeTab:
+      case .changeTab, .back, .popToRoot:
         true
       }
     }

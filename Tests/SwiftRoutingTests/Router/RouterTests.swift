@@ -1023,6 +1023,69 @@ struct RouterTests {
 
       #expect(stackRouter.detailSelection == nil)
     }
+
+    @Test
+    func selectDetailSameValueTwice_return_loggerCalledOnceNotFromXToX() {
+      // Regression test: re-selecting the same value logged "navigate from: X to: X" --
+      // `currentRoute` was read before `detailSelection` got updated, so it already resolved
+      // through the *current* (unchanged) selection.
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: expectedParentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      expectedSplitRouter.select(detail: "player")
+      loggerSpy.clearReceivedMessages()
+
+      expectedSplitRouter.select(detail: "player")
+
+      #expect(loggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func selectContentSameValueTwice_return_loggerCalledOnceNotFromXToX() {
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: expectedParentRouter,
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      expectedSplitRouter.select(content: "playerType")
+      loggerSpy.clearReceivedMessages()
+
+      expectedSplitRouter.select(content: "playerType")
+
+      #expect(loggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func pushAfterDetailSelected_return_loggerCalledWithNavigationFromDetailNotRoot() {
+      // Regression test: pushing onto an empty `path` used to always log "from: root" via
+      // path's didSet, even when a detail was already selected -- `currentRoute` itself
+      // would have resolved through that detail, not root, so "from" should match.
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: expectedParentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      expectedSplitRouter.select(detail: "player")
+      loggerSpy.clearReceivedMessages()
+
+      expectedSplitRouter.push(TestRoute.settings)
+
+      assertLogMessageKind(
+        loggerSpy,
+        is: .navigation(from: TestRoute.home, to: TestRoute.settings, type: .push)
+      )
+    }
   }
 
   @MainActor

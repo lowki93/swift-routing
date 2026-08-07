@@ -28,6 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Router.detailBinding(as:)`/`contentBinding(as:)` wrote the selection directly instead of going through `select(detail:)`/`select(content:)`, so selecting a `List` row never logged a `.navigation` event -- `Configuration.logger` and `Configuration.events` (and therefore `printRouterOnChange()`) silently never fired for that path
 - `NavigationLink(route:)` pushes bypassed `push(_:)`/`route(to:type:)` entirely (SwiftUI mutates the `NavigationStack(path:)` binding directly), so they were never logged either -- now logged from `path`'s own change instead, catching both origins
 - A native swipe-back/back-button tap, or a long-press-back-button jump to an ancestor, mutates `path` the same way and bypassed `back()`/`terminate(_:)` entirely -- now logged as `.action(.back(count:))` from the same observer, without double-logging `back()`/`popToRoot()`/`terminate(_:)`'s own explicit calls
+- `select(detail:)`/`select(content:)` logged `navigate from: X to: X` when re-selecting the value that was already selected, since `currentRoute` was read before the selection was updated -- now a no-op when the value hasn't changed
+- Pushing onto an empty `path` in a split router always logged `from: root`, even when a detail/content was already selected -- `path`'s `didSet` now resolves "from" the same way `currentRoute` does, instead of assuming `root`
 
 ### Documentation
 

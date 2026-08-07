@@ -50,7 +50,10 @@ public final class Router: PresentableRouter, @unchecked Sendable {
       // that catches both native and programmatic changes to `path`.
       let delta = path.count - oldValue.count
       if delta > 0, let pushed = path.last {
-        log(.navigation(from: oldValue.last?.wrapped ?? root.wrapped, to: pushed.wrapped, type: .push))
+        // Not just `oldValue.last?.wrapped ?? root.wrapped`: for a split router with an
+        // empty `path`, "current" before this push was whatever `currentRoute` itself would
+        // have resolved to -- the detail or content selection, not necessarily `root`.
+        log(.navigation(from: route(for: oldValue).wrapped, to: pushed.wrapped, type: .push))
       } else if delta < 0, !isPathChangeLoggedExplicitly {
         // `isPathChangeLoggedExplicitly` is set by back()/popToRoot()/terminate(_:) around
         // their own mutation, so a shrink they already logged with more specific semantics
@@ -75,6 +78,14 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   /// print(router.currentRoute.name)
   /// ```
   override public var currentRoute: AnyRoute {
+    route(for: path)
+  }
+
+  /// Resolves the visible route for a given `path` snapshot, following the same rules as
+  /// ``currentRoute``. Factored out so `path`'s `didSet` can resolve what was current
+  /// *before* a mutation (passing `oldValue`) without duplicating the split-specific
+  /// detail/content fallback logic.
+  private func route(for path: [AnyRoute]) -> AnyRoute {
     switch type {
     case .split:
       if let route = path.last { return route }
@@ -278,10 +289,16 @@ extension Router: @preconcurrency RouterModel {
       contentSelection = nil
       return
     }
-    guard let route = contentRouteFactory?(AnyHashable(value)) else { return }
+    // Re-selecting the value that's already selected is a no-op -- without this guard,
+    // `currentRoute` (evaluated below, before `contentSelection` is updated) already
+    // resolves through the *current* selection, so logging would read "navigate from: X
+    // to: X" for the same route.
+    let newSelection = AnyHashable(value)
+    guard newSelection != contentSelection else { return }
+    guard let route = contentRouteFactory?(newSelection) else { return }
     log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
 
-    contentSelection = AnyHashable(value)
+    contentSelection = newSelection
   }
 
   @MainActor public func select<T: Hashable & Sendable>(detail value: T?) {
@@ -291,10 +308,13 @@ extension Router: @preconcurrency RouterModel {
       detailSelection = nil
       return
     }
-    guard let route = detailRouteFactory?(AnyHashable(value)) else { return }
+    // See the equivalent guard in `select(content:)` -- same "from: X to: X" issue otherwise.
+    let newSelection = AnyHashable(value)
+    guard newSelection != detailSelection else { return }
+    guard let route = detailRouteFactory?(newSelection) else { return }
     log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
 
-    detailSelection = AnyHashable(value)
+    detailSelection = newSelection
   }
 }
 
