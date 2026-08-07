@@ -19,10 +19,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Public `AnyRoute.init(_:)` initializer, enabling external `RouterModel`/`SplitModel` conformances (#102)
 - `ContextModel.canTerminate(_:)` to check for a registered `RouteContext` observer before calling `terminate(_:)`
 - `Set<RouterContext>.contains(for:)`
+- `printRouter(trigger:)`/`printRouterOnChange()` view modifiers to print the full router hierarchy to the console for debugging (`DEBUG` builds only) -- a router with pushed routes gets an extra `path:` line listing its whole navigation stack
+- `Configuration.events`, a payload-less signal fired when any router in the hierarchy logs a meaningful event (routine/redundant ones like view appearance or going back are filtered out) -- powers `printRouterOnChange()`, usable independently of whatever `Configuration.logger` is already configured
 
 ### Fixed
 
 - Data race in `BaseRouter.addChild`/`removeChild` (called from non-`@MainActor` `init`/`deinit`) that could corrupt or crash on concurrent router creation/teardown off the main actor -- now guarded by a lock
+- `Router.detailBinding(as:)`/`contentBinding(as:)` wrote the selection directly instead of going through `select(detail:)`/`select(content:)`, so selecting a `List` row never logged a `.navigation` event -- `Configuration.logger` and `Configuration.events` (and therefore `printRouterOnChange()`) silently never fired for that path
 
 ### Documentation
 

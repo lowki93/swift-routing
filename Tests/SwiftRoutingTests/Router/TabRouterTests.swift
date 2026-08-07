@@ -80,6 +80,24 @@ struct TabRouterTests {
   }
 
   @MainActor
+  struct CurrentRoute: TabRouterTestSuite {
+    let parentRouter: Router
+    let tabRouter: TabRouter
+
+    @Test
+    func noTabChange_currentRoute_return_initialTab() {
+      #expect((tabRouter.currentRoute.wrapped as? TestTabRoute) == .home)
+    }
+
+    @Test
+    func tabChanged_currentRoute_return_selectedTab() {
+      tabRouter.change(tab: TestTabRoute.settings)
+
+      #expect((tabRouter.currentRoute.wrapped as? TestTabRoute) == .settings)
+    }
+  }
+
+  @MainActor
   struct PushRoute: TabRouterTestSuite {
     let parentRouter: Router
     let tabRouter: TabRouter

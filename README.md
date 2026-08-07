@@ -21,6 +21,7 @@ SwiftUI's `NavigationStack` is powerful but can become hard to manage in larger 
 | **Tab Navigation** | First-class `TabRouter` for cross-tab navigation |
 | **Split Navigation** | `RoutingSplitView` for sidebar/content/detail layouts on iPad and macOS |
 | **Testable** | `RouterSpy`/`TabRouterSpy` test doubles ship in `SwiftRoutingTestSupport` — no hand-rolled mocks |
+| **Debuggable** | Print the live router tree with `printRouterOnChange()`/`printRouter(trigger:)` — see what's mounted, active, and observing at a glance |
 | **Swift 6 Ready** | Full concurrency support with `@MainActor` and `Sendable` |
 
 ### Why Separate Routes From Views?

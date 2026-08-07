@@ -5,6 +5,7 @@
 //  Created by Kévin Budain on 2/21/25.
 //
 
+import Combine
 import Foundation
 
 /// A configuration structure used to initialize the app router.
@@ -40,6 +41,21 @@ public struct Configuration {
   let logger: ((LoggerConfiguration) -> Void)?
 
   let shouldCrashOnRouteNotFound: Bool
+
+  /// Fires when a router sharing this configuration logs a message that's worth re-checking
+  /// the tree for, regardless of where that router sits in the hierarchy. Carries no payload
+  /// -- it's a "something changed, re-check the tree" signal, not the event itself (see
+  /// `BaseRouter.log(_:)` for why the event's `LoggerConfiguration`/router is deliberately
+  /// not forwarded here).
+  ///
+  /// Not every logged message fires this signal -- see `LoggerMessage.shouldTriggerEvent`
+  /// for exactly which ones are filtered out to avoid noisy or duplicate signals.
+  ///
+  /// `Configuration` is a value type, but `PassthroughSubject` is a reference type, so every
+  /// router created from this configuration (directly or via a parent) shares the same
+  /// publisher. Unlike `logger`, subscribing here doesn't replace or interfere with whatever
+  /// the app already configured for `logger`.
+  let events = PassthroughSubject<Void, Never>()
 
   /// Initializes a new configuration instance.
   ///

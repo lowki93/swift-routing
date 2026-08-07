@@ -111,6 +111,26 @@ public class BaseRouter: ObservableObject, Identifiable {
   ///   - message: The type of message being logged.
   func log(_ message: LoggerMessage) {
     configuration.logger?(LoggerConfiguration(message: message, router: self))
+
+    guard message.shouldTriggerEvent else { return }
+
+    // Notify `events` that *something* happened, without passing `self`/`router` into the
+    // escaping closure below: `log` can run from `deinit` (e.g. for `.delete`), and
+    // capturing a strong reference to `self` there -- even indirectly, e.g. via a
+    // `LoggerConfiguration` holding `router: self` -- would keep the router alive until
+    // this deferred block runs, delaying (or in non-`.delete` cases, silently extending)
+    // its deinitialization for every router in the app. `events` only needs to signal
+    // "re-check the tree", so it carries no payload at all.
+    //
+    // Deferred rather than sent synchronously: `events` is a single PassthroughSubject
+    // shared across the whole router hierarchy, and calling `send` synchronously from
+    // `deinit` can reenter the same subject if a related router also logs around the same
+    // time, which crashes Combine. Dispatching to the next run loop tick guarantees `send`
+    // never runs nested inside another `log` call.
+    nonisolated(unsafe) let events = configuration.events
+    Task { @MainActor in
+      events.send()
+    }
   }
 }
 
@@ -222,3 +242,60 @@ extension BaseRouter: CustomStringConvertible {
     }
   }
 }
+
+// MARK: - Debug Tree Description
+
+#if DEBUG
+extension BaseRouter {
+
+  /// Walks up to the top-most router in the hierarchy (the one with no `parent`).
+  var rootRouter: BaseRouter {
+    parent?.rootRouter ?? self
+  }
+
+  /// Builds a human-readable, indented tree of this router's full hierarchy, starting from
+  /// ``rootRouter``. Each line shows ``description``, the router's current route, its full
+  /// push stack (if any), and any ``RouteContext`` types registered on it along with the
+  /// route each was registered for.
+  func routerTreeDescription() -> String {
+    rootRouter.treeLines().joined(separator: "\n")
+  }
+
+  private func treeLines(prefix: String = "", isRoot: Bool = true, isLast: Bool = true) -> [String] {
+    let connector = isRoot ? "" : (isLast ? "└─ " : "├─ ")
+    let line = "\(prefix)\(connector)\(description) — current: \(currentRoute.wrapped.description)"
+
+    let childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ")
+
+    // Only `Router` has a push stack at all -- `BaseRouter`/`TabRouter` have no `path`. `root`
+    // is prepended since it's the bottom of the stack and omitting it would make `path:` an
+    // incomplete/misleading picture of what's actually been navigated through.
+    var pathLines: [String] = []
+    if let router = self as? Router {
+      let descriptions = ([router.root] + router.path).map(\.wrapped.description)
+      pathLines = ["\(childPrefix)   path: [\(descriptions.joined(separator: ", "))]"]
+    }
+
+    // `contexts` is a Set, whose iteration order is not deterministic -- sort by type name
+    // for the same reason `children` is sorted below. Printed on its own line (rather than
+    // appended to `line`) so it doesn't compete for space with the route description. Each
+    // context is registered against a specific route (not necessarily the router's current
+    // one), which matters when a router accumulates contexts across several routes over its
+    // lifetime -- so it's shown alongside the context type rather than left implicit.
+    let contextDescriptions = contexts
+      .map { "\($0.routerContext)(\($0.route.description))" }
+      .sorted()
+    let contextLines = contextDescriptions.isEmpty ? [] : ["\(childPrefix)   contexts: [\(contextDescriptions.joined(separator: ", "))]"]
+
+    // `children` is a Dictionary, whose iteration order is not deterministic --
+    // sort so the printed tree is stable across calls instead of shuffling randomly.
+    let sortedChildren = children.values.compactMap(\.value).sorted { $0.id.uuidString < $1.id.uuidString }
+
+    let childLines = sortedChildren.enumerated().flatMap { index, child in
+      child.treeLines(prefix: childPrefix, isRoot: false, isLast: index == sortedChildren.count - 1)
+    }
+
+    return [line] + pathLines + contextLines + childLines
+  }
+}
+#endif

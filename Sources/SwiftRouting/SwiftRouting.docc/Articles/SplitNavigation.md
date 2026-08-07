@@ -32,7 +32,7 @@ RoutingSplitView(destination: AppRoute.self, sidebar: .sidebar) { (type: PlayerT
 
 ## Driving Selections
 
-Use ``Router/detailBinding(as:)`` and ``Router/contentBinding(as:)`` to wire a `List` selection directly, or call ``Router/select(detail:)`` / ``Router/select(content:)`` programmatically:
+Use ``Router/detailBinding(as:)`` and ``Router/contentBinding(as:)`` to wire a `List` selection directly, or call ``Router/select(detail:)`` / ``Router/select(content:)`` programmatically. Both paths behave identically -- the binding calls `select(detail:)`/`select(content:)` internally, so a selection made by tapping a `List` row logs a `.navigation` event just like a programmatic call would.
 
 ```swift
 struct SidebarScreen: View {

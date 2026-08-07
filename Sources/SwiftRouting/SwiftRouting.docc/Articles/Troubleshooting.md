@@ -79,6 +79,52 @@ router.add(context: MyContext.self) { [weak self] context in
 
 Observers registered outside of a view lifecycle (e.g., in a ViewModel) must be removed explicitly. See <doc:RouteContextGuide> for the full memory management guide.
 
+## Visualizing the Router Hierarchy
+
+When it's unclear which router owns which tab/sheet/cover, what the full navigation stack looks like, or which `RouteContext` observers are registered on which router, print the whole hierarchy to the console. Both variants are only available in `DEBUG` builds -- calls are compiled out entirely in release, so there's no need to remove them before shipping.
+
+Use `printRouter(trigger:)` to print the tree on appear and again whenever a value changes, for example the current route:
+
+```swift
+content.printRouter(trigger: router.currentRoute)
+```
+
+This prints the tree starting from the top-most router, for example. A router with pushed routes gets an extra `path:` line listing its whole stack, so you're not just seeing the current route in isolation:
+
+```
+router(app) — current: home
+├─ tabRouter(hometab) — current: home
+│  ├─ router(tab(home)) — current: profile(userId: "42")
+│  │     path: [home, profile(userId: "42")]
+│  │     contexts: [UserSelectionContext(profile(userId: "42"))]
+│  └─ router(tab(settings)) — current: settings
+└─ router(presented(sheet)) — current: onboarding
+```
+
+Use `printRouterOnChange()` to re-print whenever a router in the hierarchy logs a meaningful event (push, present, tab change, router creation/destruction...), without picking a specific value to watch — including at the very top of the app, before any child router exists yet. This is the noisier of the two variants; routine or redundant events (view appearance, going back, context execution...) are filtered out to keep it from firing multiple times for the same conceptual change:
+
+```swift
+content.printRouterOnChange()
+```
+
+### Placement relative to `.environment(\.router, ...)`
+
+Like any modifier reading `@Environment(\.router)`, `printRouter*()` only sees the router injected by an `.environment(\.router, ...)` call that comes **after** it in the modifier chain (i.e. applied further out). If `.environment()` comes first, the modifier is outside its reach and silently falls back to the disconnected default router — it never crashes, it just never prints anything meaningful:
+
+```swift
+// ❌ Wrong — .environment() is "inside" printRouterOnChange(); the modifier
+// never sees the real router and instead observes the inert default one.
+ChoiceScreen()
+    .environment(\.router, Router(configuration: .default))
+    .printRouterOnChange()
+
+// ✅ Correct — .environment() is the outermost modifier, so it covers
+// printRouterOnChange() too.
+ChoiceScreen()
+    .printRouterOnChange()
+    .environment(\.router, Router(configuration: .default))
+```
+
 ## Topics
 
 ### Related

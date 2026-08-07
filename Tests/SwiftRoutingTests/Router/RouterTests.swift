@@ -948,6 +948,47 @@ struct RouterTests {
     }
 
     @Test
+    func detailBinding_set_return_loggerCalledWithNavigation() {
+      // Regression test: detailBinding(as:)'s `set` used to write `detailSelection` directly,
+      // bypassing `select(detail:)` entirely -- selecting a row in a `List(selection:)` bound
+      // this way updated the UI but never logged anything, so `Configuration.events` never
+      // fired and `printRouterOnChange()` never reprinted.
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: expectedParentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      let binding = expectedSplitRouter.detailBinding(as: String.self)
+
+      binding.wrappedValue = "test"
+
+      #expect(loggerSpy.receivedRouterId == expectedSplitRouter.id)
+      assertLogMessageKind(loggerSpy, is: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push))
+    }
+
+    @Test
+    func detailBinding_setNil_return_loggerNotCalled() {
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: expectedParentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      let binding = expectedSplitRouter.detailBinding(as: String.self)
+      loggerSpy.clearReceivedMessages()
+
+      binding.wrappedValue = nil
+
+      #expect(expectedSplitRouter.detailSelection == nil)
+      #expect(loggerSpy.receivedMessage == nil)
+    }
+
+    @Test
     func stackRouter_detailBinding_return_nil() {
       let stackRouter = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .stack(DefaultRoute.main.name), parent: parentRouter)
       let binding = stackRouter.detailBinding(as: String.self)
@@ -997,6 +1038,27 @@ struct RouterTests {
       binding.wrappedValue = nil
 
       #expect(splitRouter.contentSelection == nil)
+    }
+
+    @Test
+    func contentBinding_set_return_loggerCalledWithNavigation() {
+      // Regression test: contentBinding(as:)'s `set` used to write `contentSelection`
+      // directly, bypassing `select(content:)` entirely -- see the equivalent detailBinding
+      // regression test for the full explanation.
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: expectedParentRouter,
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      let binding = expectedSplitRouter.contentBinding(as: String.self)
+
+      binding.wrappedValue = "test"
+
+      #expect(loggerSpy.receivedRouterId == expectedSplitRouter.id)
+      assertLogMessageKind(loggerSpy, is: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push))
     }
 
     @Test
@@ -1655,6 +1717,12 @@ private func makeRouterWithLoggerSpy() -> (router: Router, loggerSpy: LoggerSpy)
 @MainActor
 private func makeSplitRouterPair() -> (parent: Router, split: Router) {
   let parent = Router(configuration: Configuration())
-  let split = Router(root: AnyRoute(wrapped: DefaultRoute.main), type: .split(DefaultRoute.main.name, hasContentColumn: false), parent: parent)
+  let split = Router(
+    root: AnyRoute(wrapped: DefaultRoute.main),
+    type: .split(DefaultRoute.main.name, hasContentColumn: false),
+    parent: parent,
+    detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) },
+    contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+  )
   return (parent, split)
 }
