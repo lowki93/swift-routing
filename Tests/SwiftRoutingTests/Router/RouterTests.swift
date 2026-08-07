@@ -512,6 +512,23 @@ struct RouterTests {
       #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.popToRoot))
     }
+
+    @Test
+    func pathHasElements_popToRoot_return_onlyActionPopToRootLoggedNotBackCount() {
+      // Regression test: path's didSet must not also auto-log a generic .action(.back(count:))
+      // for the shrink popToRoot() itself already logged as the more specific .action(.popToRoot).
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.push(TestRoute.details(id: "42"))
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.popToRoot()
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.popToRoot))
+    }
   }
 
   @MainActor
@@ -567,6 +584,43 @@ struct RouterTests {
 
       #expect(expectedLoggerSpy.receivedMessages.count == 1)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
+    }
+
+    @Test
+    func pathMutatedDirectlyByOneElement_return_loggerCalledWithActionBack() {
+      // Regression test: a native swipe-back/back-button tap mutates `path` directly through
+      // `NavigationStack(path: $router.path)`'s binding, bypassing back() entirely -- same
+      // class of gap as NavigationLink bypassing push(_:). Simulated here by mutating `path`
+      // directly instead of calling back().
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.push(TestRoute.details(id: "42"))
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.path.removeLast()
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 1)))
+    }
+
+    @Test
+    func pathMutatedDirectlyByMultipleElements_return_loggerCalledWithActionBackCount() {
+      // Simulates a long-press-back-button jump to an ancestor, which also mutates `path`
+      // directly by more than one element at once.
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.push(TestRoute.details(id: "42"))
+      expectedRouter.push(TestRoute.settings)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.path.removeLast(2)
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 2)))
     }
   }
 
@@ -1373,6 +1427,27 @@ struct RouterTests {
       #expect((expectedRouter.currentRoute.wrapped as? TestRoute) == .home)
       #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 1)))
+    }
+
+    @Test
+    func contextExistsInPreviousRoute_terminate_return_onlyActionBackCountLoggedNotDuplicated() {
+      // Regression test: path's didSet must not also auto-log a generic .action(.back(count:))
+      // alongside the one terminate(_:) already logs explicitly for the same pop.
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.add(context: StringContext.self) { _ in }
+      expectedRouter.push(TestRoute.settings)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.terminate(StringContext(value: "42"))
+
+      // `terminate(_:)` also logs `.context(.execute(...))` when the matched context's
+      // handler runs, in addition to `.action(.back(count:))` -- two messages total, not
+      // three (i.e. path's didSet didn't also auto-log the same pop a second time).
+      #expect(expectedLoggerSpy.receivedMessages.count == 2)
+      assertLogMessagesContain(expectedLoggerSpy, expected: .action(.back(count: 1)))
     }
 
     @Test

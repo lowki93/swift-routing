@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Data race in `BaseRouter.addChild`/`removeChild` (called from non-`@MainActor` `init`/`deinit`) that could corrupt or crash on concurrent router creation/teardown off the main actor -- now guarded by a lock
 - `Router.detailBinding(as:)`/`contentBinding(as:)` wrote the selection directly instead of going through `select(detail:)`/`select(content:)`, so selecting a `List` row never logged a `.navigation` event -- `Configuration.logger` and `Configuration.events` (and therefore `printRouterOnChange()`) silently never fired for that path
 - `NavigationLink(route:)` pushes bypassed `push(_:)`/`route(to:type:)` entirely (SwiftUI mutates the `NavigationStack(path:)` binding directly), so they were never logged either -- now logged from `path`'s own change instead, catching both origins
+- A native swipe-back/back-button tap, or a long-press-back-button jump to an ancestor, mutates `path` the same way and bypassed `back()`/`terminate(_:)` entirely -- now logged as `.action(.back(count:))` from the same observer, without double-logging `back()`/`popToRoot()`/`terminate(_:)`'s own explicit calls
 
 ### Documentation
 

@@ -43,17 +43,26 @@ public final class Router: PresentableRouter, @unchecked Sendable {
     }
     didSet {
       // `NavigationStack(path: $router.path)` (in `RoutingView`/`RoutingSplitView`) lets
-      // SwiftUI mutate `path` directly through the binding when a native `NavigationLink`
-      // is activated -- bypassing `push(_:)`/`route(to:type:)` entirely, so their explicit
-      // `log(.navigation(...))` call never runs for that push. Logging here instead, keyed
-      // on a clean single-element growth, catches both origins (`push(_:)` and a native
-      // link) in one place. Anything else -- `back()`/`popToRoot()`/`terminate(_:)` shrinking
-      // the stack, or a bulk reset -- already logs explicitly by those call sites, so this
-      // only fires on growth to avoid double-logging a normal `push(_:)`.
-      guard path.count == oldValue.count + 1, let pushed = path.last else { return }
-      log(.navigation(from: oldValue.last?.wrapped ?? root.wrapped, to: pushed.wrapped, type: .push))
+      // SwiftUI mutate `path` directly through the binding -- bypassing push(_:)/back()/
+      // popToRoot()/terminate(_:) entirely -- for a native `NavigationLink` push, a
+      // swipe-back/back-button tap, or a long-press-back-button jump to an ancestor. Their
+      // explicit `log(...)` calls never run for those, so this observer is the single place
+      // that catches both native and programmatic changes to `path`.
+      let delta = path.count - oldValue.count
+      if delta > 0, let pushed = path.last {
+        log(.navigation(from: oldValue.last?.wrapped ?? root.wrapped, to: pushed.wrapped, type: .push))
+      } else if delta < 0, !isPathChangeLoggedExplicitly {
+        // `isPathChangeLoggedExplicitly` is set by back()/popToRoot()/terminate(_:) around
+        // their own mutation, so a shrink they already logged with more specific semantics
+        // (`.popToRoot`, or a `.back(count:)` tied to a matched context) isn't logged again
+        // here -- this only fires for a shrink that didn't go through any of them.
+        log(.action(.back(count: -delta)))
+      }
     }
   }
+
+  /// See `path`'s `didSet` for why this exists.
+  private var isPathChangeLoggedExplicitly = false
 
   /// The currently visible route.
   ///
@@ -209,13 +218,17 @@ extension Router: @preconcurrency RouterModel {
   @MainActor public func popToRoot() {
     guard !path.isEmpty else { return }
 
+    isPathChangeLoggedExplicitly = true
     path.removeAll()
+    isPathChangeLoggedExplicitly = false
     log(.action(.popToRoot))
   }
 
   @MainActor public func back() {
     guard !path.isEmpty else { return }
+    isPathChangeLoggedExplicitly = true
     path.removeLast()
+    isPathChangeLoggedExplicitly = false
     log(.action(.back()))
   }
 
@@ -227,7 +240,9 @@ extension Router: @preconcurrency RouterModel {
     if let context = contexts.first(for: Swift.type(of: value), currentRoute: currentRoute.wrapped) {
       guard path.count - context.pathCount >= 0 else { return }
       let clear = path.count - context.pathCount
+      isPathChangeLoggedExplicitly = true
       path.removeLast(clear)
+      isPathChangeLoggedExplicitly = false
       log(.action(.back(count: clear)))
     /// If the context is not found and the router is presented (i.e., displayed modally)
     } else if type.isPresented {
