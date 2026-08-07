@@ -41,7 +41,31 @@ public final class Router: PresentableRouter, @unchecked Sendable {
     willSet {
       removeContext(old: path, new: newValue)
     }
+    didSet {
+      // `NavigationStack(path: $router.path)` (in `RoutingView`/`RoutingSplitView`) lets
+      // SwiftUI mutate `path` directly through the binding -- bypassing push(_:)/back()/
+      // popToRoot()/terminate(_:) entirely -- for a native `NavigationLink` push, a
+      // swipe-back/back-button tap, or a long-press-back-button jump to an ancestor. Their
+      // explicit `log(...)` calls never run for those, so this observer is the single place
+      // that catches both native and programmatic changes to `path`.
+      let delta = path.count - oldValue.count
+      if delta > 0, let pushed = path.last {
+        // Not just `oldValue.last?.wrapped ?? root.wrapped`: for a split router with an
+        // empty `path`, "current" before this push was whatever `currentRoute` itself would
+        // have resolved to -- the detail or content selection, not necessarily `root`.
+        log(.navigation(from: route(for: oldValue).wrapped, to: pushed.wrapped, type: .push))
+      } else if delta < 0, !isPathChangeLoggedExplicitly {
+        // `isPathChangeLoggedExplicitly` is set by back()/popToRoot()/terminate(_:) around
+        // their own mutation, so a shrink they already logged with more specific semantics
+        // (`.popToRoot`, or a `.back(count:)` tied to a matched context) isn't logged again
+        // here -- this only fires for a shrink that didn't go through any of them.
+        log(.action(.back(count: -delta)))
+      }
+    }
   }
+
+  /// See `path`'s `didSet` for why this exists.
+  private var isPathChangeLoggedExplicitly = false
 
   /// The currently visible route.
   ///
@@ -54,6 +78,14 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   /// print(router.currentRoute.name)
   /// ```
   override public var currentRoute: AnyRoute {
+    route(for: path)
+  }
+
+  /// Resolves the visible route for a given `path` snapshot, following the same rules as
+  /// ``currentRoute``. Factored out so `path`'s `didSet` can resolve what was current
+  /// *before* a mutation (passing `oldValue`) without duplicating the split-specific
+  /// detail/content fallback logic.
+  private func route(for path: [AnyRoute]) -> AnyRoute {
     switch type {
     case .split:
       if let route = path.last { return route }
@@ -197,13 +229,17 @@ extension Router: @preconcurrency RouterModel {
   @MainActor public func popToRoot() {
     guard !path.isEmpty else { return }
 
+    isPathChangeLoggedExplicitly = true
     path.removeAll()
+    isPathChangeLoggedExplicitly = false
     log(.action(.popToRoot))
   }
 
   @MainActor public func back() {
     guard !path.isEmpty else { return }
+    isPathChangeLoggedExplicitly = true
     path.removeLast()
+    isPathChangeLoggedExplicitly = false
     log(.action(.back()))
   }
 
@@ -215,7 +251,9 @@ extension Router: @preconcurrency RouterModel {
     if let context = contexts.first(for: Swift.type(of: value), currentRoute: currentRoute.wrapped) {
       guard path.count - context.pathCount >= 0 else { return }
       let clear = path.count - context.pathCount
+      isPathChangeLoggedExplicitly = true
       path.removeLast(clear)
+      isPathChangeLoggedExplicitly = false
       log(.action(.back(count: clear)))
     /// If the context is not found and the router is presented (i.e., displayed modally)
     } else if type.isPresented {
@@ -251,10 +289,16 @@ extension Router: @preconcurrency RouterModel {
       contentSelection = nil
       return
     }
-    guard let route = contentRouteFactory?(AnyHashable(value)) else { return }
+    // Re-selecting the value that's already selected is a no-op -- without this guard,
+    // `currentRoute` (evaluated below, before `contentSelection` is updated) already
+    // resolves through the *current* selection, so logging would read "navigate from: X
+    // to: X" for the same route.
+    let newSelection = AnyHashable(value)
+    guard newSelection != contentSelection else { return }
+    guard let route = contentRouteFactory?(newSelection) else { return }
     log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
 
-    contentSelection = AnyHashable(value)
+    contentSelection = newSelection
   }
 
   @MainActor public func select<T: Hashable & Sendable>(detail value: T?) {
@@ -264,10 +308,13 @@ extension Router: @preconcurrency RouterModel {
       detailSelection = nil
       return
     }
-    guard let route = detailRouteFactory?(AnyHashable(value)) else { return }
+    // See the equivalent guard in `select(content:)` -- same "from: X to: X" issue otherwise.
+    let newSelection = AnyHashable(value)
+    guard newSelection != detailSelection else { return }
+    guard let route = detailRouteFactory?(newSelection) else { return }
     log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
 
-    detailSelection = AnyHashable(value)
+    detailSelection = newSelection
   }
 }
 
@@ -339,16 +386,18 @@ public extension Router {
 private extension Router {
 
   @MainActor func route(to destination: some Route, type: RoutingType) {
-    log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
-
     switch type {
     case .push:
+      // Logged by `path`'s `didSet` instead -- see its comment for why.
       path.append(AnyRoute(wrapped: destination))
     case let .sheet(withStack):
+      log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
       sheet = AnyRoute(wrapped: destination, inStack: withStack)
     case .cover:
+      log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
       cover = AnyRoute(wrapped: destination)
     case .root:
+      log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
       root = AnyRoute(wrapped: destination)
     }
   }

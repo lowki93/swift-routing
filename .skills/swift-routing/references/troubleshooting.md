@@ -13,14 +13,24 @@ Use this guide to quickly diagnose common SwiftRouting issues.
 - Both are `DEBUG`-only (compiled out in release) and share the same output format, e.g.:
   ```
   router(app) — current: home
+     root: home
   ├─ tabRouter(hometab) — current: home
   │  ├─ router(tab(home)) — current: profile(userId: "42")
-  │  │     path: [home, profile(userId: "42")]
+  │  │     root: home
+  │  │     path: [profile(userId: "42")]
   │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
   │  └─ router(tab(settings)) — current: settings
+  │        root: settings
+  ├─ router(split(sidebar)) — current: player(id: "42")
+  │     root: sidebar
+  │     content: players(type: .forward)
+  │     detail: player(id: "42")
   └─ router(presented(sheet)) — current: onboarding
+        root: onboarding
   ```
-  A `path:` line appears only when the router has pushed routes, listing the whole stack including the root (omitted when there's nothing pushed, since `current:` alone already shows the root in that case).
+  - `root:` shows on every `Router` (stack, presented, tab-scoped, split) -- not shown for `TabRouter`/`BaseRouter`, which have no root/push stack of their own.
+  - `path:` shows right after `root:`/`content:`/`detail:`, listing only the pushed routes (root excluded, since it already has its own line) -- omitted entirely when nothing's been pushed.
+  - `content:`/`detail:` only show on a split router, one line each, only when that column has a selection -- since `current:` alone only shows whichever one currently "wins" (an explicit push, then detail, then content).
 
 **Common mistake**
 - These modifiers only see the router injected by an `.environment(\.router, ...)` call that comes **after** them in the modifier chain. If `.environment()` is applied first, the modifier silently observes the disconnected default router instead (no crash, just nothing meaningful printed):

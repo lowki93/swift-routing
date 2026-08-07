@@ -382,6 +382,57 @@ struct RouterTests {
         is: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push)
       )
     }
+
+    @Test
+    func pathMutatedDirectly_return_loggerCalledWithNavigationPush() {
+      // Regression test: `NavigationStack(path: $router.path)` lets SwiftUI append to `path`
+      // directly via the binding when a native `NavigationLink` is activated, bypassing
+      // push(_:)/route(to:type:) entirely. Simulates that by mutating `path` directly instead
+      // of calling push(_:).
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.path.append(AnyRoute(wrapped: TestRoute.home))
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(
+        expectedLoggerSpy,
+        is: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push)
+      )
+    }
+
+    @Test
+    func pathMutatedWithMultipleRoutes_return_loggerCalledOncePerRoute() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.path.append(AnyRoute(wrapped: TestRoute.home))
+      expectedRouter.path.append(AnyRoute(wrapped: TestRoute.details(id: "42")))
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 2)
+      assertLogMessagesContain(
+        expectedLoggerSpy,
+        expected: .navigation(from: DefaultRoute.main, to: TestRoute.home, type: .push)
+      )
+      assertLogMessagesContain(
+        expectedLoggerSpy,
+        expected: .navigation(from: TestRoute.home, to: TestRoute.details(id: "42"), type: .push)
+      )
+    }
+
+    @Test
+    func pushCalled_return_loggerCalledOnceNotTwice() {
+      // Regression test: push(_:) must not be double-logged now that path's didSet also logs.
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.push(TestRoute.home)
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+    }
   }
 
   @MainActor
@@ -461,6 +512,23 @@ struct RouterTests {
       #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.popToRoot))
     }
+
+    @Test
+    func pathHasElements_popToRoot_return_onlyActionPopToRootLoggedNotBackCount() {
+      // Regression test: path's didSet must not also auto-log a generic .action(.back(count:))
+      // for the shrink popToRoot() itself already logged as the more specific .action(.popToRoot).
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.push(TestRoute.details(id: "42"))
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.popToRoot()
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.popToRoot))
+    }
   }
 
   @MainActor
@@ -500,6 +568,59 @@ struct RouterTests {
 
       #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
+    }
+
+    @Test
+    func pathHasElements_back_return_onlyActionBackLoggedNotNavigation() {
+      // Regression test: path's didSet only logs .navigation on growth -- back() shrinking
+      // the path must not also trigger a spurious .navigation log alongside .action(.back()).
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.back()
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
+    }
+
+    @Test
+    func pathMutatedDirectlyByOneElement_return_loggerCalledWithActionBack() {
+      // Regression test: a native swipe-back/back-button tap mutates `path` directly through
+      // `NavigationStack(path: $router.path)`'s binding, bypassing back() entirely -- same
+      // class of gap as NavigationLink bypassing push(_:). Simulated here by mutating `path`
+      // directly instead of calling back().
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.push(TestRoute.details(id: "42"))
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.path.removeLast()
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 1)))
+    }
+
+    @Test
+    func pathMutatedDirectlyByMultipleElements_return_loggerCalledWithActionBackCount() {
+      // Simulates a long-press-back-button jump to an ancestor, which also mutates `path`
+      // directly by more than one element at once.
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.push(TestRoute.details(id: "42"))
+      expectedRouter.push(TestRoute.settings)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.path.removeLast(2)
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 2)))
     }
   }
 
@@ -901,6 +1022,69 @@ struct RouterTests {
       stackRouter.select(detail: "test")
 
       #expect(stackRouter.detailSelection == nil)
+    }
+
+    @Test
+    func selectDetailSameValueTwice_return_loggerCalledOnceNotFromXToX() {
+      // Regression test: re-selecting the same value logged "navigate from: X to: X" --
+      // `currentRoute` was read before `detailSelection` got updated, so it already resolved
+      // through the *current* (unchanged) selection.
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: expectedParentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      expectedSplitRouter.select(detail: "player")
+      loggerSpy.clearReceivedMessages()
+
+      expectedSplitRouter.select(detail: "player")
+
+      #expect(loggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func selectContentSameValueTwice_return_loggerCalledOnceNotFromXToX() {
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: expectedParentRouter,
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      expectedSplitRouter.select(content: "playerType")
+      loggerSpy.clearReceivedMessages()
+
+      expectedSplitRouter.select(content: "playerType")
+
+      #expect(loggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func pushAfterDetailSelected_return_loggerCalledWithNavigationFromDetailNotRoot() {
+      // Regression test: pushing onto an empty `path` used to always log "from: root" via
+      // path's didSet, even when a detail was already selected -- `currentRoute` itself
+      // would have resolved through that detail, not root, so "from" should match.
+      let loggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: loggerSpy))
+      let expectedSplitRouter = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: expectedParentRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      expectedSplitRouter.select(detail: "player")
+      loggerSpy.clearReceivedMessages()
+
+      expectedSplitRouter.push(TestRoute.settings)
+
+      assertLogMessageKind(
+        loggerSpy,
+        is: .navigation(from: TestRoute.home, to: TestRoute.settings, type: .push)
+      )
     }
   }
 
@@ -1306,6 +1490,27 @@ struct RouterTests {
       #expect((expectedRouter.currentRoute.wrapped as? TestRoute) == .home)
       #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 1)))
+    }
+
+    @Test
+    func contextExistsInPreviousRoute_terminate_return_onlyActionBackCountLoggedNotDuplicated() {
+      // Regression test: path's didSet must not also auto-log a generic .action(.back(count:))
+      // alongside the one terminate(_:) already logs explicitly for the same pop.
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedRouter.add(context: StringContext.self) { _ in }
+      expectedRouter.push(TestRoute.settings)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.terminate(StringContext(value: "42"))
+
+      // `terminate(_:)` also logs `.context(.execute(...))` when the matched context's
+      // handler runs, in addition to `.action(.back(count:))` -- two messages total, not
+      // three (i.e. path's didSet didn't also auto-log the same pop a second time).
+      #expect(expectedLoggerSpy.receivedMessages.count == 2)
+      assertLogMessagesContain(expectedLoggerSpy, expected: .action(.back(count: 1)))
     }
 
     @Test

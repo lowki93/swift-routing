@@ -45,8 +45,8 @@ struct LoggerMessageTests {
     }
 
     @Test
-    func popToRoot_shouldTriggerEvent_return_false() {
-      #expect(LoggerMessage.Action.popToRoot.shouldTriggerEvent == false)
+    func popToRoot_shouldTriggerEvent_return_true() {
+      #expect(LoggerMessage.Action.popToRoot.shouldTriggerEvent)
     }
 
     @Test
@@ -55,8 +55,8 @@ struct LoggerMessageTests {
     }
 
     @Test
-    func back_shouldTriggerEvent_return_false() {
-      #expect(LoggerMessage.Action.back().shouldTriggerEvent == false)
+    func back_shouldTriggerEvent_return_true() {
+      #expect(LoggerMessage.Action.back().shouldTriggerEvent)
     }
 
     @Test

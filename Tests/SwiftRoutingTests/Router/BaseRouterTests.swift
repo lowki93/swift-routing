@@ -193,6 +193,14 @@ struct BaseRouterTests {
     }
 
     @Test
+    func childHasNoPushedRoutes_routerTreeDescription_return_noPathLine() {
+      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
+
+      #expect(child.path.isEmpty)
+      #expect(baseRouter.routerTreeDescription().contains("path:") == false)
+    }
+
+    @Test
     func oneChild_routerTreeDescription_return_childOnLastConnector() {
       let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
 
@@ -201,7 +209,7 @@ struct BaseRouterTests {
       #expect(lines.count == 3)
       #expect(lines[0] == "baseRouter — current: main")
       #expect(lines[1] == "└─ \(child.description) — current: home")
-      #expect(lines[2] == "      path: [home]")
+      #expect(lines[2] == "      root: home")
     }
 
     @Test
@@ -218,9 +226,9 @@ struct BaseRouterTests {
 
       #expect(lines.count == 5)
       #expect(lines[1] == "├─ \(ordered[0].description) — current: \(expectedRoute(ordered[0]))")
-      #expect(lines[2] == "│     path: [\(expectedRoute(ordered[0]))]")
+      #expect(lines[2] == "│     root: \(expectedRoute(ordered[0]))")
       #expect(lines[3] == "└─ \(ordered[1].description) — current: \(expectedRoute(ordered[1]))")
-      #expect(lines[4] == "      path: [\(expectedRoute(ordered[1]))]")
+      #expect(lines[4] == "      root: \(expectedRoute(ordered[1]))")
     }
 
     @Test
@@ -231,9 +239,10 @@ struct BaseRouterTests {
 
       let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
 
-      #expect(lines.count == 3)
+      #expect(lines.count == 4)
       #expect(lines[1] == "└─ \(child.description) — current: settings")
-      #expect(lines[2] == "      path: [home, details, settings]")
+      #expect(lines[2] == "      root: home")
+      #expect(lines[3] == "      path: [details, settings]")
     }
 
     @Test
@@ -252,9 +261,9 @@ struct BaseRouterTests {
 
       #expect(lines.count == 5)
       #expect(lines[1] == "└─ \(child.description) — current: home")
-      #expect(lines[2] == "      path: [home]")
+      #expect(lines[2] == "      root: home")
       #expect(lines[3] == "   └─ \(grandchild.description) — current: settings")
-      #expect(lines[4] == "         path: [settings]")
+      #expect(lines[4] == "         root: settings")
     }
 
     @Test
@@ -293,8 +302,73 @@ struct BaseRouterTests {
 
       #expect(lines.count == 4)
       #expect(lines[1] == "└─ \(child.description) — current: home")
-      #expect(lines[2] == "      path: [home]")
+      #expect(lines[2] == "      root: home")
       #expect(lines[3] == "      contexts: [StringContext(home)]")
+    }
+
+    @Test
+    func splitRouterHasDetailSelection_routerTreeDescription_return_detailLine() {
+      let child = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: baseRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      child.select(detail: "player")
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 4)
+      #expect(lines[1] == "└─ \(child.description) — current: home")
+      #expect(lines[2] == "      root: main")
+      #expect(lines[3] == "      detail: home")
+    }
+
+    @Test
+    func splitRouterHasContentAndDetailSelection_routerTreeDescription_return_bothLinesContentFirst() {
+      let child = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: true),
+        parent: baseRouter,
+        detailRouteFactory: { _ in AnyRoute(wrapped: TestRoute.settings) },
+        contentRouteFactory: { _ in AnyRoute(wrapped: TestRoute.home) }
+      )
+      child.select(content: "playerType")
+      child.select(detail: "player")
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 5)
+      #expect(lines[1] == "└─ \(child.description) — current: settings")
+      #expect(lines[2] == "      root: main")
+      #expect(lines[3] == "      content: home")
+      #expect(lines[4] == "      detail: settings")
+    }
+
+    @Test
+    func splitRouterHasNoSelection_routerTreeDescription_return_noContentOrDetailLine() {
+      let child = Router(
+        root: AnyRoute(wrapped: DefaultRoute.main),
+        type: .split(DefaultRoute.main.name, hasContentColumn: false),
+        parent: baseRouter
+      )
+
+      let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
+
+      #expect(lines.count == 3)
+      #expect(lines[1] == "└─ \(child.description) — current: main")
+      #expect(lines[2] == "      root: main")
+      #expect(baseRouter.routerTreeDescription().contains("content:") == false)
+      #expect(baseRouter.routerTreeDescription().contains("detail:") == false)
+    }
+
+    @Test
+    func nonSplitRouter_routerTreeDescription_return_noContentOrDetailLine() {
+      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
+
+      #expect(child.detailSelection == nil)
+      #expect(baseRouter.routerTreeDescription().contains("content:") == false)
+      #expect(baseRouter.routerTreeDescription().contains("detail:") == false)
     }
   }
 
