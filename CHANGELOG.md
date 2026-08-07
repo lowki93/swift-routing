@@ -17,6 +17,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `SplitDeeplink`/`SplitDeeplinkHandler` and `Router.handle(splitDeeplink:)` for deep linking into `RoutingSplitView` columns (#101)
 - `SwiftRoutingTestSupport` package with `RouterSpy`/`TabRouterSpy` test doubles (#102)
 - Public `AnyRoute.init(_:)` initializer, enabling external `RouterModel`/`SplitModel` conformances (#102)
+- `ContextModel.canTerminate(_:)` to check for a registered `RouteContext` observer before calling `terminate(_:)`
+- `Set<RouterContext>.contains(for:)`
+
+### Fixed
+
+- Data race in `BaseRouter.addChild`/`removeChild` (called from non-`@MainActor` `init`/`deinit`) that could corrupt or crash on concurrent router creation/teardown off the main actor -- now guarded by a lock
 
 ### Documentation
 
