@@ -254,15 +254,28 @@ extension BaseRouter {
   }
 
   /// Builds a human-readable, indented tree of this router's full hierarchy, starting from
-  /// ``rootRouter``. Each line shows ``description``, the router's current route, and any
-  /// ``RouteContext`` types registered on it along with the route each was registered for.
+  /// ``rootRouter``. Each line shows ``description``, the router's full navigation stack (or
+  /// just the current route for routers with no stack concept), and any ``RouteContext``
+  /// types registered on it along with the route each was registered for.
   func routerTreeDescription() -> String {
     rootRouter.treeLines().joined(separator: "\n")
   }
 
+  /// `root` alone only reflects the current route for `BaseRouter`/`TabRouter`, and for a
+  /// `.split` `Router` (whose "stack" is really content/detail column selections, not a
+  /// linear push history). For a regular stack `Router`, `root` is just the bottom of the
+  /// stack -- showing only `currentRoute` there would hide every intermediate pushed route.
+  private var routesDescription: String {
+    guard let router = self as? Router, !router.type.isSplit else {
+      return "current: \(currentRoute.wrapped.description)"
+    }
+    let routes = ([router.root] + router.path).map { $0.wrapped.description }
+    return "routes: [\(routes.joined(separator: " → "))]"
+  }
+
   private func treeLines(prefix: String = "", isRoot: Bool = true, isLast: Bool = true) -> [String] {
     let connector = isRoot ? "" : (isLast ? "└─ " : "├─ ")
-    let line = "\(prefix)\(connector)\(description) — current: \(currentRoute.wrapped.description)"
+    let line = "\(prefix)\(connector)\(description) — \(routesDescription)"
 
     let childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ")
 
