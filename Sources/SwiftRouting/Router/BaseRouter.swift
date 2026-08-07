@@ -269,11 +269,9 @@ extension BaseRouter {
 
     // Only `Router` has a push stack at all -- `BaseRouter`/`TabRouter` have no `path`. `root`
     // is prepended since it's the bottom of the stack and omitting it would make `path:` an
-    // incomplete/misleading picture of what's actually been navigated through. An empty
-    // `path` means `currentRoute` already shows everything there is (the root alone), so the
-    // line is skipped rather than printed as a redundant single-element `path: [root]`.
+    // incomplete/misleading picture of what's actually been navigated through.
     var pathLines: [String] = []
-    if let router = self as? Router, !router.path.isEmpty {
+    if let router = self as? Router {
       let descriptions = ([router.root] + router.path).map(\.wrapped.description)
       pathLines = ["\(childPrefix)   path: [\(descriptions.joined(separator: ", "))]"]
     }

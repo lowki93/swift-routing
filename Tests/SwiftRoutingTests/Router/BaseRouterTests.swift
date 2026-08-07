@@ -198,9 +198,10 @@ struct BaseRouterTests {
 
       let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
 
-      #expect(lines.count == 2)
+      #expect(lines.count == 3)
       #expect(lines[0] == "baseRouter — current: main")
       #expect(lines[1] == "└─ \(child.description) — current: home")
+      #expect(lines[2] == "      path: [home]")
     }
 
     @Test
@@ -215,9 +216,11 @@ struct BaseRouterTests {
 
       let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
 
-      #expect(lines.count == 3)
+      #expect(lines.count == 5)
       #expect(lines[1] == "├─ \(ordered[0].description) — current: \(expectedRoute(ordered[0]))")
-      #expect(lines[2] == "└─ \(ordered[1].description) — current: \(expectedRoute(ordered[1]))")
+      #expect(lines[2] == "│     path: [\(expectedRoute(ordered[0]))]")
+      #expect(lines[3] == "└─ \(ordered[1].description) — current: \(expectedRoute(ordered[1]))")
+      #expect(lines[4] == "      path: [\(expectedRoute(ordered[1]))]")
     }
 
     @Test
@@ -234,14 +237,6 @@ struct BaseRouterTests {
     }
 
     @Test
-    func childHasNoPushedRoutes_routerTreeDescription_return_noPathLine() {
-      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
-
-      #expect(child.path.isEmpty)
-      #expect(baseRouter.routerTreeDescription().contains("path:") == false)
-    }
-
-    @Test
     func calledFromNestedChild_routerTreeDescription_return_fullTreeFromRoot() {
       let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: baseRouter)
 
@@ -255,9 +250,11 @@ struct BaseRouterTests {
 
       let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
 
-      #expect(lines.count == 3)
+      #expect(lines.count == 5)
       #expect(lines[1] == "└─ \(child.description) — current: home")
-      #expect(lines[2] == "   └─ \(grandchild.description) — current: settings")
+      #expect(lines[2] == "      path: [home]")
+      #expect(lines[3] == "   └─ \(grandchild.description) — current: settings")
+      #expect(lines[4] == "         path: [settings]")
     }
 
     @Test
@@ -294,9 +291,10 @@ struct BaseRouterTests {
 
       let lines = baseRouter.routerTreeDescription().components(separatedBy: "\n")
 
-      #expect(lines.count == 3)
+      #expect(lines.count == 4)
       #expect(lines[1] == "└─ \(child.description) — current: home")
-      #expect(lines[2] == "      contexts: [StringContext(home)]")
+      #expect(lines[2] == "      path: [home]")
+      #expect(lines[3] == "      contexts: [StringContext(home)]")
     }
   }
 

@@ -228,39 +228,46 @@ extension Router: @preconcurrency RouterModel {
 
   // MARK: Split
 
-  public func contentBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
+  @MainActor public func contentBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
     guard self.type.isSplit else { return .constant(nil) }
     return Binding(
       get: { [weak self] in self?.contentSelection as? T },
-      set: { [weak self] in self?.contentSelection = $0.map(AnyHashable.init) }
+      set: { [weak self] in self?.select(content: $0) }
     )
   }
 
-  public func detailBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
+  @MainActor public func detailBinding<T: Hashable & Sendable>(as type: T.Type) -> Binding<T?> {
     guard self.type.isSplit else { return .constant(nil) }
     return Binding(
       get: { [weak self] in self?.detailSelection as? T },
-      set: { [weak self] in self?.detailSelection = $0.map(AnyHashable.init) }
+      set: { [weak self] in self?.select(detail: $0) }
     )
   }
 
   @MainActor public func select<T: Hashable & Sendable>(content value: T?) {
     guard type.isSplit else { return }
 
-    guard let content = value.map(AnyHashable.init), let route = contentRouteFactory?(content) else { return }
+    guard let value else {
+      contentSelection = nil
+      return
+    }
+    guard let route = contentRouteFactory?(AnyHashable(value)) else { return }
     log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
 
-
-    contentSelection = content
+    contentSelection = AnyHashable(value)
   }
 
   @MainActor public func select<T: Hashable & Sendable>(detail value: T?) {
     guard type.isSplit else { return }
 
-    guard let details = value.map(AnyHashable.init), let route = detailRouteFactory?(details) else { return }
+    guard let value else {
+      detailSelection = nil
+      return
+    }
+    guard let route = detailRouteFactory?(AnyHashable(value)) else { return }
     log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
 
-    detailSelection = details
+    detailSelection = AnyHashable(value)
   }
 }
 
