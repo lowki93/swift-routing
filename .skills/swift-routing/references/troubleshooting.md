@@ -18,9 +18,13 @@ Use this guide to quickly diagnose common SwiftRouting issues.
   │  │     path: [home, profile(userId: "42")]
   │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
   │  └─ router(tab(settings)) — current: settings
+  ├─ router(split(sidebar)) — current: player(id: "42")
+  │     content: players(type: .forward)
+  │     detail: player(id: "42")
   └─ router(presented(sheet)) — current: onboarding
   ```
-  A `path:` line appears only when the router has pushed routes, listing the whole stack including the root (omitted when there's nothing pushed, since `current:` alone already shows the root in that case).
+  - `path:` shows on every stack-based `Router` (root included), regardless of whether anything's been pushed -- not shown for `TabRouter`/`BaseRouter`, which have no push stack.
+  - `content:`/`detail:` only show on a split router, one line each, only when that column has a selection -- since `current:` alone only shows whichever one currently "wins" (an explicit push, then detail, then content).
 
 **Common mistake**
 - These modifiers only see the router injected by an `.environment(\.router, ...)` call that comes **after** them in the modifier chain. If `.environment()` is applied first, the modifier silently observes the disconnected default router instead (no crash, just nothing meaningful printed):

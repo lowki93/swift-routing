@@ -89,7 +89,7 @@ Use `printRouter(trigger:)` to print the tree on appear and again whenever a val
 content.printRouter(trigger: router.currentRoute)
 ```
 
-This prints the tree starting from the top-most router, for example. A router with pushed routes gets an extra `path:` line listing its whole stack, so you're not just seeing the current route in isolation:
+This prints the tree starting from the top-most router, for example. Every stack-based router gets a `path:` line listing its whole stack (root included), so you're not just seeing the current route in isolation. A split router also gets `content:`/`detail:` lines for its column selections, since `current:` alone only shows whichever one currently "wins" (an explicit push, then detail, then content):
 
 ```
 router(app) — current: home
@@ -98,6 +98,9 @@ router(app) — current: home
 │  │     path: [home, profile(userId: "42")]
 │  │     contexts: [UserSelectionContext(profile(userId: "42"))]
 │  └─ router(tab(settings)) — current: settings
+├─ router(split(sidebar)) — current: player(id: "42")
+│     content: players(type: .forward)
+│     detail: player(id: "42")
 └─ router(presented(sheet)) — current: onboarding
 ```
 

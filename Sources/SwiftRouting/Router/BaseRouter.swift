@@ -255,8 +255,8 @@ extension BaseRouter {
 
   /// Builds a human-readable, indented tree of this router's full hierarchy, starting from
   /// ``rootRouter``. Each line shows ``description``, the router's current route, its full
-  /// push stack (if any), and any ``RouteContext`` types registered on it along with the
-  /// route each was registered for.
+  /// push stack (if any), its content/detail column selections (for a split router), and any
+  /// ``RouteContext`` types registered on it along with the route each was registered for.
   func routerTreeDescription() -> String {
     rootRouter.treeLines().joined(separator: "\n")
   }
@@ -266,6 +266,20 @@ extension BaseRouter {
     let line = "\(prefix)\(connector)\(description) — current: \(currentRoute.wrapped.description)"
 
     let childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ")
+
+    // For a split router, `currentRoute` collapses path/detail/content into a single value
+    // (an explicit push wins over detail, which wins over content), so an active content
+    // selection can be entirely hidden by `current:` once a detail is also selected. Shown
+    // explicitly here so both columns' state stays visible regardless of which one "wins".
+    var splitLines: [String] = []
+    if let router = self as? Router, router.type.isSplit {
+      if let content = router.contentSelection, let route = router.contentRouteFactory?(content) {
+        splitLines.append("\(childPrefix)   content: \(route.wrapped.description)")
+      }
+      if let detail = router.detailSelection, let route = router.detailRouteFactory?(detail) {
+        splitLines.append("\(childPrefix)   detail: \(route.wrapped.description)")
+      }
+    }
 
     // Only `Router` has a push stack at all -- `BaseRouter`/`TabRouter` have no `path`. `root`
     // is prepended since it's the bottom of the stack and omitting it would make `path:` an
@@ -295,7 +309,7 @@ extension BaseRouter {
       child.treeLines(prefix: childPrefix, isRoot: false, isLast: index == sortedChildren.count - 1)
     }
 
-    return [line] + pathLines + contextLines + childLines
+    return [line] + splitLines + pathLines + contextLines + childLines
   }
 }
 #endif
