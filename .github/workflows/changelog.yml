@@ -79,13 +79,46 @@ jobs:
           print("updated=true")
           PY
 
+      - name: Update README version references
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+
+          python3 - <<PY
+          import re
+
+          version = "${VERSION}"
+
+          with open("README.md", "r", encoding="utf-8") as f:
+              content = f.read()
+
+          # DocC documentation links: .../swift-routing/X.Y.Z/documentation/...
+          content = re.sub(
+              r"(https://lowki93\.github\.io/swift-routing/)\d+\.\d+\.\d+(/documentation)",
+              rf"\g<1>{version}\g<2>",
+              content,
+          )
+
+          # SPM install snippet: .upToNextMajor(from: "X.Y.Z")
+          content = re.sub(
+              r'(\.upToNextMajor\(from: ")\d+\.\d+\.\d+(")',
+              rf"\g<1>{version}\g<2>",
+              content,
+          )
+
+          with open("README.md", "w", encoding="utf-8") as f:
+              f.write(content)
+
+          print(f"Updated README.md version references to {version}")
+          PY
+
       - name: Open PR and enable auto-merge
         env:
           GH_TOKEN: ${{ secrets.CHANGELOG_PR_TOKEN }}
         run: |
           set -euo pipefail
-          if git diff --quiet -- CHANGELOG.md; then
-            echo "CHANGELOG.md unchanged, nothing to do."
+          if git diff --quiet -- CHANGELOG.md README.md; then
+            echo "Nothing changed, nothing to do."
             exit 0
           fi
 
@@ -95,11 +128,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "${BRANCH}"
-          git add CHANGELOG.md
-          git commit -m "update changelog for v${VERSION}"
+          git add CHANGELOG.md README.md
+          git commit -m "update changelog and README version references for v${VERSION}"
           git push origin "${BRANCH}"
 
-          BODY=$'**What**:\n'"Automated changelog closeout for the ${VERSION} release, opened by \`.github/workflows/changelog.yml\`."$'\n\n**Breaking Changes**:\nNone — documentation only.'
+          BODY=$'**What**:\n'"Automated changelog closeout and README version bump for the ${VERSION} release, opened by \`.github/workflows/changelog.yml\`."$'\n\n**Breaking Changes**:\nNone — documentation only.'
 
           gh pr create \
             --base main \
