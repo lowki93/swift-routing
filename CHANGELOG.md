@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-08
+
 ### Added
 
 - `ContextModel.canTerminate(_:)` to check for a registered `RouteContext` observer before calling `terminate(_:)`
@@ -353,7 +355,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project foundation (#1, #2, #3, #4)
 
-[Unreleased]: https://github.com/lowki93/swift-routing/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/lowki93/swift-routing/compare/0.7.0...HEAD
+[0.7.0]: https://github.com/lowki93/swift-routing/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/lowki93/swift-routing/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/lowki93/swift-routing/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/lowki93/swift-routing/compare/0.3.0...0.4.0
