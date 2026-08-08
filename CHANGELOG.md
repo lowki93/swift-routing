@@ -14,9 +14,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `SplitDeeplink`/`SplitDeeplinkHandler` and `Router.handle(splitDeeplink:)` for deep linking into `RoutingSplitView` columns (#101)
-- `SwiftRoutingTestSupport` package with `RouterSpy`/`TabRouterSpy` test doubles (#102)
-- Public `AnyRoute.init(_:)` initializer, enabling external `RouterModel`/`SplitModel` conformances (#102)
 - `ContextModel.canTerminate(_:)` to check for a registered `RouteContext` observer before calling `terminate(_:)`
 - `Set<RouterContext>.contains(for:)`
 - `printRouter(trigger:)`/`printRouterOnChange()` view modifiers to print the full router hierarchy to the console for debugging (`DEBUG` builds only) -- every router gets a `root:` line, a `path:` line for anything pushed on top of it (omitted when nothing's been pushed), and a split router gets `content:`/`detail:` lines for its column selections
@@ -30,6 +27,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A native swipe-back/back-button tap, or a long-press-back-button jump to an ancestor, mutates `path` the same way and bypassed `back()`/`terminate(_:)` entirely -- now logged as `.action(.back(count:))` from the same observer, without double-logging `back()`/`popToRoot()`/`terminate(_:)`'s own explicit calls
 - `select(detail:)`/`select(content:)` logged `navigate from: X to: X` when re-selecting the value that was already selected, since `currentRoute` was read before the selection was updated -- now a no-op when the value hasn't changed
 - Pushing onto an empty `path` in a split router always logged `from: root`, even when a detail/content was already selected -- `path`'s `didSet` now resolves "from" the same way `currentRoute` does, instead of assuming `root`
+
+## [0.6.0] - 2026-07-31
+
+### Added
+
+- `SplitDeeplink`/`SplitDeeplinkHandler` and `Router.handle(splitDeeplink:)` for deep linking into `RoutingSplitView` columns (#101)
+- `SwiftRoutingTestSupport` package with `RouterSpy`/`TabRouterSpy` test doubles (#102)
+- Public `AnyRoute.init(_:)` initializer, enabling external `RouterModel`/`SplitModel` conformances (#102)
+- `CHANGELOG.md`, with automated release closeout on tag push (#105)
+
+### Fixed
+
+- Corrected macOS requirement in README (13+ → 14+) (#106)
 
 ### Documentation
 
@@ -342,7 +352,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project foundation (#1, #2, #3, #4)
 
-[Unreleased]: https://github.com/lowki93/swift-routing/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/lowki93/swift-routing/compare/0.6.0...HEAD
+[0.6.0]: https://github.com/lowki93/swift-routing/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/lowki93/swift-routing/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/lowki93/swift-routing/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/lowki93/swift-routing/compare/0.2.0...0.3.0
