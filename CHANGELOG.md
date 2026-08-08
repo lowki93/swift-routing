@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Link `RouterType` references to `BaseRouter.description` instead of leaving them unlinked (#103)
 - Explain the Route/RouteDestination separation rationale in the README (#104)
+- README doc links and the SPM install snippet pointed at a hardcoded old version (`0.2.0`) instead of the current release (`0.6.0`)
 
 ## [0.5.0] - 2026-07-30
 
