@@ -21,7 +21,13 @@ struct UserScreen: View {
       Button("User: Ben") {
         router.push(AppRoute.user(name: "Ben"))
       }
-      Button("Go back") {
+      Button("Back") {
+        router.back()
+      }
+      Button("Pop to root") {
+        router.popToRoot()
+      }
+      Button("Go back (terminate)") {
         router.terminate(model.name)
       }
     }

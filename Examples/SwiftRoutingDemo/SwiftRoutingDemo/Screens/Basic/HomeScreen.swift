@@ -16,6 +16,7 @@ struct HomeScreen: View {
   var body: some View {
     VStack {
       Button("Search") { router.present(AppRoute.search, withStack: false) }
+      Button("About (cover)") { router.cover(AppRoute.about) }
       Button("User: lowki") { router.push(AppRoute.user(name: "Lowki")) }
       NavigationLink(route: AppRoute.user(name: "Alexia")) {
         Text("User: alexia")
