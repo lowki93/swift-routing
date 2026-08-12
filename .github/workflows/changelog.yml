@@ -125,6 +125,14 @@ jobs:
           VERSION="${GITHUB_REF_NAME}"
           BRANCH="changelog/${VERSION}"
 
+          # A duplicate workflow run for the same tag (retry, re-delivered webhook, etc.)
+          # would otherwise recreate this branch and get a non-fast-forward push rejection
+          # against the one a prior run already pushed -- treat that as "already handled".
+          if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
+            echo "Branch ${BRANCH} already exists on origin -- a previous run already opened the PR for this tag. Skipping."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "${BRANCH}"
