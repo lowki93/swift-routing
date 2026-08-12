@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Documentation
+
+- "Next Steps" in the Getting Started guide only linked 5 of the 12 articles -- now links all of them, in the same order as the landing page's Topics section
+
 ## [0.7.0] - 2026-08-08
 
 ### Added
