@@ -9,6 +9,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: changelog-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   update-changelog:
     runs-on: ubuntu-latest
