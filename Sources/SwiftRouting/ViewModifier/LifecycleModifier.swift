@@ -26,12 +26,14 @@ struct LifecycleModifier: ViewModifier {
   }
 
   func shouldLog() -> Bool {
-    if let last = lastDateLog, Date().timeIntervalSince(last) < 0.05 {
-      lastDateLog = Date()
-      return false
-    }
+    let currentDate = Date()
+    defer { lastDateLog = currentDate }
+    return Self.shouldLog(lastDateLog: lastDateLog, currentDate: currentDate)
+  }
 
-    lastDateLog = Date()
-    return true
+  /// Pure debounce decision, kept separate from `@State` so it can be tested without a live view hierarchy.
+  static func shouldLog(lastDateLog: Date?, currentDate: Date) -> Bool {
+    guard let lastDateLog else { return true }
+    return currentDate.timeIntervalSince(lastDateLog) >= 0.05
   }
 }
