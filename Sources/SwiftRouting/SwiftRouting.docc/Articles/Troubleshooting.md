@@ -43,6 +43,22 @@ When a route cannot be resolved, an error view is rendered. Its behavior depends
 
 Use `true` during development to catch routing mismatches immediately. See <doc:ConfigurationGuide> for setup details.
 
+## onAppear Fires Before the Root When Pushing Into an Unvisited Tab
+
+### Symptom
+
+`tabRouter.push(_:in:)` (and similarly `present`/`cover`/`popToRoot`/`update(root:in:)`/`handle(tabDeeplink:)`) switches to the target tab and acts on it in the same call. If that tab's stack was never shown before, the pushed route's `onAppear` can fire **before** the tab's root `onAppear` -- the opposite of what a real, incremental push does.
+
+### Cause
+
+The tab change and the push both happen synchronously, before SwiftUI re-renders. If the target tab was never selected before, its `NavigationStack(path:)` is being shown for the very first time -- with `path` already non-empty. SwiftUI never gets a frame where that stack shows just the root; it materializes the whole stack (root + pushed route) at once instead of running a normal push transition, and doesn't guarantee `onAppear` fires root-first in that situation.
+
+This is a SwiftUI rendering-order quirk, not a SwiftRouting bug -- there's no fix on our side to guarantee ordering here. It isn't specific to `push(_:in:)` either: the same applies to any router method that changes tab and acts in the same call, and to deep links that land on a not-yet-visited tab.
+
+### Solution
+
+Don't rely on `onAppear`/`onDisappear` ordering after a cross-tab push/present/deeplink into a tab that hasn't been shown yet. If you need reliable ordering (for logging, analytics, etc.), key off `Configuration.logger`/`Configuration.events` instead (see <doc:ConfigurationGuide>) -- `.action(.changeTab(_:))` and `.navigation(...)` are logged synchronously, in the correct causal order, at the moment the router methods are called, regardless of when SwiftUI actually renders each view.
+
 ## Context Not Received
 
 If a context is sent but no observer is triggered, check:
