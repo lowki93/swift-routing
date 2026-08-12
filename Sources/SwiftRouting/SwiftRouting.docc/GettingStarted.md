@@ -145,5 +145,12 @@ Now that you have the basics, explore these topics:
 - <doc:DefiningRoutes> - Learn about route customization and routing types
 - <doc:NavigationBasics> - Explore all navigation methods in detail
 - <doc:TabNavigation> - Set up tab-based navigation
+- <doc:SplitNavigation> - Build sidebar/content/detail layouts with `RoutingSplitView`
 - <doc:Deeplinks> - Handle deep links in your app
 - <doc:RouteContextGuide> - Pass data between routes
+- <doc:ConfigurationGuide> - Configure SwiftRouting and customize logging behavior
+- <doc:Architecture> - Understand the design principles behind SwiftRouting
+- <doc:Testing> - Write unit tests for your navigation logic
+- <doc:Migration> - Adopt SwiftRouting in an existing app with minimal disruption
+- <doc:Troubleshooting> - Diagnose and fix common issues
+- <doc:FAQ> - Answers to common questions about SwiftRouting
