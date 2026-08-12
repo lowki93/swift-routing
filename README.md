@@ -35,7 +35,7 @@ Routes are plain data (`Hashable & Sendable`); the mapping to views lives separa
 | **Flexibility** | Change view implementations without touching route definitions |
 | **Modularity** | Routes can live in a shared module; views in feature modules |
 
-See the [Architecture guide](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/architecture) for the full rationale.
+See the [Architecture guide](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/architecture) for the full rationale.
 
 ## Quick Start
 
@@ -181,7 +181,7 @@ Add SwiftRouting via **Swift Package Manager**:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "0.6.0"))
+    .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "0.7.0"))
 ]
 ```
 
@@ -203,15 +203,15 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 
 | Topic | Description |
 |-------|-------------|
-| [Getting Started](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/gettingstarted) | Installation and basic setup |
-| [Architecture](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/architecture) | Design principles — why routes are separate from views |
-| [Defining Routes](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/definingroutes) | Route customization and routing types |
-| [Navigation Basics](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/navigationbasics) | Push, present, cover, and more |
-| [Tab Navigation](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
-| [Split Navigation](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/splitnavigation) | Sidebar/content/detail layouts with `RoutingSplitView` |
-| [Deep Linking](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/deeplinks) | Handle deep links in your app |
-| [Route Context](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/routecontextguide) | Pass data between routes |
-| [Migration](https://lowki93.github.io/swift-routing/0.6.0/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
+| [Getting Started](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/gettingstarted) | Installation and basic setup |
+| [Architecture](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/architecture) | Design principles — why routes are separate from views |
+| [Defining Routes](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/definingroutes) | Route customization and routing types |
+| [Navigation Basics](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/navigationbasics) | Push, present, cover, and more |
+| [Tab Navigation](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
+| [Split Navigation](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/splitnavigation) | Sidebar/content/detail layouts with `RoutingSplitView` |
+| [Deep Linking](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/deeplinks) | Handle deep links in your app |
+| [Route Context](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/routecontextguide) | Pass data between routes |
+| [Migration](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
 
 ## Articles
 
