@@ -8,11 +8,7 @@ See `ai-rules/linear_flow.md` for the full workflow.
 
 ## Code Conventions
 
-- **Naming**: PascalCase for types, lowerCamelCase for properties/methods/enum cases
-- **Access control**: `public` only for exposed APIs, `private`/`internal` by default
-- **Concurrency**: `@MainActor` on main types, `@unchecked Sendable` for thread-safe classes
-- **Public classes**: `public final class`
-- **Doc comments**: `///` with Swift code examples on all public types and methods
+See `ai-rules/swift_conventions.md` for the full Swift code conventions.
 
 ## Planning
 
