@@ -806,7 +806,7 @@ struct RouterTests {
     }
 
     @Test
-    func routerTypeIsPresented_close_return_loggerCalledWithActionClose() {
+    func routerTypeIsPresented_close_return_loggerCalledOnParentWithActionClose() {
       let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
       let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
       let expectedPresentedRouter = Router(
@@ -819,7 +819,9 @@ struct RouterTests {
 
       expectedPresentedRouter.close()
 
-      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      // Logged on the presenter (parent), not the presented router -- it's the parent's
+      // sheet/cover that actually clears, matching what a native dismiss auto-logs too.
+      #expect(expectedLoggerSpy.receivedRouterId == expectedParentRouter.id)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
     }
   }
@@ -969,7 +971,7 @@ struct RouterTests {
       expectedParentRouter.sheet = nil
 
       #expect(expectedLoggerSpy.receivedCallCount == 1)
-      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedParentRouter.id)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
     }
   }
@@ -1595,7 +1597,7 @@ struct RouterTests {
       expectedPresentedRouter.terminate(StringContext(value: "42"))
 
       #expect(expectedPresentedRouter.triggerClose == true)
-      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedParentRouter.id)
       assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
     }
 

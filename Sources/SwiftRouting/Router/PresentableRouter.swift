@@ -39,11 +39,9 @@ public class PresentableRouter: BaseRouter {
   /// Triggers dismissal of the current modal when set to `true`.
   @Published internal var triggerClose: Bool = false
 
-  /// Set right before a mutation that's already logging its own `.action(.close)`, so
-  /// `logCloseIfNeeded` doesn't log a second time once that mutation actually clears
-  /// `sheet`/`cover`. `close()` is called on the *presented* router, but it's always the
-  /// *parent* whose `sheet`/`cover` actually goes `nil` (via `CloseModifier`'s native
-  /// `dismiss()`, not synchronously) -- so `close()` arms this flag on `parent`, not `self`.
+  /// Set right after logging an explicit `.action(.close)`, so `logCloseIfNeeded` doesn't log
+  /// a second time once `sheet`/`cover` actually clears -- which, for `close()`, happens later
+  /// via `CloseModifier`'s native `dismiss()`, not synchronously within the call.
   private var isCloseLoggedExplicitly = false
 
   /// Indicates whether this router is presented modally.
@@ -80,9 +78,11 @@ extension PresentableRouter: @preconcurrency PresentationModel {
 
   @MainActor public func close() {
     guard isPresented else { return }
-    (parent as? PresentableRouter)?.isCloseLoggedExplicitly = true
+    if let presenter = parent as? PresentableRouter {
+      presenter.isCloseLoggedExplicitly = true
+      presenter.log(.action(.close))
+    }
     triggerClose = true
-    log(.action(.close))
   }
 
   @MainActor public func closeChildren() {
