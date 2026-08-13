@@ -20,6 +20,8 @@ enum AppRoute: Route {
   case sidebar
   case players(PlayerType)
   case player(Player)
+  case formFlow
+  case form
 
   var name: String {
     switch self {
@@ -34,6 +36,8 @@ enum AppRoute: Route {
     case .sidebar: "Sidebar"
     case let .players(type): "Players(\(type))"
     case let .player(player): "Player(\(player.name))"
+    case .formFlow: "FormFlow"
+    case .form: "Form"
     }
   }
 }
@@ -54,6 +58,8 @@ extension AppRoute: RouteDestination {
     case .sidebar: SidebarScreen()
     case let players(type): PlayersScreen(type: type)
     case let .player(player): PlayerScreen(player: player)
+    case .formFlow: FormFlowScreen(model: FormFlowScreenModel())
+    case .form: FormScreen()
     }
   }
 }
@@ -70,4 +76,10 @@ enum FailedRoute: Route {
 
 struct Success: RouteContext {
   let value: Int
+}
+
+struct FormResult: RouteContext {
+  let name: String
+  let age: Int
+  let newsletter: Bool
 }

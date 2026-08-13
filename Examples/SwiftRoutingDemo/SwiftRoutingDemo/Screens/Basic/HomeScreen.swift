@@ -22,6 +22,10 @@ struct HomeScreen: View {
         Text("User: alexia")
       }
       Button("Failed push") { router.push(FailedRoute.failed) }
+      Button("Form flow (push + sheet)") { router.push(AppRoute.formFlow) }
+      // No FormResult observer registered here, so canTerminate(FormResult.self) is
+      // false inside FormScreen and its Save button stays disabled.
+      Button("Form (no listener)") { router.present(AppRoute.form) }
     }
     .navigationTitle("Hello " + model.name)
     .toolbar {
