@@ -73,13 +73,3 @@ enum FailedRoute: Route {
     }
   }
 }
-
-struct Success: RouteContext {
-  let value: Int
-}
-
-struct FormResult: RouteContext {
-  let name: String
-  let age: Int
-  let newsletter: Bool
-}

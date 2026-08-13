@@ -38,9 +38,6 @@ struct HomeScreen: View {
     .routerContext(String.self) {
       print("Context String", $0)
     }
-    .routerContext(Success.self) {
-      print("Context Success", $0)
-    }
     .routerPresent {
       print("RouterPresent HomeScreen : ", $0, $1)
     }
