@@ -16,7 +16,7 @@ An Xcode project demonstrating SwiftRouting's navigation patterns. Open `SwiftRo
 | Folder | Demonstrates | Related article |
 |---|---|---|
 | `Screens/Basic/` | `push`, `NavigationLink(route:)`, `present`/`cover`, `back`/`popToRoot`/`close`, `terminate()`, `RouteContext` | Navigation Basics, Route Context |
-| `Screens/TabScreen.swift`, `NotificationScreen(s).swift` | Tab-scoped stacks, `hideTabBarOnPush`, programmatic tab change (`tabRouter.change/push/update`) | Tab Navigation |
+| `Screens/Tabs/` | Tab-scoped stacks, per-tab `hideTabBarOnPush`, programmatic tab change (`tabRouter.change/push/update/present/cover/popToRoot`), cross-tab modal presentation, pushing into a never-visited tab, `onTabReselected` | Tab Navigation |
 | `Screens/SplitScreen.swift`, `SidebarScreen.swift`, `Players(Screen).swift`, `PlayerScreen.swift` | `RoutingSplitView`, `select(content:)`/`select(detail:)` | Split Navigation |
 
 See the [main README](../../README.md#documentation) for links to each article. Deep linking isn't demonstrated yet (tracked separately).
