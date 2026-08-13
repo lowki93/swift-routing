@@ -95,28 +95,6 @@ public final class Router: BaseRouter, @unchecked Sendable {
   /// clears via `CloseModifier`'s native `dismiss()` -- knows not to log a second time.
   private var isCloseLoggedExplicitly = false
 
-  /// Catches dismissals that bypass `close()` entirely -- a native swipe-down, tapping outside
-  /// the sheet, or a `@Environment(\.dismiss)` call from inside the presented content all clear
-  /// `sheet`/`cover` directly through the live `.sheet(item:)`/`.cover(item:)` binding.
-  ///
-  /// Called on the *parent* (whoever owns `sheet`/`cover`), but attributes the log to the
-  /// *presented* child router, matching what `close()` itself logs on. Prefers a child already
-  /// flagged `isCloseLoggedExplicitly` -- set by `close()`/`closeChildren()` right before this
-  /// fires -- over an arbitrary presented one, so that when both `sheet` and `cover` clear in
-  /// the same `closeChildren()` call, each clearing consumes a *different* child's flag instead
-  /// of finding the same one twice.
-  private func logCloseIfNeeded(from oldValue: AnyRoute?, to newValue: AnyRoute?) {
-    guard oldValue != nil, newValue == nil else { return }
-    let presentedChildren = children.values.compactMap({ $0.value as? Router }).filter(\.isPresented)
-    guard let presentedChild = presentedChildren.first(where: \.isCloseLoggedExplicitly) ?? presentedChildren.first
-    else { return }
-    guard !presentedChild.isCloseLoggedExplicitly else {
-      presentedChild.isCloseLoggedExplicitly = false
-      return
-    }
-    presentedChild.log(.action(.close))
-  }
-
   /// The currently visible route.
   ///
   /// - For **stack** routers: the last pushed route, or the root if the stack is empty.
@@ -291,6 +269,28 @@ extension Router: @preconcurrency PresentationModel {
     }
     sheet = nil
     cover = nil
+  }
+
+  /// Catches dismissals that bypass `close()` entirely -- a native swipe-down, tapping outside
+  /// the sheet, or a `@Environment(\.dismiss)` call from inside the presented content all clear
+  /// `sheet`/`cover` directly through the live `.sheet(item:)`/`.cover(item:)` binding.
+  ///
+  /// Called on the *parent* (whoever owns `sheet`/`cover`), but attributes the log to the
+  /// *presented* child router, matching what `close()` itself logs on. Prefers a child already
+  /// flagged `isCloseLoggedExplicitly` -- set by `close()`/`closeChildren()` right before this
+  /// fires -- over an arbitrary presented one, so that when both `sheet` and `cover` clear in
+  /// the same `closeChildren()` call, each clearing consumes a *different* child's flag instead
+  /// of finding the same one twice.
+  private func logCloseIfNeeded(from oldValue: AnyRoute?, to newValue: AnyRoute?) {
+    guard oldValue != nil, newValue == nil else { return }
+    let presentedChildren = children.values.compactMap({ $0.value as? Router }).filter(\.isPresented)
+    guard let presentedChild = presentedChildren.first(where: \.isCloseLoggedExplicitly) ?? presentedChildren.first
+    else { return }
+    guard !presentedChild.isCloseLoggedExplicitly else {
+      presentedChild.isCloseLoggedExplicitly = false
+      return
+    }
+    presentedChild.log(.action(.close))
   }
 }
 
