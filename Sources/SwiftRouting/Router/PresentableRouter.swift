@@ -23,6 +23,7 @@ public class PresentableRouter: BaseRouter {
     didSet {
       guard oldValue != sheet else { return }
       present.send((sheet != nil, self))
+      logCloseIfNeeded(from: oldValue, to: sheet)
     }
   }
 
@@ -31,16 +32,36 @@ public class PresentableRouter: BaseRouter {
     didSet {
       guard oldValue != cover else { return }
       present.send((cover != nil, self))
+      logCloseIfNeeded(from: oldValue, to: cover)
     }
   }
 
   /// Triggers dismissal of the current modal when set to `true`.
   @Published internal var triggerClose: Bool = false
 
+  /// Set right before a mutation that's already logging its own `.action(.close)`, so
+  /// `logCloseIfNeeded` doesn't log a second time once that mutation actually clears
+  /// `sheet`/`cover`. `close()` is called on the *presented* router, but it's always the
+  /// *parent* whose `sheet`/`cover` actually goes `nil` (via `CloseModifier`'s native
+  /// `dismiss()`, not synchronously) -- so `close()` arms this flag on `parent`, not `self`.
+  private var isCloseLoggedExplicitly = false
+
   /// Indicates whether this router is presented modally.
   ///
   /// Defaults to `false`. Subclasses override this to reflect their presentation state.
   public var isPresented: Bool { false }
+
+  /// Catches dismissals that bypass `close()` entirely -- a native swipe-down, tapping outside
+  /// the sheet, or a `@Environment(\.dismiss)` call from inside the presented content all clear
+  /// `sheet`/`cover` directly through the live `.sheet(item:)`/`.cover(item:)` binding.
+  private func logCloseIfNeeded(from oldValue: AnyRoute?, to newValue: AnyRoute?) {
+    guard oldValue != nil, newValue == nil else { return }
+    guard !isCloseLoggedExplicitly else {
+      isCloseLoggedExplicitly = false
+      return
+    }
+    log(.action(.close))
+  }
 }
 
 // MARK: - PresentationModel
@@ -59,6 +80,7 @@ extension PresentableRouter: @preconcurrency PresentationModel {
 
   @MainActor public func close() {
     guard isPresented else { return }
+    (parent as? PresentableRouter)?.isCloseLoggedExplicitly = true
     triggerClose = true
     log(.action(.close))
   }
@@ -68,7 +90,9 @@ extension PresentableRouter: @preconcurrency PresentationModel {
 
     guard !presentedChildren.isEmpty else { return }
     presentedChildren.forEach { log(.action(.closeChildren($0))) }
+    isCloseLoggedExplicitly = true
     sheet = nil
+    isCloseLoggedExplicitly = true
     cover = nil
   }
 }

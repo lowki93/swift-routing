@@ -907,6 +907,73 @@ struct RouterTests {
     }
   }
 
+  @MainActor
+  struct NativeDismiss: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func sheetClearedWithoutClose_return_loggerCalledWithActionClose() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.present(TestRoute.home, withStack: true)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.sheet = nil
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
+    }
+
+    @Test
+    func coverClearedWithoutClose_return_loggerCalledWithActionClose() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.cover(TestRoute.home)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.cover = nil
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
+    }
+
+    @Test
+    func sheetAlreadyNil_return_noLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.sheet = nil
+
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func presentedChildCloses_sheetClearsOnParent_return_singleActionCloseLog() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedParentRouter
+      )
+      expectedParentRouter.present(TestRoute.home, withStack: true)
+      expectedLoggerSpy.clearReceivedMessages()
+      expectedLoggerSpy.receivedCallCount = 0
+
+      // `close()` only signals `triggerClose`; `CloseModifier`'s native `dismiss()` is what
+      // actually clears the parent's `sheet` later on -- simulated here as a separate step.
+      expectedPresentedRouter.close()
+      expectedParentRouter.sheet = nil
+
+      #expect(expectedLoggerSpy.receivedCallCount == 1)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
+    }
+  }
+
   // MARK: - Split
 
   @MainActor
