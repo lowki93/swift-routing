@@ -907,6 +907,98 @@ struct RouterTests {
     }
   }
 
+  @MainActor
+  struct NativeDismiss: RouterTestSuite {
+    let router: Router
+
+    @Test
+    func sheetClearedWithoutClose_return_loggerCalledOnPresentedChildWithActionClose() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedParentRouter
+      )
+      expectedParentRouter.present(TestRoute.home, withStack: true)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      // Simulates a native swipe-down/tap-outside: SwiftUI clears the binding directly,
+      // without ever going through `close()`.
+      expectedParentRouter.sheet = nil
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
+    }
+
+    @Test
+    func coverClearedWithoutClose_return_loggerCalledOnPresentedChildWithActionClose() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("cover"),
+        parent: expectedParentRouter
+      )
+      expectedParentRouter.cover(TestRoute.home)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedParentRouter.cover = nil
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
+    }
+
+    @Test
+    func sheetAlreadyNil_return_noLoggerCall() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+
+      expectedRouter.sheet = nil
+
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func sheetClearedWithoutMatchingPresentedChild_return_noLoggerCall() {
+      // No child router was ever created for this sheet (e.g. never rendered) -- nothing to
+      // attribute the close to, so this should be a no-op rather than logging on the parent.
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.present(TestRoute.home, withStack: true)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.sheet = nil
+
+      #expect(expectedLoggerSpy.receivedMessage == nil)
+    }
+
+    @Test
+    func presentedChildCloses_sheetClearsOnParent_return_singleActionCloseLogOnChild() {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedParentRouter = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedPresentedRouter = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .presented("sheet"),
+        parent: expectedParentRouter
+      )
+      expectedParentRouter.present(TestRoute.home, withStack: true)
+      expectedLoggerSpy.clearReceivedMessages()
+      expectedLoggerSpy.receivedCallCount = 0
+
+      // `close()` only signals `triggerClose`; `CloseModifier`'s native `dismiss()` is what
+      // actually clears the parent's `sheet` later on -- simulated here as a separate step.
+      expectedPresentedRouter.close()
+      expectedParentRouter.sheet = nil
+
+      #expect(expectedLoggerSpy.receivedCallCount == 1)
+      #expect(expectedLoggerSpy.receivedRouterId == expectedPresentedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.close))
+    }
+  }
+
   // MARK: - Split
 
   @MainActor
