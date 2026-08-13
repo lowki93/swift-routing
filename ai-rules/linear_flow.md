@@ -7,12 +7,8 @@ This file defines the workflow to follow when working on a Linear ticket.
 1. **Read the ticket** — fetch title, description, labels via the Linear MCP
 2. **Pull `main`** — `git checkout main && git pull origin main`
 3. **Create a branch** from `main` — see `ai-rules/versionning.md` for branch naming
-4. **Explore + plan** — delegate to the `Plan` subagent with `model: "opus"` (via the Agent tool) to explore the code and draft the implementation plan. This gives Opus-level planning quality automatically, without manual model switching.
-5. **Submit the plan for approval** (via plan mode / `ExitPlanMode`) — do not start implementing until the user explicitly approves it. The plan must be as detailed as possible to make the review easy:
-   - Files/modules that will be created or modified
-   - Concrete steps/changes for each file (not just "update X")
-   - Edge cases or tricky parts identified while exploring
-   - Open questions or assumptions, if any
+4. **Explore the code** before making any changes
+5. **Plan** — see `ai-rules/planning.md` for how to draft and get approval on the implementation plan
 6. **Implement** following the project conventions
 7. **Run tests**: `swift test`
 8. **Commit** — see `ai-rules/versionning.md` for commit format

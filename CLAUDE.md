@@ -14,6 +14,10 @@ See `ai-rules/linear_flow.md` for the full workflow.
 - **Public classes**: `public final class`
 - **Doc comments**: `///` with Swift code examples on all public types and methods
 
+## Planning
+
+See `ai-rules/planning.md` for how to draft and get approval on an implementation plan before coding.
+
 ## Versioning
 
 See `ai-rules/versionning.md` for the full branch, commit, and PR conventions.
