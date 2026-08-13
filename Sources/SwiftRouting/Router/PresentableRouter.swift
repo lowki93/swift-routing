@@ -54,13 +54,15 @@ public class PresentableRouter: BaseRouter {
   /// `sheet`/`cover` directly through the live `.sheet(item:)`/`.cover(item:)` binding.
   ///
   /// Called on the *parent* (whoever owns `sheet`/`cover`), but attributes the log to the
-  /// *presented* child router -- matched by `root`, since that's what `close()` itself logs on
-  /// when called explicitly, and the two shouldn't disagree on who dismissed what.
+  /// *presented* child router, matching what `close()` itself logs on. Prefers a child already
+  /// flagged `isCloseLoggedExplicitly` -- set by `close()`/`closeChildren()` right before this
+  /// fires -- over an arbitrary presented one, so that when both `sheet` and `cover` clear in
+  /// the same `closeChildren()` call, each clearing consumes a *different* child's flag instead
+  /// of finding the same one twice.
   private func logCloseIfNeeded(from oldValue: AnyRoute?, to newValue: AnyRoute?) {
-    guard let oldValue, newValue == nil else { return }
-    guard let presentedChild = children.values
-      .compactMap({ $0.value as? PresentableRouter })
-      .first(where: { $0.isPresented && $0.root == oldValue })
+    guard oldValue != nil, newValue == nil else { return }
+    let presentedChildren = children.values.compactMap({ $0.value as? PresentableRouter }).filter(\.isPresented)
+    guard let presentedChild = presentedChildren.first(where: \.isCloseLoggedExplicitly) ?? presentedChildren.first
     else { return }
     guard !presentedChild.isCloseLoggedExplicitly else {
       presentedChild.isCloseLoggedExplicitly = false
