@@ -33,14 +33,8 @@ struct UserScreen: View {
       Button("Pop to root") {
         router.popToRoot()
       }
-      Button("Go back (terminate)") {
-        router.terminate(model.name)
-      }
     }
     .padding()
-    .routerContext(String.self) { context in
-      print("Context as String: ", context)
-    }
   }
 }
 

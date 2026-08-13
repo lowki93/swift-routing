@@ -26,12 +26,9 @@ struct SettingsScreen: View {
     .toolbar {
       ToolbarItem(placement: .destructiveAction) {
         Button("Dismiss") {
-          router.terminate(Success(value: 4))
+          router.close()
         }
       }
-    }
-    .routerContext(Int.self) { [weak model] context in
-        model?.update(int: context)
     }
   }
 }
@@ -40,8 +37,4 @@ struct SettingsScreen: View {
 final class SettingsScreenModel {
 
   init() {}
-
-  func update(int: Int) {
-    print("Updater Int: ", int)
-  }
 }
