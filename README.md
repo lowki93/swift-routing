@@ -213,6 +213,10 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 | [Route Context](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/routecontextguide) | Pass data between routes |
 | [Migration](https://lowki93.github.io/swift-routing/0.7.0/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
 
+## Examples
+
+[`Examples/SwiftRoutingDemo`](Examples/SwiftRoutingDemo) is a runnable Xcode project demonstrating navigation stacks, tabs, split views, and `RouteContext` — see its own [README](Examples/SwiftRoutingDemo/README.md) for what each section covers.
+
 ## Articles
 
 - [Stop Fighting SwiftUI Navigation — A Type-Safe Approach with Swift Routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270)

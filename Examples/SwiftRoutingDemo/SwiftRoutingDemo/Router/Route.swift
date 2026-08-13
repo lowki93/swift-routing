@@ -14,6 +14,7 @@ enum AppRoute: Route {
   case user(name: String)
   case search
   case settings
+  case about
   case sidebar
   case players(PlayerType)
   case player(Player)
@@ -25,6 +26,7 @@ enum AppRoute: Route {
     case let .user(name): "User(\(name))"
     case .search: "Search"
     case .settings: "Settings"
+    case .about: "About"
     case .sidebar: "Sidebar"
     case let .players(type): "Players(\(type))"
     case let .player(player): "Player(\(player.name))"
@@ -42,6 +44,7 @@ extension AppRoute: RouteDestination {
         .presentationDragIndicator(.visible)
         .presentationDetents([.medium])
     case .settings: SettingsScreen(model: SettingsScreenModel())
+    case .about: AboutScreen()
     case .sidebar: SidebarScreen()
     case let players(type): PlayersScreen(type: type)
     case let .player(player): PlayerScreen(player: player)

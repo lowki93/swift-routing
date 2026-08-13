@@ -10,6 +10,7 @@ import SwiftUI
 struct UserScreen: View {
 
   @Environment(\.router) private var router
+  @Environment(\.dismiss) private var dismiss
   @State var model: UserScreenModel
 
   var body: some View {
@@ -21,7 +22,18 @@ struct UserScreen: View {
       Button("User: Ben") {
         router.push(AppRoute.user(name: "Ben"))
       }
-      Button("Go back") {
+      Button("Back") {
+        router.back()
+      }
+      Button("Back (SwiftUI dismiss)") {
+        // Pops the same way a swipe-back would -- logs .action(.back(count: 1)) via
+        // path's didSet, same as router.back() above.
+        dismiss()
+      }
+      Button("Pop to root") {
+        router.popToRoot()
+      }
+      Button("Go back (terminate)") {
         router.terminate(model.name)
       }
     }
