@@ -17,5 +17,8 @@ struct NotificationScreen: View {
         tabRouter?.change(tab: HomeTab.home)
       }
     }
+    // .notifications' hideTabBarOnPush is false, so the tab bar stays visible here,
+    // unlike pushing into .home.
+    .navigationTitle("Notification")
   }
 }

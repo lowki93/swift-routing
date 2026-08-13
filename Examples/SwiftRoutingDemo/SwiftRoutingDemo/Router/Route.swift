@@ -11,6 +11,8 @@ import SwiftRouting
 enum AppRoute: Route {
   case home(name: String)
   case notifications
+  case notification(id: Int)
+  case profile
   case user(name: String)
   case search
   case settings
@@ -23,6 +25,8 @@ enum AppRoute: Route {
     switch self {
     case let .home(name):  "Home(\(name))"
     case .notifications: "Notificatons"
+    case let .notification(id): "Notification(\(id))"
+    case .profile: "Profile"
     case let .user(name): "User(\(name))"
     case .search: "Search"
     case .settings: "Settings"
@@ -39,6 +43,8 @@ extension AppRoute: RouteDestination {
     switch route {
     case let .home(name): HomeScreen(model: HomeScreenModel(name: name))
     case .notifications: NotificationsScreen()
+    case .notification: NotificationScreen()
+    case .profile: ProfileScreen()
     case let .user(name): UserScreen(model: UserScreenModel(name: name))
     case .search: Text("Search")
         .presentationDragIndicator(.visible)

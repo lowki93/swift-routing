@@ -30,6 +30,7 @@ struct TabScreen: View {
     RoutingTabView(tab: $tab, destination: AppRoute.self) { destination in
       tab(.home, destination: destination, root: .home(name: "John"))
       tab(.notifications, destination: destination, root: .notifications)
+      tab(.profile, destination: destination, root: .profile)
     }
   }
 
@@ -37,6 +38,7 @@ struct TabScreen: View {
     TabView(selection: .tabToRoot(for: $tab, in: router)) {
       tab(.home, destination: AppRoute.self, root: .home(name: "John"))
       tab(.notifications, destination: AppRoute.self, root: .notifications)
+      tab(.profile, destination: AppRoute.self, root: .profile)
     }
   }
 
