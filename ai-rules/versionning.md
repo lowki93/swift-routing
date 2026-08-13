@@ -1,6 +1,14 @@
 # Versioning Rules (SwiftRouting)
 
-This file defines branch, commit, and PR conventions for the project.
+This file defines the git process (pull, branch, commit, push, PR) and the branch, commit, and PR conventions for the project.
+
+## Process
+
+1. **Pull `main`** — `git checkout main && git pull origin main`
+2. **Create a branch** from `main` — see Branch Naming below
+3. *(implementation happens here — see `ai-rules/planning.md` and `CLAUDE.md`)*
+4. **Commit** — see Commit Conventions below
+5. **Push + create PR** — see PR Conventions below
 
 ## Branch Naming
 

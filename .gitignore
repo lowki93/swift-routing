@@ -10,4 +10,5 @@ DerivedData/
 
 # AI
 /.cursor
-/.claude
+/.claude/*
+!/.claude/agents
