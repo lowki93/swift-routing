@@ -6,7 +6,7 @@ This file defines the git process (pull, branch, commit, push, PR) and the branc
 
 1. **Pull `main`** — `git checkout main && git pull origin main`
 2. **Create a branch** from `main` — see Branch Naming below
-3. Implement, then **run tests**: `swift test`
+3. *(implementation happens here — see `ai-rules/planning.md` and `CLAUDE.md`)*
 4. **Commit** — see Commit Conventions below
 5. **Push + create PR** — see PR Conventions below
 
