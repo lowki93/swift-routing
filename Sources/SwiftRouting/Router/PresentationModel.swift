@@ -9,9 +9,7 @@ import Foundation
 
 /// Defines modal and sheet presentation capabilities for router types.
 ///
-/// `PresentationModel` is implemented by ``PresentableRouter`` and shared by all
-/// concrete router types that support sheet and cover presentation, such as
-/// ``Router`` and any concrete router type built on ``PresentableRouter``.
+/// `PresentationModel` is implemented by ``Router``.
 ///
 /// Use these methods to present routes modally or to dismiss the current router.
 public protocol PresentationModel {

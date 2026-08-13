@@ -32,7 +32,7 @@ import SwiftUI
 /// router.select(detail: player)          // drives the detail column
 /// router.select(content: playerType)     // drives the content column (3-column only)
 /// ```
-public final class Router: PresentableRouter, @unchecked Sendable {
+public final class Router: BaseRouter, @unchecked Sendable {
 
   static let defaultRouter: Router = Router(configuration: .default)
 
@@ -66,6 +66,34 @@ public final class Router: PresentableRouter, @unchecked Sendable {
 
   /// See `path`'s `didSet` for why this exists.
   private var isPathChangeLoggedExplicitly = false
+
+  // MARK: Presentation
+
+  /// The route currently presented as a sheet, or `nil` if no sheet is shown.
+  @Published internal var sheet: AnyRoute? {
+    didSet {
+      guard oldValue != sheet else { return }
+      present.send((sheet != nil, self))
+      logCloseIfNeeded(from: oldValue, to: sheet)
+    }
+  }
+
+  /// The route currently presented as a full-screen cover, or `nil` if none is shown.
+  @Published internal var cover: AnyRoute? {
+    didSet {
+      guard oldValue != cover else { return }
+      present.send((cover != nil, self))
+      logCloseIfNeeded(from: oldValue, to: cover)
+    }
+  }
+
+  /// Triggers dismissal of the current modal when set to `true`.
+  @Published internal var triggerClose: Bool = false
+
+  /// Set by `close()` right before it logs its own `.action(.close)` on `self`, so
+  /// `logCloseIfNeeded` -- triggered later, on the *parent*, once `sheet`/`cover` actually
+  /// clears via `CloseModifier`'s native `dismiss()` -- knows not to log a second time.
+  private var isCloseLoggedExplicitly = false
 
   /// The currently visible route.
   ///
@@ -111,7 +139,7 @@ public final class Router: PresentableRouter, @unchecked Sendable {
   ///   Button("Close") { router.close() }
   /// }
   /// ```
-  override public var isPresented: Bool {
+  public var isPresented: Bool {
     type.isPresented
   }
 
@@ -207,6 +235,62 @@ public final class Router: PresentableRouter, @unchecked Sendable {
     super.init(configuration: parent.configuration, root: root, parent: parent)
     self.isCompact = isCompact
     parent.addChild(self)
+  }
+}
+
+// MARK: - Presentation
+
+extension Router: @preconcurrency PresentationModel {
+
+  @MainActor public func present(_ destination: some Route, withStack: Bool) {
+    log(.navigation(from: currentRoute.wrapped, to: destination, type: .sheet(withStack: withStack)))
+    sheet = AnyRoute(wrapped: destination, inStack: withStack)
+  }
+
+  @MainActor public func cover(_ destination: some Route) {
+    log(.navigation(from: currentRoute.wrapped, to: destination, type: .cover))
+    cover = AnyRoute(wrapped: destination)
+  }
+
+  @MainActor public func close() {
+    guard isPresented else { return }
+    isCloseLoggedExplicitly = true
+    triggerClose = true
+    log(.action(.close))
+  }
+
+  @MainActor public func closeChildren() {
+    let presentedChildren = children.values.compactMap({ $0.value as? Router }).filter(\.isPresented)
+
+    guard !presentedChildren.isEmpty else { return }
+    presentedChildren.forEach {
+      $0.isCloseLoggedExplicitly = true
+      log(.action(.closeChildren($0)))
+    }
+    sheet = nil
+    cover = nil
+  }
+
+  /// Catches dismissals that bypass `close()` entirely -- a native swipe-down, tapping outside
+  /// the sheet, or a `@Environment(\.dismiss)` call from inside the presented content all clear
+  /// `sheet`/`cover` directly through the live `.sheet(item:)`/`.cover(item:)` binding.
+  ///
+  /// Called on the *parent* (whoever owns `sheet`/`cover`), but attributes the log to the
+  /// *presented* child router, matching what `close()` itself logs on. Prefers a child already
+  /// flagged `isCloseLoggedExplicitly` -- set by `close()`/`closeChildren()` right before this
+  /// fires -- over an arbitrary presented one, so that when both `sheet` and `cover` clear in
+  /// the same `closeChildren()` call, each clearing consumes a *different* child's flag instead
+  /// of finding the same one twice.
+  private func logCloseIfNeeded(from oldValue: AnyRoute?, to newValue: AnyRoute?) {
+    guard oldValue != nil, newValue == nil else { return }
+    let presentedChildren = children.values.compactMap({ $0.value as? Router }).filter(\.isPresented)
+    guard let presentedChild = presentedChildren.first(where: \.isCloseLoggedExplicitly) ?? presentedChildren.first
+    else { return }
+    guard !presentedChild.isCloseLoggedExplicitly else {
+      presentedChild.isCloseLoggedExplicitly = false
+      return
+    }
+    presentedChild.log(.action(.close))
   }
 }
 
