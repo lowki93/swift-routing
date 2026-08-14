@@ -11,15 +11,28 @@
 		6CB19B952D727873007764BF /* SwiftRouting in Frameworks */ = {isa = PBXBuildFile; productRef = 6CB19B942D727873007764BF /* SwiftRouting */; };
 		715FF8362D7656A500ACECB7 /* SwiftRouting in Frameworks */ = {isa = PBXBuildFile; productRef = 715FF8352D7656A500ACECB7 /* SwiftRouting */; };
 		71907CB82D693A6C00E91B2D /* SwiftRouting in Frameworks */ = {isa = PBXBuildFile; productRef = 71907CB72D693A6C00E91B2D /* SwiftRouting */; };
+		A52A232727DD6E89C5180D72 /* URLRouting in Frameworks */ = {isa = PBXBuildFile; productRef = F2E362FC6E06CDC80E46E507 /* URLRouting */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		6C08D29E2D4062EA0013100F /* SwiftRoutingDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftRoutingDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F08F79E3AFCAF1D56A5FC561 /* Exceptions for "SwiftRoutingDemo" folder in "SwiftRoutingDemo" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 6C08D29D2D4062EA0013100F /* SwiftRoutingDemo */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6C08D2A02D4062EA0013100F /* SwiftRoutingDemo */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F08F79E3AFCAF1D56A5FC561 /* Exceptions for "SwiftRoutingDemo" folder in "SwiftRoutingDemo" target */,
+			);
 			path = SwiftRoutingDemo;
 			sourceTree = "<group>";
 		};
@@ -34,6 +47,7 @@
 				715FF8362D7656A500ACECB7 /* SwiftRouting in Frameworks */,
 				6C08D2B22D4063040013100F /* SwiftRouting in Frameworks */,
 				71907CB82D693A6C00E91B2D /* SwiftRouting in Frameworks */,
+				A52A232727DD6E89C5180D72 /* URLRouting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -80,6 +94,7 @@
 				71907CB72D693A6C00E91B2D /* SwiftRouting */,
 				6CB19B942D727873007764BF /* SwiftRouting */,
 				715FF8352D7656A500ACECB7 /* SwiftRouting */,
+				F2E362FC6E06CDC80E46E507 /* URLRouting */,
 			);
 			productName = SwiftRoutingDemo;
 			productReference = 6C08D29E2D4062EA0013100F /* SwiftRoutingDemo.app */;
@@ -111,6 +126,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				715FF8342D7656A500ACECB7 /* XCLocalSwiftPackageReference "../../../swift-routing" */,
+				0816EE7BD68986D904899F8F /* XCRemoteSwiftPackageReference "swift-url-routing" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6C08D29F2D4062EA0013100F /* Products */;
@@ -267,6 +283,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SwiftRoutingDemo/SwiftRoutingDemo.entitlements;
+				INFOPLIST_FILE = SwiftRoutingDemo/Info.plist;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
@@ -311,6 +328,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SwiftRoutingDemo/SwiftRoutingDemo.entitlements;
+				INFOPLIST_FILE = SwiftRoutingDemo/Info.plist;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
@@ -379,6 +397,17 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		0816EE7BD68986D904899F8F /* XCRemoteSwiftPackageReference "swift-url-routing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-url-routing";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.6.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		6C08D2B12D4063040013100F /* SwiftRouting */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -395,6 +424,11 @@
 		71907CB72D693A6C00E91B2D /* SwiftRouting */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftRouting;
+		};
+		F2E362FC6E06CDC80E46E507 /* URLRouting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0816EE7BD68986D904899F8F /* XCRemoteSwiftPackageReference "swift-url-routing" */;
+			productName = URLRouting;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

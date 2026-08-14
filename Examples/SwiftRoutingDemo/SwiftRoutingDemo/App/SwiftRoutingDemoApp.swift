@@ -7,6 +7,7 @@
 
 import SwiftRouting
 import SwiftUI
+import URLRouting
 
 @main
 struct SwiftRoutingDemoApp: App {
@@ -15,6 +16,17 @@ struct SwiftRoutingDemoApp: App {
       ChoiceScreen()
         .printRouterOnChange()
         .environment(\.router, Router(configuration: Configuration(shouldCrashOnRouteNotFound: true)))
+        .onOpenURL { url in
+          print("Deeplink: received", url)
+          guard let identifier = try? appDeeplinkRouter.match(url: url) else {
+            print("Deeplink: no match for", url)
+            return
+          }
+          Task {
+            let deeplink = try? await AppDeeplinkHandler().deeplink(from: identifier)
+            print("Deeplink:", identifier, "->", deeplink as Any)
+          }
+        }
     }
   }
 }
