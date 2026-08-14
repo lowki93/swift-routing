@@ -23,6 +23,16 @@ Format: `type/SWI-XX-short-title`
 
 Example: `feat/SWI-5-navigation-link-tests`
 
+## Multi-Ticket Epics
+
+If a parent ticket has sub-tickets that are **not independently shippable** (e.g. an early sub-ticket makes a founding/breaking decision, or the work leaves the code in a non-functional intermediate state until a later sub-ticket lands), don't branch each sub-ticket from `main`. Instead:
+
+1. Create one integration branch from `main`: `feat/SWI-XX-<slug>` (using the parent ticket's number).
+2. Branch each sub-ticket from that integration branch, and PR into it instead of `main`.
+3. Merge the integration branch into `main` only once the epic is complete (all sub-tickets done).
+
+This does **not** apply just because a ticket is large — a parent ticket whose sub-tickets are each independently shippable (e.g. SWI-44's demo-app sub-tickets, each adding a self-contained screen) still branches every sub-ticket from `main` as usual.
+
 ## Commit Conventions
 
 Format: `short description`
