@@ -10,8 +10,8 @@ import SwiftUI
 
 struct ProfileScreen: View {
 
-  @Environment(\.router) private var router
-  @Environment(\.tabRouter) private var tabRouter
+  let router: any RouterModel
+  let viewModel: ProfileViewModel?
   @State private var reselectionCount = 0
 
   var body: some View {
@@ -19,12 +19,7 @@ struct ProfileScreen: View {
       // .profile's hideTabBarOnPush is false, so the tab bar stays visible on push.
       Button("Push user") { router.push(AppRoute.user(name: "Me")) }
 
-      if let tabRouter {
-        // TabRouterModel is only resolvable from within `body`, so the ViewModel is built
-        // here from the already-resolved environment value -- see ProfileViewModel for the
-        // TabRouterModel-injection-for-testability pattern documented in Testing.md.
-        let viewModel = ProfileViewModel(tabRouter: tabRouter)
-
+      if let viewModel {
         Button("Present search (current tab)") { viewModel.presentSearch() }
         Button("Cover about (current tab)") { viewModel.coverAbout() }
         Button("Present search in notifications tab") { viewModel.presentSearchInNotifications() }
@@ -44,6 +39,8 @@ struct ProfileScreen: View {
 
 // Demonstrates injecting `any TabRouterModel` into a ViewModel (Testing.md "Strategy 2"),
 // so navigation can be unit-tested with TabRouterSpy instead of exercising real UI.
+// Built in AppRoute's RouteDestination (Route.swift), the only place `@Environment(\.tabRouter)`
+// needs resolving for this route.
 @MainActor
 final class ProfileViewModel {
   private let tabRouter: any TabRouterModel
