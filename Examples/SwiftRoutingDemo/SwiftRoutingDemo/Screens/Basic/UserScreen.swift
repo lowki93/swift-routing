@@ -8,18 +8,26 @@
 import SwiftRouting
 import SwiftUI
 
-struct UserScreen: View {
-
+// Destination wrapper: the only place `@Environment(\.router)` needs to be resolved
+// for this route (per the environment-driven mapping pattern documented on
+// `RouteDestination.view(for:)`). UserScreen itself takes the ViewModel as a plain
+// dependency and stays environment-free for navigation.
+struct UserRouteDestination: View {
   @Environment(\.router) private var router
-  @Environment(\.dismiss) private var dismiss
-  @State var model: UserScreenModel
+  let name: String
 
   var body: some View {
-    // RouterModel is only resolvable from within `body`, so the ViewModel is built here
-    // from the already-resolved environment value -- see UserViewModel for the
-    // RouterModel-injection-for-testability pattern documented in Testing.md.
-    let viewModel = UserViewModel(name: model.name, router: router)
+    UserScreen(model: UserScreenModel(name: name), viewModel: UserViewModel(name: name, router: router))
+  }
+}
 
+struct UserScreen: View {
+
+  @Environment(\.dismiss) private var dismiss
+  @State var model: UserScreenModel
+  let viewModel: UserViewModel
+
+  var body: some View {
     VStack {
       Image(systemName: "globe")
         .imageScale(.large)
@@ -56,6 +64,7 @@ final class UserScreenModel {
 
 // Demonstrates injecting `any RouterModel` into a ViewModel (Testing.md "Strategy 2"),
 // so navigation can be unit-tested with RouterSpy instead of exercising real UI.
+// Built by UserRouteDestination above.
 @MainActor
 final class UserViewModel {
   private let name: String
