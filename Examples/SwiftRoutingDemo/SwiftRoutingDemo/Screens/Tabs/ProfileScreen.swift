@@ -19,14 +19,12 @@ struct ProfileScreen: View {
       // .profile's hideTabBarOnPush is false, so the tab bar stays visible on push.
       Button("Push user") { router.push(AppRoute.user(name: "Me")) }
 
-      if viewModel.isAvailable {
-        Button("Present search (current tab)") { viewModel.presentSearch() }
-        Button("Cover about (current tab)") { viewModel.coverAbout() }
-        Button("Present search in notifications tab") { viewModel.presentSearchInNotifications() }
-        // popToRoot(in:) does NOT call change(tab:) -- unlike push/present/cover/update,
-        // this resets the home tab's stack without switching you to it.
-        Button("Reset home tab (stays on profile)") { viewModel.resetHomeTab() }
-      }
+      Button("Present search (current tab)") { viewModel.presentSearch() }
+      Button("Cover about (current tab)") { viewModel.coverAbout() }
+      Button("Present search in notifications tab") { viewModel.presentSearchInNotifications() }
+      // popToRoot(in:) does NOT call change(tab:) -- unlike push/present/cover/update,
+      // this resets the home tab's stack without switching you to it.
+      Button("Reset home tab (stays on profile)") { viewModel.resetHomeTab() }
 
       Text("Reselected \(reselectionCount) time(s)")
     }
@@ -49,8 +47,6 @@ final class ProfileViewModel {
   init(tabRouter: (any TabRouterModel)?) {
     self.tabRouter = tabRouter
   }
-
-  var isAvailable: Bool { tabRouter != nil }
 
   func presentSearch() {
     tabRouter?.present(AppRoute.search)
