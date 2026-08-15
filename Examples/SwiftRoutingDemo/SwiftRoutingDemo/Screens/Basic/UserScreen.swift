@@ -12,7 +12,6 @@ struct UserScreen: View {
 
   @Environment(\.dismiss) private var dismiss
   @State var model: UserScreenModel
-  let viewModel: UserViewModel
 
   var body: some View {
     VStack {
@@ -21,31 +20,22 @@ struct UserScreen: View {
         .foregroundStyle(.tint)
       Text("Hello \(model.name)")
       Button("User: Ben") {
-        viewModel.pushBen()
+        model.pushBen()
       }
       Button("Back") {
-        viewModel.back()
+        model.back()
       }
       Button("Back (SwiftUI dismiss)") {
         // Pops the same way a swipe-back would -- logs .action(.back(count: 1)) via
-        // path's didSet, same as viewModel.back() above. Stays a View-level concern,
-        // unlike the router-driven actions above which go through the ViewModel.
+        // path's didSet, same as model.back() above. Stays a View-level concern,
+        // unlike the router-driven actions above which go through the model.
         dismiss()
       }
       Button("Pop to root") {
-        viewModel.popToRoot()
+        model.popToRoot()
       }
     }
     .padding()
-  }
-}
-
-@Observable
-final class UserScreenModel {
-  private(set) var name: String
-
-  init(name: String) {
-    self.name = name
   }
 }
 
@@ -53,9 +43,9 @@ final class UserScreenModel {
 // so navigation can be unit-tested with RouterSpy instead of exercising real UI.
 // Built in AppRoute's RouteDestination (Route.swift), the only place `@Environment(\.router)`
 // needs resolving for this route.
-@MainActor
-final class UserViewModel {
-  private let name: String
+@Observable @MainActor
+final class UserScreenModel {
+  private(set) var name: String
   private let router: any RouterModel
 
   init(name: String, router: any RouterModel) {

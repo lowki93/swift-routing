@@ -49,7 +49,7 @@ extension AppRoute: RouteDestination {
 }
 
 // Only `.profile` and `.user` need environment-driven dependency injection (RouterModel/
-// TabRouterModel into a ViewModel -- see UserViewModel/ProfileViewModel), so this single
+// TabRouterModel into a ViewModel -- see UserScreenModel/ProfileViewModel), so this single
 // wrapper resolves `@Environment` once for the whole route enum, per the "Using Environment
 // Values In RouteDestination" pattern from the swift-routing skill. Everything else just
 // passes through unchanged.
@@ -64,7 +64,7 @@ struct AppRouteDestination: View {
     case .notifications: NotificationsScreen()
     case .notification: NotificationScreen()
     case .profile: ProfileScreen(router: router, viewModel: tabRouter.map { ProfileViewModel(tabRouter: $0) })
-    case let .user(name): UserScreen(model: UserScreenModel(name: name), viewModel: UserViewModel(name: name, router: router))
+    case let .user(name): UserScreen(model: UserScreenModel(name: name, router: router))
     case .search: Text("Search")
         .presentationDragIndicator(.visible)
         .presentationDetents([.medium])
