@@ -20,12 +20,17 @@ struct ProfileScreen: View {
       Button("Push user") { router.push(AppRoute.user(name: "Me")) }
 
       if let tabRouter {
-        Button("Present search (current tab)") { tabRouter.present(AppRoute.search) }
-        Button("Cover about (current tab)") { tabRouter.cover(AppRoute.about) }
-        Button("Present search in notifications tab") { tabRouter.present(AppRoute.search, in: HomeTab.notifications) }
+        // TabRouterModel is only resolvable from within `body`, so the ViewModel is built
+        // here from the already-resolved environment value -- see ProfileViewModel for the
+        // TabRouterModel-injection-for-testability pattern documented in Testing.md.
+        let viewModel = ProfileViewModel(tabRouter: tabRouter)
+
+        Button("Present search (current tab)") { viewModel.presentSearch() }
+        Button("Cover about (current tab)") { viewModel.coverAbout() }
+        Button("Present search in notifications tab") { viewModel.presentSearchInNotifications() }
         // popToRoot(in:) does NOT call change(tab:) -- unlike push/present/cover/update,
         // this resets the home tab's stack without switching you to it.
-        Button("Reset home tab (stays on profile)") { tabRouter.popToRoot(in: HomeTab.home) }
+        Button("Reset home tab (stays on profile)") { viewModel.resetHomeTab() }
       }
 
       Text("Reselected \(reselectionCount) time(s)")
@@ -34,5 +39,32 @@ struct ProfileScreen: View {
     .onTabReselected(HomeTab.profile) {
       reselectionCount += 1
     }
+  }
+}
+
+// Demonstrates injecting `any TabRouterModel` into a ViewModel (Testing.md "Strategy 2"),
+// so navigation can be unit-tested with TabRouterSpy instead of exercising real UI.
+@MainActor
+final class ProfileViewModel {
+  private let tabRouter: any TabRouterModel
+
+  init(tabRouter: any TabRouterModel) {
+    self.tabRouter = tabRouter
+  }
+
+  func presentSearch() {
+    tabRouter.present(AppRoute.search)
+  }
+
+  func coverAbout() {
+    tabRouter.cover(AppRoute.about)
+  }
+
+  func presentSearchInNotifications() {
+    tabRouter.present(AppRoute.search, in: HomeTab.notifications)
+  }
+
+  func resetHomeTab() {
+    tabRouter.popToRoot(in: HomeTab.home)
   }
 }
