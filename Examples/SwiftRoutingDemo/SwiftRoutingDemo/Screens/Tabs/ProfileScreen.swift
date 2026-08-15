@@ -11,7 +11,7 @@ import SwiftUI
 struct ProfileScreen: View {
 
   let router: any RouterModel
-  let viewModel: ProfileViewModel?
+  let viewModel: ProfileViewModel
   @State private var reselectionCount = 0
 
   var body: some View {
@@ -19,7 +19,7 @@ struct ProfileScreen: View {
       // .profile's hideTabBarOnPush is false, so the tab bar stays visible on push.
       Button("Push user") { router.push(AppRoute.user(name: "Me")) }
 
-      if let viewModel {
+      if viewModel.isAvailable {
         Button("Present search (current tab)") { viewModel.presentSearch() }
         Button("Cover about (current tab)") { viewModel.coverAbout() }
         Button("Present search in notifications tab") { viewModel.presentSearchInNotifications() }
@@ -40,28 +40,31 @@ struct ProfileScreen: View {
 // Demonstrates injecting `any TabRouterModel` into a ViewModel (Testing.md "Strategy 2"),
 // so navigation can be unit-tested with TabRouterSpy instead of exercising real UI.
 // Built in AppRoute's RouteDestination (Route.swift), the only place `@Environment(\.tabRouter)`
-// needs resolving for this route.
+// needs resolving for this route. The ViewModel itself always exists -- only the underlying
+// `tabRouter` (unavailable outside a tab context) is optional.
 @MainActor
 final class ProfileViewModel {
-  private let tabRouter: any TabRouterModel
+  private let tabRouter: (any TabRouterModel)?
 
-  init(tabRouter: any TabRouterModel) {
+  init(tabRouter: (any TabRouterModel)?) {
     self.tabRouter = tabRouter
   }
 
+  var isAvailable: Bool { tabRouter != nil }
+
   func presentSearch() {
-    tabRouter.present(AppRoute.search)
+    tabRouter?.present(AppRoute.search)
   }
 
   func coverAbout() {
-    tabRouter.cover(AppRoute.about)
+    tabRouter?.cover(AppRoute.about)
   }
 
   func presentSearchInNotifications() {
-    tabRouter.present(AppRoute.search, in: HomeTab.notifications)
+    tabRouter?.present(AppRoute.search, in: HomeTab.notifications)
   }
 
   func resetHomeTab() {
-    tabRouter.popToRoot(in: HomeTab.home)
+    tabRouter?.popToRoot(in: HomeTab.home)
   }
 }

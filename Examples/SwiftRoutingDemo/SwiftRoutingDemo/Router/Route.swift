@@ -63,7 +63,7 @@ struct AppRouteDestination: View {
     case let .home(name): HomeScreen(model: HomeScreenModel(name: name))
     case .notifications: NotificationsScreen()
     case .notification: NotificationScreen()
-    case .profile: ProfileScreen(router: router, viewModel: tabRouter.map { ProfileViewModel(tabRouter: $0) })
+    case .profile: ProfileScreen(router: router, viewModel: ProfileViewModel(tabRouter: tabRouter))
     case let .user(name): UserScreen(model: UserScreenModel(name: name, router: router))
     case .search: Text("Search")
         .presentationDragIndicator(.visible)
