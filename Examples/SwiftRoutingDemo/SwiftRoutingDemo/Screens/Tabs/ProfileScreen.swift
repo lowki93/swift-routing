@@ -10,8 +10,8 @@ import SwiftUI
 
 struct ProfileScreen: View {
 
-  @Environment(\.router) private var router
-  @Environment(\.tabRouter) private var tabRouter
+  let router: any RouterModel
+  let viewModel: ProfileViewModel
   @State private var reselectionCount = 0
 
   var body: some View {
@@ -19,14 +19,12 @@ struct ProfileScreen: View {
       // .profile's hideTabBarOnPush is false, so the tab bar stays visible on push.
       Button("Push user") { router.push(AppRoute.user(name: "Me")) }
 
-      if let tabRouter {
-        Button("Present search (current tab)") { tabRouter.present(AppRoute.search) }
-        Button("Cover about (current tab)") { tabRouter.cover(AppRoute.about) }
-        Button("Present search in notifications tab") { tabRouter.present(AppRoute.search, in: HomeTab.notifications) }
-        // popToRoot(in:) does NOT call change(tab:) -- unlike push/present/cover/update,
-        // this resets the home tab's stack without switching you to it.
-        Button("Reset home tab (stays on profile)") { tabRouter.popToRoot(in: HomeTab.home) }
-      }
+      Button("Present search (current tab)") { viewModel.presentSearch() }
+      Button("Cover about (current tab)") { viewModel.coverAbout() }
+      Button("Present search in notifications tab") { viewModel.presentSearchInNotifications() }
+      // popToRoot(in:) does NOT call change(tab:) -- unlike push/present/cover/update,
+      // this resets the home tab's stack without switching you to it.
+      Button("Reset home tab (stays on profile)") { viewModel.resetHomeTab() }
 
       Text("Reselected \(reselectionCount) time(s)")
     }
@@ -34,5 +32,35 @@ struct ProfileScreen: View {
     .onTabReselected(HomeTab.profile) {
       reselectionCount += 1
     }
+  }
+}
+
+// Demonstrates injecting `any TabRouterModel` into a ViewModel (Testing.md "Strategy 2"),
+// so navigation can be unit-tested with TabRouterSpy instead of exercising real UI.
+// Built in AppRoute's RouteDestination (Route.swift), the only place `@Environment(\.tabRouter)`
+// needs resolving for this route. The ViewModel itself always exists -- only the underlying
+// `tabRouter` (unavailable outside a tab context) is optional.
+@MainActor
+final class ProfileViewModel {
+  private let tabRouter: (any TabRouterModel)?
+
+  init(tabRouter: (any TabRouterModel)?) {
+    self.tabRouter = tabRouter
+  }
+
+  func presentSearch() {
+    tabRouter?.present(AppRoute.search)
+  }
+
+  func coverAbout() {
+    tabRouter?.cover(AppRoute.about)
+  }
+
+  func presentSearchInNotifications() {
+    tabRouter?.present(AppRoute.search, in: HomeTab.notifications)
+  }
+
+  func resetHomeTab() {
+    tabRouter?.popToRoot(in: HomeTab.home)
   }
 }
