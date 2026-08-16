@@ -27,6 +27,9 @@ struct SidebarScreen: View {
       NavigationLink(item.rawValue.capitalized, value: item)
     }
     .onFirstAppear {
+      // On iPhone, NavigationSplitView collapses to a single column -- skip
+      // auto-selection there and let the user tap to navigate instead.
+      guard !router.isCompact else { return }
       if router.hasContentColumn {
         router.select(content: array.first)
       } else {
@@ -43,6 +46,15 @@ struct SidebarScreen: View {
             preferredCompactColumnPicker
           }
           .pickerStyle(.menu)
+        }
+      }
+      ToolbarItem(placement: .secondaryAction) {
+        Button("Deep link to a player") {
+          Task {
+            guard let player = Player.players.randomElement() else { return }
+            guard let deeplink = try? await PlayerSplitDeeplinkHandler().deeplink(from: .player(player)) else { return }
+            router.handle(splitDeeplink: deeplink)
+          }
         }
       }
     }
