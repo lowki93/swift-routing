@@ -12,9 +12,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Merged `PresentableRouter` into `Router` -- the intermediate class added no polymorphism (`Router` was its only, `final` subclass) and just split the implementation across two files. Not a breaking change: `PresentableRouter` was never part of the public type hierarchy consumers could actually reach (#124)
+
+### Fixed
+
+- `close()`'s `.action(.close)` log was skipped when a sheet/cover was dismissed via native SwiftUI (swipe-down, tap-outside, `@Environment(\.dismiss)`) instead of `router.close()` -- `sheet`/`cover` now log it from their own `didSet` whenever they clear without an explicit `close()`/`closeChildren()` call (#123)
+
 ### Documentation
 
 - "Next Steps" in the Getting Started guide only linked 5 of the 12 articles -- now links all of them, in the same order as the landing page's Topics section
+- Curated 5 public `View` extension modifiers (`onTabReselected`, `routerContext`, `routerPresent`, `printRouter(trigger:)`, `printRouterOnChange()`) into a new "View Modifiers" DocC Topics group -- previously only discoverable via the auto-generated "Extensions to View" catch-all (#128)
+- Documented a SwiftUI rendering-order quirk: `onAppear` on a route pushed into a never-before-shown tab can fire before that tab's root `onAppear` -- not fixable without breaking the synchronous contract of `push`/`present`/`cover`/`popToRoot`/`update(root:in:)` (#121)
+
+### Tests
+
+- `LifecycleModifier`'s 50ms debounce logic extracted into a pure, directly-testable `static func shouldLog(lastDateLog:currentDate:)`, with new coverage for the threshold behavior (#120)
 
 ## [0.7.0] - 2026-08-08
 
