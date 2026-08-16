@@ -23,8 +23,19 @@ struct SidebarScreen: View {
   }
 
   var body: some View {
-    List(array, selection: selection) { item in
-      NavigationLink(item.rawValue.capitalized, value: item)
+    List(selection: selection) {
+      ForEach(array) { item in
+        NavigationLink(item.rawValue.capitalized, value: item)
+      }
+      Section {
+        Button("Deep link to a player") {
+          Task {
+            guard let player = Player.players.randomElement() else { return }
+            guard let deeplink = try? await PlayerSplitDeeplinkHandler().deeplink(from: .player(player)) else { return }
+            router.handle(splitDeeplink: deeplink)
+          }
+        }
+      }
     }
     .onFirstAppear {
       // On iPhone, NavigationSplitView collapses to a single column -- skip
@@ -46,15 +57,6 @@ struct SidebarScreen: View {
             preferredCompactColumnPicker
           }
           .pickerStyle(.menu)
-        }
-      }
-      ToolbarItem(placement: .secondaryAction) {
-        Button("Deep link to a player") {
-          Task {
-            guard let player = Player.players.randomElement() else { return }
-            guard let deeplink = try? await PlayerSplitDeeplinkHandler().deeplink(from: .player(player)) else { return }
-            router.handle(splitDeeplink: deeplink)
-          }
         }
       }
     }
