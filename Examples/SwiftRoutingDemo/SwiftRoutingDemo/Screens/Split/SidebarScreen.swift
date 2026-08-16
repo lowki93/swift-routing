@@ -27,6 +27,9 @@ struct SidebarScreen: View {
       NavigationLink(item.rawValue.capitalized, value: item)
     }
     .onFirstAppear {
+      // On iPhone, NavigationSplitView collapses to a single column -- skip
+      // auto-selection there and let the user tap to navigate instead.
+      guard !router.isCompact else { return }
       if router.hasContentColumn {
         router.select(content: array.first)
       } else {
