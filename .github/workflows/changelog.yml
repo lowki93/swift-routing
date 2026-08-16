@@ -24,6 +24,121 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CHANGELOG_PR_TOKEN }}
 
+      - name: Populate [Unreleased] from merged PRs
+        env:
+          GH_TOKEN: ${{ secrets.CHANGELOG_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+
+          # Previous release tag, if any (version-sorted, excluding the tag just pushed).
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${VERSION}$" | head -1 || true)
+          if [ -n "$PREV_TAG" ]; then
+            SINCE=$(git log -1 --format=%aI "$PREV_TAG")
+          else
+            SINCE="1970-01-01T00:00:00Z"
+          fi
+
+          gh pr list --state merged --base main --limit 200 \
+            --json number,title,body,mergedAt,files \
+            --jq "[.[] | select(.mergedAt > \"${SINCE}\")]" > /tmp/merged_prs.json
+
+          python3 - <<'PY'
+          import json
+          import re
+
+          with open("/tmp/merged_prs.json", encoding="utf-8") as f:
+              prs = json.load(f)
+
+          # Oldest first, and only PRs that touched library sources -- Examples/-only PRs
+          # (demo app work) aren't notable for consumers of the package.
+          prs = [pr for pr in prs if any(fi["path"].startswith("Sources/") for fi in pr["files"])]
+          prs.sort(key=lambda pr: pr["mergedAt"])
+
+          SCOPE_SECTIONS = {"docs": "Documentation", "tests": "Tests"}
+          TYPE_SECTIONS = {
+              "feat": "Added",
+              "fix": "Fixed",
+              "impr": "Changed",
+              "update": "Changed",
+              "revert": "Changed",
+          }
+          SECTION_ORDER = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Documentation", "Tests", "Security"]
+
+          def entry_for(pr):
+              title = pr["title"].strip()
+              m = re.match(r"^(\w+)\(([^)]*)\):\s*(?:\[[A-Za-z]+-\d+\]\s*)?(.+)$", title)
+              pr_type, scope, description = m.groups() if m else ("", "", title)
+              section = SCOPE_SECTIONS.get(scope.lower()) or TYPE_SECTIONS.get(pr_type.lower(), "Changed")
+
+              # Prefer the PR body's "**What**:" paragraph -- our PR template already asks for
+              # a clear one-paragraph summary there, which reads better than a terse title.
+              body = pr.get("body") or ""
+              what_match = re.search(
+                  r"\*\*What\*\*:\s*\n(.*?)(?:\n\s*\n|\n\*\*Breaking Changes\*\*|\Z)", body, re.DOTALL
+              )
+              if what_match:
+                  text = " ".join(line.strip() for line in what_match.group(1).strip().splitlines() if line.strip())
+              else:
+                  text = description.strip()
+
+              return section, f"- {text} (#{pr['number']})"
+
+          with open("CHANGELOG.md", encoding="utf-8") as f:
+              content = f.read()
+
+          marker = "## [Unreleased]"
+          idx = content.find(marker)
+          if idx == -1:
+              raise SystemExit("No [Unreleased] section found in CHANGELOG.md")
+
+          body_start = idx + len(marker)
+          next_release = content.find("\n## [", body_start)
+          block_end = next_release if next_release != -1 else len(content)
+          block = content[body_start:block_end]
+
+          # Split the Unreleased block into (heading, body) subsections, keeping their order.
+          parts = re.split(r"(?m)^(### .+)$", block)
+          preamble = parts[0]
+          subsections = [[parts[i].strip(), parts[i + 1]] for i in range(1, len(parts), 2)]
+
+          added_count = 0
+          for pr in prs:
+              # Idempotent: a PR that already got a manually-added entry (per the "add an
+              # entry in the same PR" convention) is never duplicated.
+              if f"(#{pr['number']})" in content:
+                  continue
+
+              section, entry = entry_for(pr)
+              heading = f"### {section}"
+
+              for sub in subsections:
+                  if sub[0] == heading:
+                      # Always leave exactly one trailing blank line before whatever follows.
+                      sub[1] = re.sub(r"\n+\Z", "", sub[1]) + f"\n{entry}\n\n"
+                      break
+              else:
+                  target_rank = SECTION_ORDER.index(section) if section in SECTION_ORDER else len(SECTION_ORDER)
+                  insert_at = len(subsections)
+                  for i, sub in enumerate(subsections):
+                      name = sub[0][len("### "):].strip()
+                      rank = SECTION_ORDER.index(name) if name in SECTION_ORDER else len(SECTION_ORDER)
+                      if rank > target_rank:
+                          insert_at = i
+                          break
+                  subsections.insert(insert_at, [heading, f"\n\n{entry}\n\n"])
+
+              added_count += 1
+
+          new_block = preamble + "".join(h + b for h, b in subsections)
+          new_content = content[:idx + len(marker)] + new_block + content[block_end:]
+
+          with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+              f.write(new_content)
+
+          print(f"Added {added_count} entr{'y' if added_count == 1 else 'ies'} to [Unreleased]")
+          PY
+
       - name: Close out [Unreleased] section
         id: changelog
         run: |
