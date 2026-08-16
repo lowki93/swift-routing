@@ -18,10 +18,8 @@ enum AppRoute: Route {
   case settings
   case about
   case sidebar
-  case players(PlayerType)
-  case player(Player)
-  case formFlow
-  case form
+  case players(PlayersRoute)
+  case form(FormRoute)
 
   var name: String {
     switch self {
@@ -34,10 +32,35 @@ enum AppRoute: Route {
     case .settings: "Settings"
     case .about: "About"
     case .sidebar: "Sidebar"
-    case let .players(type): "Players(\(type))"
-    case let .player(player): "Player(\(player.name))"
-    case .formFlow: "FormFlow"
-    case .form: "Form"
+    case let .players(child): "Players.\(child.name)"
+    case let .form(child): "Form.\(child.name)"
+    }
+  }
+}
+
+// Demonstrates the "Nested Routes and Nested Destinations" pattern from DefiningRoutes.md:
+// a subflow modeled as its own Route enum, exposed through a single case of the parent
+// route, rendered via a dedicated destination view (see PlayersRouteDestination below).
+enum PlayersRoute: Route {
+  case list(PlayerType)
+  case detail(Player)
+
+  var name: String {
+    switch self {
+    case let .list(type): "Players(\(type))"
+    case let .detail(player): "Player(\(player.name))"
+    }
+  }
+}
+
+enum FormRoute: Route {
+  case flow // FormFlowScreen, the coordinator
+  case entry // FormScreen, the form itself
+
+  var name: String {
+    switch self {
+    case .flow: "FormFlow"
+    case .entry: "Form"
     }
   }
 }
@@ -71,10 +94,30 @@ struct AppRouteDestination: View {
     case .settings: SettingsScreen(model: SettingsScreenModel())
     case .about: AboutScreen()
     case .sidebar: SidebarScreen()
-    case let .players(type): PlayersScreen(type: type)
-    case let .player(player): PlayerScreen(player: player)
-    case .formFlow: FormFlowScreen(model: FormFlowScreenModel())
-    case .form: FormScreen()
+    case let .players(child): PlayersRouteDestination(route: child)
+    case let .form(child): FormRouteDestination(route: child)
+    }
+  }
+}
+
+struct PlayersRouteDestination: View {
+  let route: PlayersRoute
+
+  var body: some View {
+    switch route {
+    case let .list(type): PlayersScreen(type: type)
+    case let .detail(player): PlayerScreen(player: player)
+    }
+  }
+}
+
+struct FormRouteDestination: View {
+  let route: FormRoute
+
+  var body: some View {
+    switch route {
+    case .flow: FormFlowScreen(model: FormFlowScreenModel())
+    case .entry: FormScreen()
     }
   }
 }

@@ -23,9 +23,9 @@ struct SplitScreen: View {
           preferredCompactColumn: $preferredCompactColumn,
           destination: AppRoute.self,
           sidebar: .sidebar) { (type: PlayerType) in
-            .players(type)
+            .players(.list(type))
           } detail: { (player: Player) in
-            .player(player)
+            .players(.detail(player))
           }
       } else {
         RoutingSplitView(
@@ -33,7 +33,7 @@ struct SplitScreen: View {
           destination: AppRoute.self,
           sidebar: .sidebar
         ) { (type: PlayerType) in
-          .players(type)
+          .players(.list(type))
         }
       }
     }

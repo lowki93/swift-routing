@@ -27,7 +27,7 @@ struct PlayersScreen: View {
           }
         } else {
           List(Player.players.for(type: type)) { item in
-            NavigationLink(item.name, route: AppRoute.player(item))
+            NavigationLink(item.name, route: AppRoute.players(.detail(item)))
           }
         }
       }

@@ -23,8 +23,8 @@ struct FormFlowScreen: View {
         Text("No submission yet")
       }
 
-      Button("Open form (push)") { router.push(AppRoute.form) }
-      Button("Open form (sheet)") { router.present(AppRoute.form) }
+      Button("Open form (push)") { router.push(AppRoute.form(.entry)) }
+      Button("Open form (sheet)") { router.present(AppRoute.form(.entry)) }
     }
     .navigationTitle("Form flow")
     // Same FormScreen, opened two different ways -- terminate() resolves to a stack pop
