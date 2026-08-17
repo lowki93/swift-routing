@@ -14,7 +14,7 @@ enum UserDeeplinkID: Hashable {
 }
 
 let userDeeplinkRouter = OneOf {
-  Route(.case(UserDeeplinkID.user)) {
+  Route(UserDeeplinkID.user) {
     Path {
       "user"
       Rest().map(.string)

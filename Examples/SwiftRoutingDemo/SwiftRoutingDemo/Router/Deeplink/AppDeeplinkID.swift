@@ -19,16 +19,16 @@ enum NavigationStackDeeplinkID: Hashable {
 }
 
 let appDeeplinkRouter = OneOf {
-  Route(.case(AppDeeplinkID.navigationStack)) {
+  Route(AppDeeplinkID.navigationStack) {
     Host("navigationStack")
     OneOf {
-      Route(.case(NavigationStackDeeplinkID.user)) {
+      Route(NavigationStackDeeplinkID.user) {
         userDeeplinkRouter
       }
-      Route(.case(NavigationStackDeeplinkID.notifications)) {
+      Route(NavigationStackDeeplinkID.notifications) {
         notificationsDeeplinkRouter
       }
-      Route(.case(NavigationStackDeeplinkID.profile)) {
+      Route(NavigationStackDeeplinkID.profile) {
         profileDeeplinkRouter
       }
     }

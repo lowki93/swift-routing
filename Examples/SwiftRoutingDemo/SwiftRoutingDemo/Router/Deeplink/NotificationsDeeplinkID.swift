@@ -17,10 +17,10 @@ enum NotificationsDeeplinkID: Hashable {
 }
 
 let notificationsDeeplinkRouter = OneOf {
-  Route(.case(NotificationsDeeplinkID.list)) {
+  Route(NotificationsDeeplinkID.list) {
     Path { "notifications" }
   }
-  Route(.case(NotificationsDeeplinkID.detail)) {
+  Route(NotificationsDeeplinkID.detail) {
     Path {
       "notifications"
       Digits()

@@ -13,7 +13,7 @@ enum ProfileDeeplinkID: Hashable {
 }
 
 let profileDeeplinkRouter = OneOf {
-  Route(.case(ProfileDeeplinkID.profile)) {
+  Route(ProfileDeeplinkID.profile) {
     Path { "profile" }
   }
 }
