@@ -28,7 +28,6 @@ let appDeeplinkRouter = OneOf {
         }
       }
       Route(.case(NavigationStackDeeplinkID.notifications)) {
-        Path { "notifications" }
         notificationsDeeplinkRouter
       }
     }
