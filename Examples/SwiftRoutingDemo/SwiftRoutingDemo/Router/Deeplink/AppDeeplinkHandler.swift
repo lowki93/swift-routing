@@ -15,8 +15,11 @@ struct AppDeeplinkHandler: DeeplinkHandler {
     switch route {
     case let .navigationStack(target):
       switch target {
-      case let .user(name):
-        .push(AppRoute.user(name: name))
+      case let .user(userID):
+        switch userID {
+        case let .user(name):
+          .push(AppRoute.user(name: name))
+        }
       case let .notifications(notification):
         switch notification {
         case .list:

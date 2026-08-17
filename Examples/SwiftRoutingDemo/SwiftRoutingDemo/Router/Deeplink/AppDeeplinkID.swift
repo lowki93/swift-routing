@@ -13,7 +13,7 @@ enum AppDeeplinkID: Hashable {
 }
 
 enum NavigationStackDeeplinkID: Hashable {
-  case user(name: String)
+  case user(UserDeeplinkID)
   case notifications(NotificationsDeeplinkID)
 }
 
@@ -22,10 +22,7 @@ let appDeeplinkRouter = OneOf {
     Host("navigationStack")
     OneOf {
       Route(.case(NavigationStackDeeplinkID.user)) {
-        Path {
-          "user"
-          Rest().map(.string)
-        }
+        userDeeplinkRouter
       }
       Route(.case(NavigationStackDeeplinkID.notifications)) {
         notificationsDeeplinkRouter
