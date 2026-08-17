@@ -10,8 +10,7 @@ import SwiftRouting
 
 enum AppRoute: Route {
   case home(name: String)
-  case notifications
-  case notification(id: Int)
+  case notifications(NotificationsRoute)
   case profile
   case user(name: String)
   case search
@@ -24,8 +23,7 @@ enum AppRoute: Route {
   var name: String {
     switch self {
     case let .home(name):  "Home(\(name))"
-    case .notifications: "Notificatons"
-    case let .notification(id): "Notification(\(id))"
+    case let .notifications(child): "Notifications.\(child.name)"
     case .profile: "Profile"
     case let .user(name): "User(\(name))"
     case .search: "Search"
@@ -65,6 +63,18 @@ enum FormRoute: Route {
   }
 }
 
+enum NotificationsRoute: Route {
+  case list
+  case detail(id: Int)
+
+  var name: String {
+    switch self {
+    case .list: "Notifications"
+    case let .detail(id): "Notification(\(id))"
+    }
+  }
+}
+
 extension AppRoute: RouteDestination {
   static func view(for route: AppRoute) -> some View {
     AppRouteDestination(route: route)
@@ -84,8 +94,7 @@ struct AppRouteDestination: View {
   var body: some View {
     switch route {
     case let .home(name): HomeScreen(model: HomeScreenModel(name: name))
-    case .notifications: NotificationsScreen()
-    case .notification: NotificationScreen()
+    case let .notifications(child): NotificationsRouteDestination(route: child)
     case .profile: ProfileScreen(router: router, viewModel: ProfileViewModel(tabRouter: tabRouter))
     case let .user(name): UserScreen(model: UserScreenModel(name: name, router: router))
     case .search: Text("Search")
@@ -118,6 +127,17 @@ struct FormRouteDestination: View {
     switch route {
     case .flow: FormFlowScreen(model: FormFlowScreenModel())
     case .entry: FormScreen()
+    }
+  }
+}
+
+struct NotificationsRouteDestination: View {
+  let route: NotificationsRoute
+
+  var body: some View {
+    switch route {
+    case .list: NotificationsScreen()
+    case .detail: NotificationScreen()
     }
   }
 }

@@ -14,7 +14,11 @@ struct ChoiceScreen: View {
   var body: some View {
       switch example {
       case .none: choiceView
-      case .navigationStack: RoutingView(destination: AppRoute.self, root: .home(name: "John"))
+      case .navigationStack:
+        RoutingView(destination: AppRoute.self, root: .home(name: "John")) {
+          HomeScreen(model: HomeScreenModel(name: "John"))
+            .modifier(PendingDeeplinkConsumer())
+        }
       case .tabView: TabScreen(type: .tabView)
       case .routingTabView: TabScreen(type: .routingTabView)
       case .splitView: SplitScreen()
