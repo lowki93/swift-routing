@@ -7,12 +7,30 @@
 
 import URLRouting
 
-enum AppDeeplinkID: Equatable {
-  case home
+// Mirrors AppRoute's own shape -- one case per paradigm.
+enum AppDeeplinkID: Hashable {
+  case navigationStack(NavigationStackDeeplinkID)
+}
+
+enum NavigationStackDeeplinkID: Hashable {
+  case user(UserDeeplinkID)
+  case notifications(NotificationsDeeplinkID)
+  case profile(ProfileDeeplinkID)
 }
 
 let appDeeplinkRouter = OneOf {
-  Route(.case(AppDeeplinkID.home)) {
-    Host("home")
+  Route(AppDeeplinkID.navigationStack) {
+    Host("navigationStack")
+    OneOf {
+      Route(NavigationStackDeeplinkID.user) {
+        userDeeplinkRouter
+      }
+      Route(NavigationStackDeeplinkID.notifications) {
+        notificationsDeeplinkRouter
+      }
+      Route(NavigationStackDeeplinkID.profile) {
+        profileDeeplinkRouter
+      }
+    }
   }
 }

@@ -11,8 +11,28 @@ struct AppDeeplinkHandler: DeeplinkHandler {
   typealias R = AppDeeplinkID
   typealias D = AppRoute
 
-  // Stub: case mapping is SWI-18's scope. This only proves the pipeline compiles and fires.
   func deeplink(from route: AppDeeplinkID) async throws -> DeeplinkRoute<AppRoute>? {
-    nil
+    switch route {
+    case let .navigationStack(target):
+      switch target {
+      case let .user(userID):
+        switch userID {
+        case let .user(name):
+          .push(AppRoute.user(name: name))
+        }
+      case let .notifications(notification):
+        switch notification {
+        case .list:
+          .push(AppRoute.notifications(.list))
+        case let .detail(id):
+          .push(AppRoute.notifications(.detail(id: id)))
+        }
+      case let .profile(profileID):
+        switch profileID {
+        case .profile:
+          .present(AppRoute.profile)
+        }
+      }
+    }
   }
 }
