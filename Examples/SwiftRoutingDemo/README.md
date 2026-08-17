@@ -21,9 +21,29 @@ An Xcode project demonstrating SwiftRouting's navigation patterns. Open `SwiftRo
 
 `AppRoute.players`/`AppRoute.form`/`AppRoute.notifications` also demonstrate nested routes and destinations: each wraps its own `Route` enum (`PlayersRoute`, `FormRoute`, `NotificationsRoute`) rendered by a dedicated destination view (`Router/Route.swift`), instead of flattening every screen into `AppRoute` directly. See Defining Routes.
 
-`swiftroutingdemo://navigationStack/...` demonstrates a deep link selecting a navigation paradigm and performing real navigation within it — `AppDeeplinkID` mirrors `AppRoute`'s shape (reusing `NotificationsRoute` directly for `.notifications`), and `PendingDeeplinkConsumer` (`Router/Deeplink/`) defers applying the deep link until that paradigm's real `Router` has mounted. Try `swiftroutingdemo://navigationStack/user/Ben`, `swiftroutingdemo://navigationStack/notifications`, or `swiftroutingdemo://navigationStack/notifications/42` via `xcrun simctl openurl`. The other 3 paradigms (`tabView`, `tabRouter`, `splitView`) are tracked separately. See Deep Linking.
+`swiftroutingdemo://navigationStack/...` demonstrates a deep link selecting a navigation paradigm and performing real navigation within it. `AppDeeplinkID` mirrors `AppRoute`'s shape, but each identifier (`UserDeeplinkID`, `NotificationsDeeplinkID`) is its own type with its own composable parser (`Router/Deeplink/`) rather than reusing `AppRoute`'s nested `Route` types directly — the deep link's shape is a URL-facing concern, kept separate from the internal route shape. `PendingDeeplinkConsumer` defers applying the deep link until that paradigm's real `Router` has mounted. The other 3 paradigms (`tabView`, `tabRouter`, `splitView`) are tracked separately. See Deep Linking.
 
 See the [main README](../../README.md#documentation) for links to each article.
+
+## Testing deep links
+
+With the app installed on a booted simulator:
+
+```bash
+# User screen
+xcrun simctl openurl booted "swiftroutingdemo://navigationStack/user/Ben"
+
+# Notifications list
+xcrun simctl openurl booted "swiftroutingdemo://navigationStack/notifications"
+
+# Notifications detail (nested route)
+xcrun simctl openurl booted "swiftroutingdemo://navigationStack/notifications/42"
+
+# Unmatched -- should log "no match", not crash
+xcrun simctl openurl booted "swiftroutingdemo://navigationStack/doesnotexist"
+```
+
+Each one selects the Navigation Stack paradigm (if not already selected) and navigates to the target screen. Note: `xcrun simctl openurl` only reliably delivers one `.onOpenURL` event per app launch session in the Simulator -- terminate and relaunch the app (or use `xcrun simctl launch` to bring it back to the foreground) between tries if a later URL seems to have no effect.
 
 ## Debugging navigation
 
