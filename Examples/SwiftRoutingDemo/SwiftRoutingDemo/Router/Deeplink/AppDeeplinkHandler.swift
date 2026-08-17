@@ -18,7 +18,12 @@ struct AppDeeplinkHandler: DeeplinkHandler {
       case let .user(name):
         .push(AppRoute.user(name: name))
       case let .notifications(notification):
-        .push(AppRoute.notifications(notification))
+        switch notification {
+        case .list:
+          .push(AppRoute.notifications(.list))
+        case let .detail(id):
+          .push(AppRoute.notifications(.detail(id: id)))
+        }
       }
     }
   }

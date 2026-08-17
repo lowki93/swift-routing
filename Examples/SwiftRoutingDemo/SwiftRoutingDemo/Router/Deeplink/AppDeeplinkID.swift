@@ -7,15 +7,14 @@
 
 import URLRouting
 
-// Mirrors AppRoute's own shape -- one case per paradigm, reusing AppRoute's nested Route
-// types directly (e.g. NotificationsRoute) instead of duplicating parallel identifier types.
+// Mirrors AppRoute's own shape -- one case per paradigm.
 enum AppDeeplinkID: Hashable {
   case navigationStack(NavigationStackDeeplinkID)
 }
 
 enum NavigationStackDeeplinkID: Hashable {
   case user(name: String)
-  case notifications(NotificationsRoute)
+  case notifications(NotificationsDeeplinkID)
 }
 
 let appDeeplinkRouter = OneOf {
@@ -30,12 +29,7 @@ let appDeeplinkRouter = OneOf {
       }
       Route(.case(NavigationStackDeeplinkID.notifications)) {
         Path { "notifications" }
-        OneOf {
-          Route(.case(NotificationsRoute.list))
-          Route(.case(NotificationsRoute.detail)) {
-            Path { Digits() }
-          }
-        }
+        notificationsDeeplinkRouter
       }
     }
   }
