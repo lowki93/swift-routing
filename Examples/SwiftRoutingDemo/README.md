@@ -39,6 +39,9 @@ xcrun simctl openurl booted "swiftroutingdemo://navigationStack/notifications"
 # Notifications detail (nested route)
 xcrun simctl openurl booted "swiftroutingdemo://navigationStack/notifications/42"
 
+# Profile, presented as a sheet
+xcrun simctl openurl booted "swiftroutingdemo://navigationStack/profile"
+
 # Unmatched -- should log "no match", not crash
 xcrun simctl openurl booted "swiftroutingdemo://navigationStack/doesnotexist"
 ```
