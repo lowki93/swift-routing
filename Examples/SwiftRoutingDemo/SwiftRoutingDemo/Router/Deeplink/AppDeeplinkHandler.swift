@@ -27,6 +27,11 @@ struct AppDeeplinkHandler: DeeplinkHandler {
         case let .detail(id):
           .push(AppRoute.notifications(.detail(id: id)))
         }
+      case let .profile(profileID):
+        switch profileID {
+        case .profile:
+          .present(AppRoute.profile)
+        }
       }
     }
   }

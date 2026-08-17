@@ -15,6 +15,7 @@ enum AppDeeplinkID: Hashable {
 enum NavigationStackDeeplinkID: Hashable {
   case user(UserDeeplinkID)
   case notifications(NotificationsDeeplinkID)
+  case profile(ProfileDeeplinkID)
 }
 
 let appDeeplinkRouter = OneOf {
@@ -26,6 +27,9 @@ let appDeeplinkRouter = OneOf {
       }
       Route(.case(NavigationStackDeeplinkID.notifications)) {
         notificationsDeeplinkRouter
+      }
+      Route(.case(NavigationStackDeeplinkID.profile)) {
+        profileDeeplinkRouter
       }
     }
   }
