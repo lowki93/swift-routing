@@ -7,29 +7,25 @@
 
 import SwiftRouting
 
+// Delegates to the per-identifier handlers (UserDeeplinkHandler/NotificationsDeeplinkHandler/
+// ProfileDeeplinkHandler) instead of rebuilding their AppRoute-construction logic here --
+// DeeplinkHandlers compose the same way TabDeeplinkHandler's own doc example does.
 struct NavigationStackDeeplinkHandler: DeeplinkHandler {
   typealias R = NavigationStackDeeplinkID
   typealias D = AppRoute
 
+  private let userHandler = UserDeeplinkHandler()
+  private let notificationsHandler = NotificationsDeeplinkHandler()
+  private let profileHandler = ProfileDeeplinkHandler()
+
   func deeplink(from route: NavigationStackDeeplinkID) async throws -> DeeplinkRoute<AppRoute>? {
     switch route {
     case let .user(userID):
-      switch userID {
-      case let .user(name):
-        .push(AppRoute.user(name: name))
-      }
+      try await userHandler.deeplink(from: userID)
     case let .notifications(notification):
-      switch notification {
-      case .list:
-        .push(AppRoute.notifications(.list))
-      case let .detail(id):
-        .push(AppRoute.notifications(.detail(id: id)))
-      }
+      try await notificationsHandler.deeplink(from: notification)
     case let .profile(profileID):
-      switch profileID {
-      case .profile:
-        .present(AppRoute.profile)
-      }
+      try await profileHandler.deeplink(from: profileID)
     }
   }
 }
