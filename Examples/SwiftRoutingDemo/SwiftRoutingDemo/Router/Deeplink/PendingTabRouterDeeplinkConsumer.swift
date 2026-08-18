@@ -21,9 +21,8 @@ struct PendingTabRouterDeeplinkConsumer: ViewModifier {
   func body(content: Content) -> some View {
     content
       .task(id: pendingDeeplink.identifier) {
-        guard case .tabRouter = pendingDeeplink.identifier,
-              let identifier = pendingDeeplink.identifier else { return }
-        guard let tabDeeplink = try? await AppTabDeeplinkHandler().deeplink(from: identifier) else {
+        guard case let .tabRouter(target) = pendingDeeplink.identifier else { return }
+        guard let tabDeeplink = try? await TabRouterDeeplinkHandler().deeplink(from: target) else {
           pendingDeeplink.identifier = nil
           return
         }

@@ -20,8 +20,7 @@ struct PendingTabDeeplinkConsumer: ViewModifier {
     content
       .task(id: pendingDeeplink.identifier) {
         guard case let .tabView(target) = pendingDeeplink.identifier, target.tab == tab else { return }
-        guard let identifier = pendingDeeplink.identifier,
-              let deeplink = try? await AppDeeplinkHandler().deeplink(from: identifier) else {
+        guard let deeplink = try? await TabViewDeeplinkHandler().deeplink(from: target) else {
           pendingDeeplink.identifier = nil
           return
         }

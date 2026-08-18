@@ -18,8 +18,8 @@ struct PendingDeeplinkConsumer: ViewModifier {
   func body(content: Content) -> some View {
     content
       .task(id: pendingDeeplink.identifier) {
-        guard let identifier = pendingDeeplink.identifier else { return }
-        guard let deeplink = try? await AppDeeplinkHandler().deeplink(from: identifier) else { return }
+        guard case let .navigationStack(target) = pendingDeeplink.identifier else { return }
+        guard let deeplink = try? await NavigationStackDeeplinkHandler().deeplink(from: target) else { return }
         router.handle(deeplink: deeplink)
         pendingDeeplink.identifier = nil
       }
