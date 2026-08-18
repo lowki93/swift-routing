@@ -25,11 +25,7 @@ struct ChoiceScreen: View {
   @ViewBuilder private var content: some View {
     switch model.example {
     case .none: choiceView
-    case .navigationStack:
-      RoutingView(destination: AppRoute.self, root: .home(name: "John")) {
-        HomeScreen(model: HomeScreenModel(name: "John"))
-          .modifier(PendingDeeplinkConsumer())
-      }
+    case .navigationStack: navigationStack
     case .tabView: TabScreen(type: .tabView)
     case .routingTabView: TabScreen(type: .routingTabView)
     case .splitView: SplitScreen()
@@ -42,6 +38,13 @@ struct ChoiceScreen: View {
       Button("TabView") { model.example = .tabView }
       Button("RoutingTabView") { model.example = .routingTabView }
       Button("SplitView") { model.example = .splitView }
+    }
+  }
+
+  private var navigationStack: some View {
+    RoutingView(destination: AppRoute.self, root: .home(name: "John")) {
+      HomeScreen(model: HomeScreenModel(name: "John"))
+        .modifier(PendingDeeplinkConsumer())
     }
   }
 }
