@@ -15,7 +15,7 @@ An Xcode project demonstrating SwiftRouting's navigation patterns. Open `SwiftRo
 
 | Folder | Demonstrates | Related article |
 |---|---|---|
-| `Screens/Basic/` | `push`, `NavigationLink(route:)`, `present`/`cover`, `back`/`popToRoot`/`close`, `terminate()`, `RouteContext`, explicit form flow (`FormFlowScreen`/`FormScreen`) returning a typed `FormResult` via `terminate()` from both a pushed and a presented screen, `canTerminate()` guarding submission when no listener is registered, injecting `any RouterModel` into a ViewModel (`UserScreen`/`UserScreenModel`) for testability | Navigation Basics, Route Context, Testing |
+| `Screens/Basic/` | `push`, `NavigationLink(route:)`, `present`/`cover`, `back`/`popToRoot`/`close`, `terminate()`, `RouteContext`, explicit form flow (`FormFlowScreen`/`FormScreen`) returning a typed `FormResult` via `terminate()` from both a pushed and a presented screen, `canTerminate()` guarding submission when no listener is registered, `SettingsScreen` using a payload-free `ChoiceReset` context + `terminate()` to reset the paradigm and return to the picker, injecting `any RouterModel` into a ViewModel (`UserScreen`/`UserScreenModel`) for testability | Navigation Basics, Route Context, Testing |
 | `Screens/Tabs/` | Tab-scoped stacks, per-tab `hideTabBarOnPush`, programmatic tab change (`tabRouter.change/push/update/present/cover/popToRoot`), cross-tab modal presentation, pushing into a never-visited tab, `onTabReselected`, injecting `any TabRouterModel` into a ViewModel (`ProfileScreen`/`ProfileViewModel`) for testability | Tab Navigation, Testing |
 | `Screens/Split/` | `RoutingSplitView`, `select(content:)`/`select(detail:)`, `isCompact` guard on auto-selection | Split Navigation |
 
