@@ -11,6 +11,7 @@ import SwiftUI
 @main
 struct SwiftRoutingDemoApp: App {
   @State private var pendingDeeplink = PendingDeeplinkStore()
+  @State private var tabSelection = TabSelectionStore()
 
   var body: some Scene {
     WindowGroup {
@@ -18,6 +19,7 @@ struct SwiftRoutingDemoApp: App {
         .printRouterOnChange()
         .environment(\.router, Router(configuration: Configuration(shouldCrashOnRouteNotFound: true)))
         .environment(pendingDeeplink)
+        .environment(tabSelection)
     }
   }
 }

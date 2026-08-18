@@ -33,6 +33,25 @@ struct AppDeeplinkHandler: DeeplinkHandler {
           .present(AppRoute.profile)
         }
       }
+    case let .tabView(target):
+      switch target {
+      case let .user(userID):
+        switch userID {
+        case let .user(name):
+          .push(AppRoute.user(name: name))
+        }
+      case let .notifications(notification):
+        switch notification {
+        case .list:
+          // Selecting the Notifications tab already puts this on screen.
+          nil
+        case let .detail(id):
+          .push(AppRoute.notifications(.detail(id: id)))
+        }
+      case .profile:
+        // Selecting the Profile tab already puts this on screen.
+        nil
+      }
     }
   }
 }

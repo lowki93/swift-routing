@@ -10,6 +10,7 @@ import URLRouting
 // Mirrors AppRoute's own shape -- one case per paradigm.
 enum AppDeeplinkID: Hashable {
   case navigationStack(NavigationStackDeeplinkID)
+  case tabView(TabViewDeeplinkID)
 }
 
 enum NavigationStackDeeplinkID: Hashable {
@@ -32,5 +33,9 @@ let appDeeplinkRouter = OneOf {
         profileDeeplinkRouter
       }
     }
+  }
+  Route(AppDeeplinkID.tabView) {
+    Host("tabView")
+    tabViewDeeplinkRouter
   }
 }
