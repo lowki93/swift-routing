@@ -14,7 +14,7 @@ struct SwiftRoutingDemoApp: App {
 
   var body: some Scene {
     WindowGroup {
-      ChoiceScreen()
+      ChoiceScreen(model: ChoiceScreenModel())
         .printRouterOnChange()
         .environment(\.router, Router(configuration: Configuration(shouldCrashOnRouteNotFound: true)))
         .environment(pendingDeeplink)

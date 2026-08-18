@@ -10,29 +10,20 @@ import SwiftUI
 import URLRouting
 
 struct ChoiceScreen: View {
-  @State private var example: Example?
+  @State var model: ChoiceScreenModel
   @Environment(PendingDeeplinkStore.self) private var pendingDeeplink
 
   var body: some View {
     content
-      .routerContext(ChoiceReset.self) { _ in example = nil }
+      .routerContext(ChoiceReset.self) { _ in model.example = nil }
       .onOpenURL { url in
-        guard let identifier = try? appDeeplinkRouter.match(url: url) else {
-          print("Deeplink: no match for", url)
-          return
-        }
-        // Select whichever paradigm this identifier targets, then hand it off to
-        // PendingDeeplinkConsumer once that paradigm's real Router has mounted.
-        switch identifier {
-        case .navigationStack:
-          example = .navigationStack
-        }
+        guard let identifier = model.handleOpenURL(url) else { return }
         pendingDeeplink.identifier = identifier
       }
   }
 
   @ViewBuilder private var content: some View {
-    switch example {
+    switch model.example {
     case .none: choiceView
     case .navigationStack:
       RoutingView(destination: AppRoute.self, root: .home(name: "John")) {
@@ -47,10 +38,32 @@ struct ChoiceScreen: View {
 
   private var choiceView: some View {
     VStack {
-      Button("Navigation Stack") { example = .navigationStack }
-      Button("TabView") { example = .tabView }
-      Button("RoutingTabView") { example = .routingTabView }
-      Button("SplitView") { example = .splitView }
+      Button("Navigation Stack") { model.example = .navigationStack }
+      Button("TabView") { model.example = .tabView }
+      Button("RoutingTabView") { model.example = .routingTabView }
+      Button("SplitView") { model.example = .splitView }
     }
+  }
+}
+
+@Observable @MainActor
+final class ChoiceScreenModel {
+  var example: Example?
+
+  init() {}
+
+  // Select whichever paradigm this identifier targets, then hand the identifier back to
+  // the view so it can pass it to PendingDeeplinkConsumer once that paradigm's real
+  // Router has mounted.
+  func handleOpenURL(_ url: URL) -> AppDeeplinkID? {
+    guard let identifier = try? appDeeplinkRouter.match(url: url) else {
+      print("Deeplink: no match for", url)
+      return nil
+    }
+    switch identifier {
+    case .navigationStack:
+      example = .navigationStack
+    }
+    return identifier
   }
 }
