@@ -52,6 +52,11 @@ struct AppDeeplinkHandler: DeeplinkHandler {
         // Selecting the Profile tab already puts this on screen.
         nil
       }
+    case .tabRouter:
+      // Unreachable in practice: .tabRouter identifiers are consumed by AppTabDeeplinkHandler
+      // (via PendingTabRouterDeeplinkConsumer). This arm exists only because the switch over
+      // AppDeeplinkID must be exhaustive.
+      nil
     }
   }
 }

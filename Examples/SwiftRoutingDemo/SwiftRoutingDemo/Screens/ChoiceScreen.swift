@@ -72,6 +72,8 @@ final class ChoiceScreenModel {
       example = .navigationStack
     case .tabView:
       example = .tabView
+    case .tabRouter:
+      example = .routingTabView
     }
     return identifier
   }
