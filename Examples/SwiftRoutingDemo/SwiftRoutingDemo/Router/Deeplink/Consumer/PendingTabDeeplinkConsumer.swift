@@ -15,12 +15,13 @@ struct PendingTabDeeplinkConsumer: ViewModifier {
   let tab: HomeTab
   @Environment(\.router) private var router
   @Environment(PendingDeeplinkStore.self) private var pendingDeeplink
+  @State private var handler = TabViewDeeplinkHandler()
 
   func body(content: Content) -> some View {
     content
       .task(id: pendingDeeplink.identifier) {
         guard case let .tabView(target) = pendingDeeplink.identifier, target.tab == tab else { return }
-        guard let deeplink = try? await TabViewDeeplinkHandler().deeplink(from: target) else {
+        guard let deeplink = try? await handler.deeplink(from: target) else {
           pendingDeeplink.identifier = nil
           return
         }

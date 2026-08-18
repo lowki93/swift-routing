@@ -17,12 +17,13 @@ import SwiftUI
 struct PendingTabRouterDeeplinkConsumer: ViewModifier {
   @Environment(\.tabRouter) private var tabRouter
   @Environment(PendingDeeplinkStore.self) private var pendingDeeplink
+  @State private var handler = TabRouterDeeplinkHandler()
 
   func body(content: Content) -> some View {
     content
       .task(id: pendingDeeplink.identifier) {
         guard case let .tabRouter(target) = pendingDeeplink.identifier else { return }
-        guard let tabDeeplink = try? await TabRouterDeeplinkHandler().deeplink(from: target) else {
+        guard let tabDeeplink = try? await handler.deeplink(from: target) else {
           pendingDeeplink.identifier = nil
           return
         }
