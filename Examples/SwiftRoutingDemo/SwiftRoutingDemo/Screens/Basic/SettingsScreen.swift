@@ -9,7 +9,6 @@ import SwiftRouting
 import SwiftUI
 
 struct SettingsScreen: View {
-  @AppStorage("example") private var example: Example?
   @Environment(\.router) private var router
   @State var model: SettingsScreenModel
 
@@ -20,7 +19,7 @@ struct SettingsScreen: View {
         .foregroundStyle(.tint)
       Text("Hello, world!")
       Button("User") { router.push(AppRoute.user(name: "Lowki")) }
-      Button("Back to choiseScreen") { example = nil }
+      Button("Back to choice") { router.terminate(ChoiceReset()) }
     }
     .navigationTitle("Settings")
     .toolbar {
