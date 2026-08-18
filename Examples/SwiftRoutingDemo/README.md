@@ -44,9 +44,21 @@ xcrun simctl openurl booted "swiftroutingdemo://navigationStack/profile"
 
 # Unmatched -- should log "no match", not crash
 xcrun simctl openurl booted "swiftroutingdemo://navigationStack/doesnotexist"
+
+# TabView: selects the Notifications tab
+xcrun simctl openurl booted "swiftroutingdemo://tabView/notifications"
+
+# TabView: Notifications tab, detail pushed
+xcrun simctl openurl booted "swiftroutingdemo://tabView/notifications/42"
+
+# TabView: selects the Profile tab
+xcrun simctl openurl booted "swiftroutingdemo://tabView/profile"
+
+# TabView: Home tab (default for .user), User(Ben) pushed
+xcrun simctl openurl booted "swiftroutingdemo://tabView/user/Ben"
 ```
 
-Each one selects the Navigation Stack paradigm (if not already selected) and navigates to the target screen. Note: `xcrun simctl openurl` only reliably delivers one `.onOpenURL` event per app launch session in the Simulator -- terminate and relaunch the app (or use `xcrun simctl launch` to bring it back to the foreground) between tries if a later URL seems to have no effect.
+Each one selects the paradigm (if not already selected) and navigates to the target screen -- for `tabView`, that includes switching to the right tab. Note: `xcrun simctl openurl` only reliably delivers one `.onOpenURL` event per app launch session in the Simulator -- terminate and relaunch the app (or use `xcrun simctl launch` to bring it back to the foreground) between tries if a later URL seems to have no effect.
 
 ## Debugging navigation
 

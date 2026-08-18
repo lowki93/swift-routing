@@ -12,12 +12,16 @@ import URLRouting
 struct ChoiceScreen: View {
   @State var model: ChoiceScreenModel
   @Environment(PendingDeeplinkStore.self) private var pendingDeeplink
+  @Environment(TabSelectionStore.self) private var tabSelection
 
   var body: some View {
     content
       .routerContext(ChoiceReset.self) { _ in model.example = nil }
       .onOpenURL { url in
         guard let identifier = model.handleOpenURL(url) else { return }
+        if case let .tabView(target) = identifier {
+          tabSelection.tab = target.tab
+        }
         pendingDeeplink.identifier = identifier
       }
   }
@@ -66,6 +70,8 @@ final class ChoiceScreenModel {
     switch identifier {
     case .navigationStack:
       example = .navigationStack
+    case .tabView:
+      example = .tabView
     }
     return identifier
   }
