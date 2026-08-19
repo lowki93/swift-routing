@@ -8,7 +8,7 @@
 import SwiftRouting
 import SwiftUI
 
-// Tab-scoped sibling of PendingDeeplinkConsumer: TabView keeps all 3 tabs mounted at once,
+// Tab-scoped sibling of PendingNavigationStackDeeplinkConsumer: TabView keeps all 3 tabs mounted at once,
 // so every tab's instance observes the same PendingDeeplinkStore -- only the one whose
 // `tab` matches the identifier's implied tab actually applies it, the others no-op.
 struct PendingTabDeeplinkConsumer: ViewModifier {
