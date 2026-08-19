@@ -48,7 +48,7 @@ struct ChoiceScreen: View {
   private var navigationStack: some View {
     RoutingView(destination: AppRoute.self, root: .home(name: "John")) {
       HomeScreen(model: HomeScreenModel(name: "John"))
-        .modifier(PendingDeeplinkConsumer())
+        .modifier(PendingNavigationStackDeeplinkConsumer())
     }
   }
 }
@@ -60,7 +60,7 @@ final class ChoiceScreenModel {
   init() {}
 
   // Select whichever paradigm this identifier targets, then hand the identifier back to
-  // the view so it can pass it to PendingDeeplinkConsumer once that paradigm's real
+  // the view so it can pass it to PendingNavigationStackDeeplinkConsumer once that paradigm's real
   // Router has mounted.
   func handleOpenURL(_ url: URL) -> AppDeeplinkID? {
     guard let identifier = try? appDeeplinkRouter.match(url: url) else {
@@ -72,6 +72,8 @@ final class ChoiceScreenModel {
       example = .navigationStack
     case .tabView:
       example = .tabView
+    case .tabRouter:
+      example = .routingTabView
     }
     return identifier
   }

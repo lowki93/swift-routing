@@ -30,6 +30,7 @@ struct TabScreen: View {
   private var routingTabView: some View {
     RoutingTabView(tab: $tab, destination: AppRoute.self) { destination in
       tab(.home, destination: destination, root: .home(name: "John"))
+        .modifier(PendingTabRouterDeeplinkConsumer())
       tab(.notifications, destination: destination, root: .notifications(.list))
       tab(.profile, destination: destination, root: .profile)
     }

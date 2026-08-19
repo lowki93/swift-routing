@@ -11,6 +11,7 @@ import URLRouting
 enum AppDeeplinkID: Hashable {
   case navigationStack(NavigationStackDeeplinkID)
   case tabView(TabViewDeeplinkID)
+  case tabRouter(TabRouterDeeplinkID)
 }
 
 enum NavigationStackDeeplinkID: Hashable {
@@ -37,5 +38,9 @@ let appDeeplinkRouter = OneOf {
   Route(AppDeeplinkID.tabView) {
     Host("tabView")
     tabViewDeeplinkRouter
+  }
+  Route(AppDeeplinkID.tabRouter) {
+    Host("tabRouter")
+    tabRouterDeeplinkRouter
   }
 }

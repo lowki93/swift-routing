@@ -21,7 +21,7 @@ An Xcode project demonstrating SwiftRouting's navigation patterns. Open `SwiftRo
 
 `AppRoute.players`/`AppRoute.form`/`AppRoute.notifications` also demonstrate nested routes and destinations: each wraps its own `Route` enum (`PlayersRoute`, `FormRoute`, `NotificationsRoute`) rendered by a dedicated destination view (`Router/Route.swift`), instead of flattening every screen into `AppRoute` directly. See Defining Routes.
 
-`swiftroutingdemo://navigationStack/...` demonstrates a deep link selecting a navigation paradigm and performing real navigation within it. `AppDeeplinkID` mirrors `AppRoute`'s shape, but each identifier (`UserDeeplinkID`, `NotificationsDeeplinkID`) is its own type with its own composable parser (`Router/Deeplink/`) rather than reusing `AppRoute`'s nested `Route` types directly — the deep link's shape is a URL-facing concern, kept separate from the internal route shape. `PendingDeeplinkConsumer` defers applying the deep link until that paradigm's real `Router` has mounted. The other 3 paradigms (`tabView`, `tabRouter`, `splitView`) are tracked separately. See Deep Linking.
+`swiftroutingdemo://navigationStack/...` demonstrates a deep link selecting a navigation paradigm and performing real navigation within it. `AppDeeplinkID` mirrors `AppRoute`'s shape, but each identifier (`UserDeeplinkID`, `NotificationsDeeplinkID`) is its own type with its own composable parser (`Router/Deeplink/`) rather than reusing `AppRoute`'s nested `Route` types directly — the deep link's shape is a URL-facing concern, kept separate from the internal route shape. `PendingDeeplinkConsumer` (navigation stack) and `PendingTabDeeplinkConsumer` (plain `TabView`) defer applying the deep link until that paradigm's real `Router` has mounted; `PendingTabRouterDeeplinkConsumer` does the same for `RoutingTabView`, delegating tab selection to `TabRouter.handle(tabDeeplink:)` instead of tracking it separately. The remaining `splitView` paradigm is tracked separately. See Deep Linking.
 
 See the [main README](../../README.md#documentation) for links to each article.
 
@@ -56,9 +56,21 @@ xcrun simctl openurl booted "swiftroutingdemo://tabView/profile"
 
 # TabView: Home tab (default for .user), User(Ben) pushed
 xcrun simctl openurl booted "swiftroutingdemo://tabView/user/Ben"
+
+# RoutingTabView: selects the Notifications tab
+xcrun simctl openurl booted "swiftroutingdemo://tabRouter/notifications"
+
+# RoutingTabView: Notifications tab, detail pushed
+xcrun simctl openurl booted "swiftroutingdemo://tabRouter/notifications/42"
+
+# RoutingTabView: selects the Profile tab
+xcrun simctl openurl booted "swiftroutingdemo://tabRouter/profile"
+
+# RoutingTabView: Home tab (default for .user), User(Ben) pushed
+xcrun simctl openurl booted "swiftroutingdemo://tabRouter/user/Ben"
 ```
 
-Each one selects the paradigm (if not already selected) and navigates to the target screen -- for `tabView`, that includes switching to the right tab. Note: `xcrun simctl openurl` only reliably delivers one `.onOpenURL` event per app launch session in the Simulator -- terminate and relaunch the app (or use `xcrun simctl launch` to bring it back to the foreground) between tries if a later URL seems to have no effect.
+Each one selects the paradigm (if not already selected) and navigates to the target screen -- for `tabView`/`tabRouter`, that includes switching to the right tab. Note: `xcrun simctl openurl` only reliably delivers one `.onOpenURL` event per app launch session in the Simulator -- terminate and relaunch the app (or use `xcrun simctl launch` to bring it back to the foreground) between tries if a later URL seems to have no effect.
 
 ## Debugging navigation
 
