@@ -220,6 +220,7 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 ## Articles
 
 - [Stop Fighting SwiftUI Navigation — A Type-Safe Approach with Swift Routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270)
+- [Two-Way Navigation in SwiftUI: The RouteContext Pattern](https://medium.com/@budainkevin/two-way-navigation-in-swiftui-the-routecontext-pattern-0af28310b407)
 
 ## AI Skills
 
