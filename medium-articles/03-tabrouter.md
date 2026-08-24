@@ -260,12 +260,20 @@ struct ProfileView: View {
 **After — one call, no mounting order to reason about:**
 
 ```swift
-func didTapPushNotification(userId: String) {
-  tabRouter.push(AppRoute.user(name: userId), in: HomeTab.profile)
+final class NotificationRouter {
+  private let tabRouter: any TabRouterModel
+
+  init(tabRouter: any TabRouterModel) {
+    self.tabRouter = tabRouter
+  }
+
+  func didTapPushNotification(userId: String) {
+    tabRouter.push(AppRoute.user(name: userId), in: HomeTab.profile)
+  }
 }
 ```
 
-`TabRouter` already knows how to switch tabs and push into a tab that hasn't been visited yet — that's exactly what `push(_:in:)` does internally, every time, not just for notifications. There's no flag to clear, no `onAppear`/`onChange` race to reason about, and no `ProfileView`-specific code required to make it work.
+Same injection pattern as `ProfileViewModel` above — `NotificationRouter` doesn't need to be a view or touch SwiftUI at all. `TabRouter` already knows how to switch tabs and push into a tab that hasn't been visited yet; that's exactly what `push(_:in:)` does internally, every time, not just for notifications. No flag to clear, no `onAppear`/`onChange` race, no `ProfileView`-specific code required to make it work.
 
 ---
 
