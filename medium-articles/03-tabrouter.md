@@ -136,7 +136,7 @@ final class ProfileViewModel {
 }
 ```
 
-Injecting `any TabRouterModel` into a view model instead of reading `@Environment(\.tabRouter)` straight from the view is the same pattern the rest of the series leans on: it keeps navigation testable without mounting a single view (more on that below).
+Injecting `any TabRouterModel` into a view model instead of reading `@Environment(\.tabRouter)` straight from the view is the same pattern the rest of the series leans on: it keeps navigation testable without mounting a single view.
 
 ---
 
@@ -193,99 +193,12 @@ struct ContentView: View {
 
 ---
 
-## Deep Linking Into a Tab
-
-Deep links rarely target "a tab." They target a tab *and* something inside it: `myapp://orders/42` should switch to the Orders tab and push order #42, not just land on the Orders tab's root.
-
-`TabDeeplinkHandler` mirrors the plain `DeeplinkHandler` from the rest of the series, but returns a `TabDeeplink<Tab, Route>` instead of a bare route — a tab, plus an optional route to apply inside it:
-
-```swift
-struct HomeTabDeeplinkHandler: TabDeeplinkHandler {
-  typealias R = DeeplinkIdentifier
-  typealias T = HomeTab
-  typealias D = HomeRoute
-
-  func deeplink(from route: DeeplinkIdentifier) async throws -> TabDeeplink<HomeTab, HomeRoute>? {
-    switch route {
-    case .userProfile(let userId):
-      return TabDeeplink(
-        tab: .profile,
-        deeplink: DeeplinkRoute(type: .push, route: .profile(userId: userId))
-      )
-    default:
-      return nil
-    }
-  }
-}
-```
-
-`TabRouter.handle(tabDeeplink:)` does the rest: switch to the target tab, then — if a route was included — push it in that tab's stack.
-
-```swift
-tabRouter.handle(tabDeeplink: deeplink)
-// equivalent to: change(tab: deeplink.tab), then push the route in that tab
-```
-
-Not every deep link needs to push something once the tab is selected. Simplified from the swift-routing demo app's own tab deep link handler, jumping to the Notifications tab doesn't always push anything extra — landing on the tab's root can *be* the destination:
-
-```swift
-case .notifications(.list):
-  // Selecting the Notifications tab already puts the list on screen.
-  TabDeeplink(tab: .notifications, deeplink: nil)
-case let .notifications(.detail(id)):
-  TabDeeplink(tab: .notifications, deeplink: .push(AppRoute.notifications(.detail(id: id))))
-```
-
-`deeplink: nil` is meaningful here, not a placeholder — it says "switching tabs is the whole job, don't push anything on top."
-
-Like `DeeplinkHandler`, `TabDeeplinkHandler` implementations compose: a top-level handler can delegate to per-feature handlers instead of flattening every case into one giant switch.
-
-```swift
-struct AppTabDeeplinkHandler: TabDeeplinkHandler {
-  typealias R = AppDeeplinkID
-  typealias T = HomeTab
-  typealias D = HomeRoute
-
-  private let profileHandler = ProfileTabDeeplinkHandler()
-
-  func deeplink(from route: AppDeeplinkID) async throws -> TabDeeplink<HomeTab, HomeRoute>? {
-    switch route {
-    case .home:
-      return TabDeeplink(tab: .home, deeplink: DeeplinkRoute(type: .push, route: .home))
-    case .profile(let profileID):
-      return try await profileHandler.deeplink(from: profileID)
-    }
-  }
-}
-```
-
----
-
-## Testing Cross-Tab Navigation Without Mounting a View
-
-Because navigation goes through `any TabRouterModel` rather than a concrete `TabRouter`, testing it doesn't require SwiftUI at all. `TabRouterSpy` (from `SwiftRoutingTestSupport`) records every call instead of performing real navigation:
-
-```swift
-@Test
-func resetHomeTab_doesNotSwitchTabs() {
-  let spy = TabRouterSpy(root: AppRoute.home)
-  let viewModel = ProfileViewModel(tabRouter: spy)
-
-  viewModel.resetHomeTab()
-
-  #expect(spy.popToRootTabs.last as? HomeTab == .home)
-  #expect(spy.changedTabs.isEmpty)  // confirms popToRoot never switches tabs
-}
-```
-
-That second assertion is the interesting one: it's not just checking that the right thing happened, it's checking that the wrong thing — switching tabs — didn't. That's the kind of assertion that's tedious to make reliably against a real UI test, and free against a spy.
-
----
-
 ## Why This Matters
 
-None of this is exotic. Cross-tab navigation, reselect-to-reset, and tab-aware deep links are things almost every non-trivial tabbed app eventually needs. What's missing from SwiftUI isn't the *possibility* of building them — it's a consistent, typed way to do it that doesn't turn into a pile of `@State` and `NotificationCenter` posts the third time a new cross-tab flow shows up.
+None of this is exotic. Cross-tab navigation and reselect-to-reset are things almost every non-trivial tabbed app eventually needs. What's missing from SwiftUI isn't the *possibility* of building them — it's a consistent, typed way to do it that doesn't turn into a pile of `@State` and `NotificationCenter` posts the third time a new cross-tab flow shows up.
 
-`TabRouter` is the same idea as the rest of swift-routing, applied to tabs: routes as values, a router that knows how to apply them, and a clean seam for tests. One less category of navigation code that has to be reinvented per app.
+`TabRouter` is the same idea as the rest of swift-routing, applied to tabs: routes as values, and a router that knows how to apply them across tab boundaries. One less category of navigation code that has to be reinvented per app.
+
+*Deep linking into a specific tab, and testing cross-tab navigation with `TabRouterSpy`, are their own topics — coming up later in this series.*
 
 The library is open source — explore the code, open issues, or contribute: [github.com/lowki93/swift-routing](https://github.com/lowki93/swift-routing)
