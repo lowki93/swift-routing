@@ -1,0 +1,291 @@
+# Tab Navigation in SwiftUI: Taming Cross-Tab Routing with TabRouter
+
+*Part 3 of the swift-routing series. If you're new here, start with [Part 1: Type-Safe Navigation in SwiftUI with swift-routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270) and [Part 2: The RouteContext Pattern](https://medium.com/@budainkevin/two-way-navigation-in-swiftui-the-routecontext-pattern-0af28310b407).*
+
+Every app with a tab bar eventually needs to do something SwiftUI's `TabView` was never designed for: switch to a different tab *and* push a screen inside it, from a single button tap somewhere else entirely. A push notification lands on the Profile tab while you're browsing Home. A "View order" button in a confirmation sheet needs to land three levels deep in the Orders tab. The already-selected tab needs to pop to root when tapped again — but only sometimes.
+
+`TabView` alone gives you none of this. `swift-routing` gives you `TabRouter`.
+
+---
+
+## The Problem: TabView Has No Memory of Its Own Structure
+
+A plain `TabView` only knows one thing: which tab is currently selected.
+
+```swift
+struct ContentView: View {
+  @State private var selectedTab: HomeTab = .home
+
+  var body: some View {
+    TabView(selection: $selectedTab) {
+      HomeView().tabItem { Label("Home", systemImage: "house") }
+      SearchView().tabItem { Label("Search", systemImage: "magnifyingglass") }
+      ProfileView().tabItem { Label("Profile", systemImage: "person") }
+    }
+  }
+}
+```
+
+That's it. There's no API for "push a screen in the Profile tab while I'm on Home." Each tab manages its own `NavigationStack` in isolation, and nothing outside that tab can reach into it. If `HomeView` needs to react to a notification tap by opening a specific order inside the Orders tab, you're on your own — usually some combination of `@State` hoisted to a shared ancestor, a `PassthroughSubject`, and a prayer that the timing works out once the tab has actually mounted.
+
+Tapping the currently-selected tab again is its own separate problem: SwiftUI gives you no hook for it at all.
+
+---
+
+## RoutingTabView + TabRouter: One Router Per Tab
+
+`RoutingTabView` gives every tab its own `Router`, all coordinated by a parent `TabRouter`:
+
+```swift
+enum HomeTab: TabRoute {
+  case home
+  case search
+  case profile
+
+  var name: String {
+    switch self {
+    case .home: "Home"
+    case .search: "Search"
+    case .profile: "Profile"
+    }
+  }
+}
+
+struct ContentView: View {
+  @State private var selectedTab: HomeTab = .home
+
+  var body: some View {
+    RoutingTabView(tab: $selectedTab, destination: HomeRoute.self) { destination in
+      RoutingView(tab: HomeTab.home, destination: destination, root: .home)
+        .tabItem { Label("Home", systemImage: "house") }
+
+      RoutingView(tab: HomeTab.search, destination: destination, root: .search)
+        .tabItem { Label("Search", systemImage: "magnifyingglass") }
+
+      RoutingView(tab: HomeTab.profile, destination: destination, root: .profile)
+        .tabItem { Label("Profile", systemImage: "person") }
+    }
+  }
+}
+```
+
+From any view inside that hierarchy, `@Environment(\.tabRouter)` gives you a handle that can reach *any* tab, not just the current one:
+
+```swift
+struct SomeView: View {
+  @Environment(\.tabRouter) private var tabRouter
+
+  var body: some View {
+    Button("Go to Profile") {
+      tabRouter?.push(HomeRoute.settings, in: HomeTab.profile)
+    }
+  }
+}
+```
+
+`tabRouter` is optional by design — it's only available inside a `RoutingTabView`. A view that might be reused outside a tab context (or in a plain push/present flow) still compiles; it just no-ops if there's no tab router around.
+
+---
+
+## Cross-Tab Actions, Concretely
+
+Every mutating method on `TabRouter` takes an optional tab:
+
+| Method | Effect |
+|--------|--------|
+| `change(tab:)` | Switch to a different tab |
+| `push(_:in:)` | Push a route in a specific tab |
+| `present(_:in:)` | Present a sheet in a specific tab |
+| `cover(_:in:)` | Present a full-screen cover in a specific tab |
+| `update(root:in:)` | Replace the root of a specific tab |
+| `popToRoot(in:)` | Pop a specific tab back to its root |
+
+Pass `nil` for `tab` to target whichever tab is currently selected. Pass an explicit tab, and — for every method except `popToRoot(in:)` — `TabRouter` switches to it first, then performs the action:
+
+```swift
+// Switches to .profile, THEN pushes — the user sees the tab change and land on settings.
+tabRouter.push(AppRoute.user(name: "Joseph"), in: HomeTab.profile)
+
+// Presents a sheet in the notifications tab without leaving the current tab.
+tabRouter.present(AppRoute.search, in: HomeTab.notifications)
+
+// Resets the home tab's stack WITHOUT switching to it — you stay exactly where you are.
+tabRouter.popToRoot(in: HomeTab.home)
+```
+
+That last one is a deliberate exception, not an oversight. `popToRoot(in:)` is the one method that never calls `change(tab:)` — resetting a tab you're not looking at (say, clearing the Home stack when a session expires) shouldn't yank the user away from what they're doing. It's the swift-routing demo app's `ProfileScreen` that makes this explicit:
+
+```swift
+// popToRoot(in:) does NOT call change(tab:) -- unlike push/present/cover/update,
+// this resets the home tab's stack without switching you to it.
+Button("Reset home tab (stays on profile)") { viewModel.resetHomeTab() }
+```
+
+```swift
+@MainActor
+final class ProfileViewModel {
+  private let tabRouter: (any TabRouterModel)?
+
+  init(tabRouter: (any TabRouterModel)?) {
+    self.tabRouter = tabRouter
+  }
+
+  func resetHomeTab() {
+    tabRouter?.popToRoot(in: HomeTab.home)
+  }
+}
+```
+
+Injecting `any TabRouterModel` into a view model instead of reading `@Environment(\.tabRouter)` straight from the view is the same pattern the rest of the series leans on: it keeps navigation testable without mounting a single view (more on that below).
+
+---
+
+## Reacting to Tab Reselection
+
+Tapping the already-selected tab is a UX convention users expect to do *something* — usually scroll to top, sometimes reset a filter. SwiftUI's `TabView` doesn't expose this as an event at all.
+
+`onTabReselected(_:perform:)` does, without touching the default pop-to-root behavior:
+
+```swift
+struct HomeView: View {
+  @ScrollViewProxy var scrollProxy
+
+  var body: some View {
+    ScrollView {
+      // ...
+    }
+    .onTabReselected(HomeTab.home) {
+      scrollProxy.scrollTo("top", anchor: .top)
+    }
+  }
+}
+```
+
+The handler fires *after* the stack has already popped to root, and only when the reselected tab matches the one you passed. It works identically whether you're using `RoutingTabView` or the native `TabView` + `.tabToRoot` binding described below — same modifier, same guarantee, wherever the tab bar lives.
+
+---
+
+## Don't Need Cross-Tab Actions? Use Native TabView
+
+Not every tabbed app needs a `TabRouter`. If tabs never need to talk to each other — no cross-tab push, no cross-tab present — SwiftUI's own `TabView` works fine, with one addition: the `.tabToRoot` binding.
+
+```swift
+struct ContentView: View {
+  @Environment(\.router) private var router
+  @State private var selectedTab: HomeTab = .home
+
+  var body: some View {
+    TabView(selection: .tabToRoot(for: $selectedTab, in: router)) {
+      RoutingView(tab: HomeTab.home, destination: HomeRoute.self, root: .home)
+        .tabItem { Label("Home", systemImage: "house") }
+
+      RoutingView(tab: HomeTab.search, destination: HomeRoute.self, root: .search)
+        .tabItem { Label("Search", systemImage: "magnifyingglass") }
+
+      RoutingView(tab: HomeTab.profile, destination: HomeRoute.self, root: .profile)
+        .tabItem { Label("Profile", systemImage: "person") }
+    }
+  }
+}
+```
+
+`.tabToRoot` gives you the reselect-to-reset behavior for free, and each `RoutingView(tab:destination:root:)` still gets its own independent `Router` and `NavigationStack`. What you lose is `@Environment(\.tabRouter)` — there's no `TabRouter` instance published into the environment, because there's no shared coordinator to publish. Reach for `RoutingTabView` the moment any of your tabs need to act on another one; stick with native `TabView` for everything else.
+
+---
+
+## Deep Linking Into a Tab
+
+Deep links rarely target "a tab." They target a tab *and* something inside it: `myapp://orders/42` should switch to the Orders tab and push order #42, not just land on the Orders tab's root.
+
+`TabDeeplinkHandler` mirrors the plain `DeeplinkHandler` from the rest of the series, but returns a `TabDeeplink<Tab, Route>` instead of a bare route — a tab, plus an optional route to apply inside it:
+
+```swift
+struct HomeTabDeeplinkHandler: TabDeeplinkHandler {
+  typealias R = DeeplinkIdentifier
+  typealias T = HomeTab
+  typealias D = HomeRoute
+
+  func deeplink(from route: DeeplinkIdentifier) async throws -> TabDeeplink<HomeTab, HomeRoute>? {
+    switch route {
+    case .userProfile(let userId):
+      return TabDeeplink(
+        tab: .profile,
+        deeplink: DeeplinkRoute(type: .push, route: .profile(userId: userId))
+      )
+    default:
+      return nil
+    }
+  }
+}
+```
+
+`TabRouter.handle(tabDeeplink:)` does the rest: switch to the target tab, then — if a route was included — push it in that tab's stack.
+
+```swift
+tabRouter.handle(tabDeeplink: deeplink)
+// equivalent to: change(tab: deeplink.tab), then push the route in that tab
+```
+
+Not every deep link needs to push something once the tab is selected. Simplified from the swift-routing demo app's own tab deep link handler, jumping to the Notifications tab doesn't always push anything extra — landing on the tab's root can *be* the destination:
+
+```swift
+case .notifications(.list):
+  // Selecting the Notifications tab already puts the list on screen.
+  TabDeeplink(tab: .notifications, deeplink: nil)
+case let .notifications(.detail(id)):
+  TabDeeplink(tab: .notifications, deeplink: .push(AppRoute.notifications(.detail(id: id))))
+```
+
+`deeplink: nil` is meaningful here, not a placeholder — it says "switching tabs is the whole job, don't push anything on top."
+
+Like `DeeplinkHandler`, `TabDeeplinkHandler` implementations compose: a top-level handler can delegate to per-feature handlers instead of flattening every case into one giant switch.
+
+```swift
+struct AppTabDeeplinkHandler: TabDeeplinkHandler {
+  typealias R = AppDeeplinkID
+  typealias T = HomeTab
+  typealias D = HomeRoute
+
+  private let profileHandler = ProfileTabDeeplinkHandler()
+
+  func deeplink(from route: AppDeeplinkID) async throws -> TabDeeplink<HomeTab, HomeRoute>? {
+    switch route {
+    case .home:
+      return TabDeeplink(tab: .home, deeplink: DeeplinkRoute(type: .push, route: .home))
+    case .profile(let profileID):
+      return try await profileHandler.deeplink(from: profileID)
+    }
+  }
+}
+```
+
+---
+
+## Testing Cross-Tab Navigation Without Mounting a View
+
+Because navigation goes through `any TabRouterModel` rather than a concrete `TabRouter`, testing it doesn't require SwiftUI at all. `TabRouterSpy` (from `SwiftRoutingTestSupport`) records every call instead of performing real navigation:
+
+```swift
+@Test
+func resetHomeTab_doesNotSwitchTabs() {
+  let spy = TabRouterSpy(root: AppRoute.home)
+  let viewModel = ProfileViewModel(tabRouter: spy)
+
+  viewModel.resetHomeTab()
+
+  #expect(spy.popToRootTabs.last as? HomeTab == .home)
+  #expect(spy.changedTabs.isEmpty)  // confirms popToRoot never switches tabs
+}
+```
+
+That second assertion is the interesting one: it's not just checking that the right thing happened, it's checking that the wrong thing — switching tabs — didn't. That's the kind of assertion that's tedious to make reliably against a real UI test, and free against a spy.
+
+---
+
+## Why This Matters
+
+None of this is exotic. Cross-tab navigation, reselect-to-reset, and tab-aware deep links are things almost every non-trivial tabbed app eventually needs. What's missing from SwiftUI isn't the *possibility* of building them — it's a consistent, typed way to do it that doesn't turn into a pile of `@State` and `NotificationCenter` posts the third time a new cross-tab flow shows up.
+
+`TabRouter` is the same idea as the rest of swift-routing, applied to tabs: routes as values, a router that knows how to apply them, and a clean seam for tests. One less category of navigation code that has to be reinvented per app.
+
+The library is open source — explore the code, open issues, or contribute: [github.com/lowki93/swift-routing](https://github.com/lowki93/swift-routing)
