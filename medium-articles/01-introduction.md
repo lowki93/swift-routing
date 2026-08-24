@@ -282,4 +282,4 @@ The full source, documentation, and example app are on [GitHub](https://github.c
 
 ---
 
-*Next: [Two-Way Navigation in SwiftUI: The RouteContext Pattern](#)*
+*Next: [Two-Way Navigation in SwiftUI: The RouteContext Pattern](https://medium.com/@budainkevin/two-way-navigation-in-swiftui-the-routecontext-pattern-0af28310b407)*
