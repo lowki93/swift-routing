@@ -113,15 +113,27 @@ tabRouter.present(AppRoute.search, in: HomeTab.notifications)
 tabRouter.popToRoot(in: HomeTab.home)
 ```
 
-That last one is a deliberate exception, not an oversight. `popToRoot(in:)` is the one method that never calls `change(tab:)` — resetting a tab you're not looking at (say, clearing the Home stack when a session expires) shouldn't yank the user away from what they're doing. It's the swift-routing demo app's `ProfileScreen` that makes this explicit:
+That last one is a deliberate exception, not an oversight. `popToRoot(in:)` is the one method that never calls `change(tab:)` — resetting a tab you're not looking at (say, clearing the Home stack when a session expires) shouldn't yank the user away from what they're doing.
+
+The swift-routing demo app's `ProfileScreen` exercises four of these side by side, injecting `any TabRouterModel` into a view model instead of reading `@Environment(\.tabRouter)` straight from the view — the same pattern the rest of the series leans on, and one that keeps navigation testable without mounting a single view:
 
 ```swift
-// popToRoot(in:) does NOT call change(tab:) -- unlike push/present/cover/update,
-// this resets the home tab's stack without switching you to it.
-Button("Reset home tab (stays on profile)") { viewModel.resetHomeTab() }
-```
+struct ProfileScreen: View {
+  let viewModel: ProfileViewModel
 
-```swift
+  var body: some View {
+    VStack {
+      Button("Present search (current tab)") { viewModel.presentSearch() }
+      Button("Cover about (current tab)") { viewModel.coverAbout() }
+      Button("Present search in notifications tab") { viewModel.presentSearchInNotifications() }
+      // popToRoot(in:) does NOT call change(tab:) -- unlike push/present/cover/update,
+      // this resets the home tab's stack without switching you to it.
+      Button("Reset home tab (stays on profile)") { viewModel.resetHomeTab() }
+    }
+    .navigationTitle("Profile")
+  }
+}
+
 @MainActor
 final class ProfileViewModel {
   private let tabRouter: (any TabRouterModel)?
@@ -130,13 +142,25 @@ final class ProfileViewModel {
     self.tabRouter = tabRouter
   }
 
+  func presentSearch() {
+    tabRouter?.present(AppRoute.search)                              // current tab
+  }
+
+  func coverAbout() {
+    tabRouter?.cover(AppRoute.about)                                 // current tab
+  }
+
+  func presentSearchInNotifications() {
+    tabRouter?.present(AppRoute.search, in: HomeTab.notifications)   // switches tab first
+  }
+
   func resetHomeTab() {
-    tabRouter?.popToRoot(in: HomeTab.home)
+    tabRouter?.popToRoot(in: HomeTab.home)                           // never switches tab
   }
 }
 ```
 
-Injecting `any TabRouterModel` into a view model instead of reading `@Environment(\.tabRouter)` straight from the view is the same pattern the rest of the series leans on: it keeps navigation testable without mounting a single view.
+Four buttons, four distinct tab behaviors, and not one of them needed a `NavigationStack` binding threaded in from outside.
 
 ---
 
@@ -190,6 +214,58 @@ struct ContentView: View {
 ```
 
 `.tabToRoot` gives you the reselect-to-reset behavior for free, and each `RoutingView(tab:destination:root:)` still gets its own independent `Router` and `NavigationStack`. What you lose is `@Environment(\.tabRouter)` — there's no `TabRouter` instance published into the environment, because there's no shared coordinator to publish. Reach for `RoutingTabView` the moment any of your tabs need to act on another one; stick with native `TabView` for everything else.
+
+---
+
+## Before and After
+
+Here's a common trigger for cross-tab navigation: a push notification arrives while the user is on Home, and tapping it should switch to Profile and open a specific user.
+
+**Before — a shared flag and a race with `onAppear`:**
+
+```swift
+// Somewhere shared, injected into both the root view and ProfileView
+@Observable
+final class PendingNavigation {
+  var userId: String?
+}
+
+// Root view
+.onReceive(NotificationCenter.default.publisher(for: .didTapPushNotification)) { note in
+  guard let userId = note.userInfo?["userId"] as? String else { return }
+  selectedTab = .profile
+  pendingNavigation.userId = userId   // ProfileView may not even be mounted yet
+}
+
+// ProfileView — has to guess whether it mounted before or after the flag was set
+struct ProfileView: View {
+  @State private var path = NavigationPath()
+
+  var body: some View {
+    NavigationStack(path: $path) {
+      // ...
+    }
+    .onAppear { applyPendingNavigationIfNeeded() }
+    .onChange(of: pendingNavigation.userId) { applyPendingNavigationIfNeeded() }
+  }
+
+  private func applyPendingNavigationIfNeeded() {
+    guard let userId = pendingNavigation.userId else { return }
+    path.append(userId)
+    pendingNavigation.userId = nil
+  }
+}
+```
+
+**After — one call, no mounting order to reason about:**
+
+```swift
+func didTapPushNotification(userId: String) {
+  tabRouter.push(AppRoute.user(name: userId), in: HomeTab.profile)
+}
+```
+
+`TabRouter` already knows how to switch tabs and push into a tab that hasn't been visited yet — that's exactly what `push(_:in:)` does internally, every time, not just for notifications. There's no flag to clear, no `onAppear`/`onChange` race to reason about, and no `ProfileView`-specific code required to make it work.
 
 ---
 
