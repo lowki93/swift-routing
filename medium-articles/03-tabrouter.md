@@ -219,26 +219,26 @@ struct ContentView: View {
 
 ## Before and After
 
-Here's a common trigger for cross-tab navigation: a push notification arrives while the user is on Home, and tapping it should switch to Profile and open a specific user.
+Here's a common trigger for cross-tab navigation: a "View order" button inside a confirmation sheet needs to dismiss, switch to the Orders tab, and land straight on that order's detail screen — three actions from one tap, in a tab the sheet itself knows nothing about.
 
 **Before — a shared flag and a race with `onAppear`:**
 
 ```swift
-// Somewhere shared, injected into both the root view and ProfileView
+// Somewhere shared, injected into both the confirmation sheet and OrdersView
 @Observable
-final class PendingNavigation {
-  var userId: String?
+final class PendingOrderNavigation {
+  var orderId: String?
 }
 
-// Root view
-.onReceive(NotificationCenter.default.publisher(for: .didTapPushNotification)) { note in
-  guard let userId = note.userInfo?["userId"] as? String else { return }
-  selectedTab = .profile
-  pendingNavigation.userId = userId   // ProfileView may not even be mounted yet
+// ConfirmationSheet
+Button("View order") {
+  selectedTab = .orders
+  pendingNavigation.orderId = order.id   // OrdersView may not even be mounted yet
+  dismiss()
 }
 
-// ProfileView — has to guess whether it mounted before or after the flag was set
-struct ProfileView: View {
+// OrdersView — has to guess whether it mounted before or after the flag was set
+struct OrdersView: View {
   @State private var path = NavigationPath()
 
   var body: some View {
@@ -246,13 +246,13 @@ struct ProfileView: View {
       // ...
     }
     .onAppear { applyPendingNavigationIfNeeded() }
-    .onChange(of: pendingNavigation.userId) { applyPendingNavigationIfNeeded() }
+    .onChange(of: pendingNavigation.orderId) { applyPendingNavigationIfNeeded() }
   }
 
   private func applyPendingNavigationIfNeeded() {
-    guard let userId = pendingNavigation.userId else { return }
-    path.append(userId)
-    pendingNavigation.userId = nil
+    guard let orderId = pendingNavigation.orderId else { return }
+    path.append(orderId)
+    pendingNavigation.orderId = nil
   }
 }
 ```
@@ -260,20 +260,15 @@ struct ProfileView: View {
 **After — one call, no mounting order to reason about:**
 
 ```swift
-final class NotificationRouter {
-  private let tabRouter: any TabRouterModel
-
-  init(tabRouter: any TabRouterModel) {
-    self.tabRouter = tabRouter
-  }
-
-  func didTapPushNotification(userId: String) {
-    tabRouter.push(AppRoute.user(name: userId), in: HomeTab.profile)
-  }
+Button("View order") {
+  tabRouter.push(AppRoute.order(id: order.id), in: HomeTab.orders)
+  dismiss()
 }
 ```
 
-Same injection pattern as `ProfileViewModel` above — `NotificationRouter` doesn't need to be a view or touch SwiftUI at all. `TabRouter` already knows how to switch tabs and push into a tab that hasn't been visited yet; that's exactly what `push(_:in:)` does internally, every time, not just for notifications. No flag to clear, no `onAppear`/`onChange` race, no `ProfileView`-specific code required to make it work.
+`TabRouter` already knows how to switch tabs and push into a tab that hasn't been visited yet — that's exactly what `push(_:in:)` does internally, every time. No flag to clear, no `onAppear`/`onChange` race, no `OrdersView`-specific code required to make it work, and no extra type needed just to hold a `tabRouter` reference for this one call — the button's own action closure is enough.
+
+This is deliberately a plain in-app trigger, not an external one. If the *same* navigation needs to happen from a push notification or a URL instead of a button tap, that's `TabDeeplinkHandler`'s job, not something to reinvent by hand — its own article is coming up later in the series.
 
 ---
 
@@ -283,6 +278,6 @@ None of this is exotic. Cross-tab navigation and reselect-to-reset are things al
 
 `TabRouter` is the same idea as the rest of swift-routing, applied to tabs: routes as values, and a router that knows how to apply them across tab boundaries. One less category of navigation code that has to be reinvented per app.
 
-*Deep linking into a specific tab, and testing cross-tab navigation with `TabRouterSpy`, are their own topics — coming up later in this series.*
+*Testing cross-tab navigation with `TabRouterSpy` is its own topic — coming up later in this series.*
 
 The library is open source — explore the code, open issues, or contribute: [github.com/lowki93/swift-routing](https://github.com/lowki93/swift-routing)
