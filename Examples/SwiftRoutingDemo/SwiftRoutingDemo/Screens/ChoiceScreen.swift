@@ -74,6 +74,8 @@ final class ChoiceScreenModel {
       example = .tabView
     case .tabRouter:
       example = .routingTabView
+    case .splitView:
+      example = .splitView
     }
     return identifier
   }

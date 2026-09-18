@@ -49,6 +49,7 @@ struct SidebarScreen: View {
         }
       }
     }
+    .modifier(PendingSplitDeeplinkConsumer())
   }
 
   private var columnNumberPicker: some View {

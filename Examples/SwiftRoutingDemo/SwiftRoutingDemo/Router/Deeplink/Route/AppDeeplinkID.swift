@@ -12,6 +12,7 @@ enum AppDeeplinkID: Hashable {
   case navigationStack(NavigationStackDeeplinkID)
   case tabView(TabViewDeeplinkID)
   case tabRouter(TabRouterDeeplinkID)
+  case splitView(SplitViewDeeplinkID)
 }
 
 enum NavigationStackDeeplinkID: Hashable {
@@ -42,5 +43,9 @@ let appDeeplinkRouter = OneOf {
   Route(AppDeeplinkID.tabRouter) {
     Host("tabRouter")
     tabRouterDeeplinkRouter
+  }
+  Route(AppDeeplinkID.splitView) {
+    Host("splitView")
+    splitViewDeeplinkRouter
   }
 }
