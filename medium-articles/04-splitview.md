@@ -126,53 +126,26 @@ Since sidebar, content, and detail all share the *same* router, `router.push(_:)
 
 ---
 
-## Deep Linking Into Specific Columns
-
-`SplitDeeplinkHandler` mirrors the plain `DeeplinkHandler` from earlier in this series, but returns a `SplitDeeplink<ContentData, DetailData, R>` instead of a bare route — a content selection, a detail selection, and an optional route to push once both are set:
-
-```swift
-struct NoteSplitDeeplinkHandler: SplitDeeplinkHandler {
-  func deeplink(from route: DeeplinkIdentifier) async throws -> SplitDeeplink<Folder, Note, AppRoute>? {
-    switch route {
-    case let .note(note):
-      SplitDeeplink(content: note.folder, detail: note)
-    default:
-      nil
-    }
-  }
-}
-```
-
-`router.handle(splitDeeplink:)` applies it in a fixed order — select `content` (3-column layout only; a no-op if this router has no content column), then select `detail`, then apply the optional `deeplink` within the detail column's own navigation stack:
-
-```swift
-router.handle(splitDeeplink: splitDeeplink)
-```
-
-The content column never has a navigation stack of its own — only detail does — so that trailing `deeplink`, if present, can only ever push further *within* detail, regardless of which column's selection led there.
-
----
-
 ## Before and After
 
-A concrete trigger: a push notification arrives for a specific note. Tapping it should open the app on the right folder *and* the right note, in whichever column layout is currently showing.
+A concrete trigger: something *outside* the split view — a "View in Notes" button from a share sheet, say — needs to open the app on a specific folder *and* note, in whichever column layout is currently showing.
 
 **Before — three pieces of state, and a compact-mode branch to get right by hand:**
 
 ```swift
-final class NotificationRouter: ObservableObject {
+final class PendingSelection: ObservableObject {
   @Published var pendingFolder: Folder?
   @Published var pendingNote: Note?
 }
 
 // Somewhere near the root
-func didTapNoteNotification(note: Note) {
-  notificationRouter.pendingFolder = note.folder
-  notificationRouter.pendingNote = note
+func openNote(_ note: Note) {
+  pendingSelection.pendingFolder = note.folder
+  pendingSelection.pendingNote = note
 }
 
 // Inside the view that owns selectedFolder/selectedNote
-.onChange(of: notificationRouter.pendingNote) { _, note in
+.onChange(of: pendingSelection.pendingNote) { _, note in
   guard let note else { return }
   selectedFolder = note.folder
   selectedNote = horizontalSizeClass == .compact ? nil : note
@@ -181,15 +154,20 @@ func didTapNoteNotification(note: Note) {
 }
 ```
 
-**After — one call, layout-agnostic:**
+**After — two calls on the router, layout-agnostic:**
 
 ```swift
-func didTapNoteNotification(note: Note) {
-  router.handle(splitDeeplink: SplitDeeplink(content: note.folder, detail: note))
+final class NoteOpener {
+  let router: any RouterModel
+
+  func openNote(_ note: Note) {
+    router.select(content: note.folder)
+    router.select(detail: note)
+  }
 }
 ```
 
-`select(content:)` already no-ops safely if the router has no content column, so the exact same call works whether the app is currently showing 2 or 3 columns — no `horizontalSizeClass` check, no separate compact-mode branch to keep in sync with the one in `SidebarScreen`.
+`select(content:)` already no-ops safely if the router has no content column, so the exact same two calls work whether the app is currently showing 2 or 3 columns — no `horizontalSizeClass` check, no separate compact-mode branch to keep in sync with the one in `SidebarScreen`, and no extra state to own: `NoteOpener` doesn't need to be a view or touch SwiftUI at all.
 
 ---
 
@@ -197,6 +175,8 @@ func didTapNoteNotification(note: Note) {
 
 Sidebar/content/detail navigation is the default shape for any serious iPad or Mac app, and it's noticeably less covered than tab-based navigation — most SwiftUI navigation writing stops at `NavigationStack`. The gap isn't whether `NavigationSplitView` *can* do this; it's that keeping three columns' selections coherent, reachable from outside the view that draws them, and correct in compact mode, is left entirely to you.
 
-`RoutingSplitView` closes that gap the same way the rest of swift-routing does: one router, typed selections instead of loose `@State`, and a `SplitDeeplinkHandler` that makes "open the app on exactly this content and detail" a single, testable call — on iPad, on Mac, and on iPhone once it collapses.
+`RoutingSplitView` closes that gap the same way the rest of swift-routing does: one router, typed selections instead of loose `@State`, reachable from anywhere -- on iPad, on Mac, and on iPhone once it collapses.
+
+*Deep linking a specific column selection from a URL is its own topic -- coming up later in this series.*
 
 The library is open source — explore the code, open issues, or contribute: [github.com/lowki93/swift-routing](https://github.com/lowki93/swift-routing)
