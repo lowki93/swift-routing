@@ -23,7 +23,11 @@ struct PlayersScreen: View {
             NavigationLink(item.name, value: item)
           }
           .onFirstAppear {
-            router.select(detail: Player.players.for(type: type).first)
+            let players = Player.players.for(type: type)
+            // Keep an already-selected player of this type (e.g. deep-linked) instead of
+            // stomping it with the first one -- only auto-select when there's nothing usable.
+            if let selected = router.detailSelection as? Player, players.contains(selected) { return }
+            router.select(detail: players.first)
           }
         } else {
           List(Player.players.for(type: type)) { item in
