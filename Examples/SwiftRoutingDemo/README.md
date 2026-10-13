@@ -81,6 +81,23 @@ xcrun simctl openurl booted "swiftroutingdemo://splitView/players/basketballPlay
 
 Each one selects the paradigm (if not already selected) and navigates to the target screen -- for `tabView`/`tabRouter`, that includes switching to the right tab. `splitView` adapts to whichever column layout is currently active: in 3-column mode it selects both the content (type) and detail (player) columns; in 2-column mode it selects the player list for that type and pushes the specific player within it -- toggle the layout from the Sidebar's "Configuration" menu before firing the URL to try the other mode. Note: `xcrun simctl openurl` only reliably delivers one `.onOpenURL` event per app launch session in the Simulator -- terminate and relaunch the app (or use `xcrun simctl launch` to bring it back to the foreground) between tries if a later URL seems to have no effect.
 
+## Testing
+
+The `SwiftRoutingDemoTests` unit-test target shows how to unit-test navigation without exercising any UI. It links the local `SwiftRoutingTestSupport` product and uses its spies in place of the real routers:
+
+- `UserScreenModelTests` — `RouterSpy` injected as `any RouterModel` (`pushBen()`/`back()`/`popToRoot()`)
+- `ProfileViewModelTests` — `TabRouterSpy` injected as `any TabRouterModel` (`presentSearch()`/`coverAbout()`/`presentSearchInNotifications()`/`resetHomeTab()`)
+
+Both follow the patterns in the Testing article ("Strategy 1: RouterSpy" and "Strategy 2: Test ViewModel Navigation"). Run them from Xcode with the `SwiftRoutingDemo` scheme (⌘U), or from the command line on any supported platform:
+
+```bash
+xcodebuild test -project SwiftRoutingDemo.xcodeproj -scheme SwiftRoutingDemo \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+
+xcodebuild test -project SwiftRoutingDemo.xcodeproj -scheme SwiftRoutingDemo \
+  -destination 'platform=macOS'
+```
+
 ## Debugging navigation
 
 `SwiftRoutingDemoApp.swift` attaches `.printRouterOnChange()` to the root view, so every meaningful navigation event (push, present, tab change, router creation/destruction...) prints the full router tree to the console. See the full documentation's Troubleshooting article for how to read it.
