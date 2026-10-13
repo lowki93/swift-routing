@@ -19,7 +19,7 @@ import SwiftUI
 ///
 /// router.push(HomeRoute.page2)
 /// router.present(HomeRoute.settings)
-/// router.back()
+/// router.pop()
 /// ```
 ///
 /// ## Split view navigation
@@ -43,7 +43,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
     }
     didSet {
       // `NavigationStack(path: $router.path)` (in `RoutingView`/`RoutingSplitView`) lets
-      // SwiftUI mutate `path` directly through the binding -- bypassing push(_:)/back()/
+      // SwiftUI mutate `path` directly through the binding -- bypassing push(_:)/pop()/
       // popToRoot()/terminate(_:) entirely -- for a native `NavigationLink` push, a
       // swipe-back/back-button tap, or a long-press-back-button jump to an ancestor. Their
       // explicit `log(...)` calls never run for those, so this observer is the single place
@@ -55,11 +55,11 @@ public final class Router: BaseRouter, @unchecked Sendable {
         // have resolved to -- the detail or content selection, not necessarily `root`.
         log(.navigation(from: route(for: oldValue).wrapped, to: pushed.wrapped, type: .push))
       } else if delta < 0, !isPathChangeLoggedExplicitly {
-        // `isPathChangeLoggedExplicitly` is set by back()/popToRoot()/terminate(_:) around
+        // `isPathChangeLoggedExplicitly` is set by pop()/popToRoot()/terminate(_:) around
         // their own mutation, so a shrink they already logged with more specific semantics
-        // (`.popToRoot`, or a `.back(count:)` tied to a matched context) isn't logged again
+        // (`.popToRoot`, or a `.pop(count:)` tied to a matched context) isn't logged again
         // here -- this only fires for a shrink that didn't go through any of them.
-        log(.action(.back(count: -delta)))
+        log(.action(.pop(count: -delta)))
       }
     }
   }
@@ -319,12 +319,12 @@ extension Router: @preconcurrency RouterModel {
     log(.action(.popToRoot))
   }
 
-  @MainActor public func back() {
+  @MainActor public func pop() {
     guard !path.isEmpty else { return }
     isPathChangeLoggedExplicitly = true
     path.removeLast()
     isPathChangeLoggedExplicitly = false
-    log(.action(.back()))
+    log(.action(.pop()))
   }
 
   @MainActor public func terminate(_ value: some RouteContext) {
@@ -338,13 +338,13 @@ extension Router: @preconcurrency RouterModel {
       isPathChangeLoggedExplicitly = true
       path.removeLast(clear)
       isPathChangeLoggedExplicitly = false
-      log(.action(.back(count: clear)))
+      log(.action(.pop(count: clear)))
     /// If the context is not found and the router is presented (i.e., displayed modally)
     } else if type.isPresented {
       close()
     /// Otherwise, pops the topmost route from the stack
     } else {
-      back()
+      pop()
     }
   }
 

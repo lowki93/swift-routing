@@ -23,11 +23,11 @@ struct UserScreen: View {
         model.pushBen()
       }
       Button("Back") {
-        model.back()
+        model.pop()
       }
       Button("Back (SwiftUI dismiss)") {
-        // Pops the same way a swipe-back would -- logs .action(.back(count: 1)) via
-        // path's didSet, same as model.back() above. Stays a View-level concern,
+        // Pops the same way a swipe-back would -- logs .action(.pop(count: 1)) via
+        // path's didSet, same as model.pop() above. Stays a View-level concern,
         // unlike the router-driven actions above which go through the model.
         dismiss()
       }
@@ -57,8 +57,8 @@ final class UserScreenModel {
     router.push(AppRoute.user(name: "Ben"))
   }
 
-  func back() {
-    router.back()
+  func pop() {
+    router.pop()
   }
 
   func popToRoot() {

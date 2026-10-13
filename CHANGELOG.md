@@ -12,7 +12,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Deprecated
+
+- `RouterModel.back()` is deprecated in favor of `pop()`, named consistently with `push(_:)` and `popToRoot()`. `back()` remains available as a deprecated alias (a `RouterModel` extension method that calls `pop()`) and will be removed in a future release. Migration: replace `router.back()` with `router.pop()`. Custom `RouterModel` conformances that implemented `back()` should implement `pop()` instead; they keep compiling either way
+
 ### Changed
+
+- `pop()` is now the `RouterModel` requirement (and `Router`'s implementation) instead of `back()`
+- `LoggerMessage.Action.back(count:)` is renamed `pop(count:)`, and the default logger now prints `pop` / `pop, count: N` instead of `back` / `back, count: N`. Custom `Configuration.logger` closures matching `.action(.back…)` must switch to `.action(.pop…)`
+- `RouterSpy.backCallCount` is renamed `popCallCount`; it counts calls made through either `pop()` or the deprecated `back()`
 
 - Merged `PresentableRouter` into `Router` -- the intermediate class added no polymorphism (`Router` was its only, `final` subclass) and just split the implementation across two files. Not a breaking change: `PresentableRouter` was never part of the public type hierarchy consumers could actually reach (#124)
 

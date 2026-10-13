@@ -23,7 +23,7 @@ struct HomeView: View {
 - `push(_:)`: push onto the stack
 - `present(_:withStack:)`: present as sheet (optional nested stack)
 - `cover(_:)`: present as full-screen cover
-- `back()`: pop one level
+- `pop()`: pop one level
 - `popToRoot()`: clear stack path and return to root
 - `update(root:)`: replace root route
 - `close()`: dismiss current presented router
@@ -37,7 +37,7 @@ router.present(HomeRoute.settings)                 // withStack defaults to true
 router.present(HomeRoute.settings, withStack: false)
 router.cover(HomeRoute.onboarding)
 
-router.back()
+router.pop()
 router.popToRoot()
 router.update(root: HomeRoute.dashboard)
 ```
@@ -89,7 +89,7 @@ if router.isPresented {
 }
 
 if router.routeCount > 1 {
-  Button("Back") { router.back() }
+  Button("Back") { router.pop() }
 }
 ```
 

@@ -162,7 +162,7 @@ The `Router` covers the full navigation surface:
 | `router.push(_:)` | Push onto the stack |
 | `router.present(_:)` | Present as a sheet |
 | `router.cover(_:)` | Full-screen cover |
-| `router.back()` | Pop one level |
+| `router.pop()` | Pop one level |
 | `router.popToRoot()` | Clear the entire stack |
 | `router.close()` | Dismiss a modal |
 | `router.update(root:)` | Replace the root |
@@ -217,7 +217,7 @@ You never instantiate `Router` yourself. You just read it from the environment:
 @Environment(\.router) private var router
 ```
 
-The right router is always there, always scoped correctly. If you're inside a sheet, `router.close()` dismisses the sheet. If you're inside the main stack, `router.back()` pops. Same API, context-aware behavior.
+The right router is always there, always scoped correctly. If you're inside a sheet, `router.close()` dismisses the sheet. If you're inside the main stack, `router.pop()` pops. Same API, context-aware behavior.
 
 ---
 

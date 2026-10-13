@@ -117,7 +117,7 @@ router.terminate(UserSelectionContext(user: selectedUser))
 
 ## How terminate Navigates Back
 
-`terminate` is smarter than a simple `back()` or `close()`. It looks up the router hierarchy for the observer that registered the context, then navigates back to exactly that level.
+`terminate` is smarter than a simple `pop()` or `close()`. It looks up the router hierarchy for the observer that registered the context, then navigates back to exactly that level.
 
 This means it works correctly across deeply nested navigation:
 

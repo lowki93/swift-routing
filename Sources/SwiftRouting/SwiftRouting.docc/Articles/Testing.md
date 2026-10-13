@@ -34,7 +34,7 @@ spy.push(AppRoute.profile(userId: "123"))
 #expect((spy.pushedRoutes.first as? AppRoute) == .profile(userId: "123"))
 ```
 
-Available recorded state: `pushedRoutes`, `presentedRoutes`, `coveredRoutes`, `updatedRoots`, `routedDestinations`, `backCallCount`, `popToRootCallCount`, `closeCallCount`, `closeChildrenCallCount`, `terminatedContexts`, `dispatchedContexts`, `addedContextTypes`, `removedContextTypes`, `detailSelections`, `contentSelections` — plus live `currentRoute`/`pathCount`/`detailSelection`/`contentSelection` that update as calls happen.
+Available recorded state: `pushedRoutes`, `presentedRoutes`, `coveredRoutes`, `updatedRoots`, `routedDestinations`, `popCallCount`, `popToRootCallCount`, `closeCallCount`, `closeChildrenCallCount`, `terminatedContexts`, `dispatchedContexts`, `addedContextTypes`, `removedContextTypes`, `detailSelections`, `contentSelections` — plus live `currentRoute`/`pathCount`/`detailSelection`/`contentSelection` that update as calls happen.
 
 > Note:
 > `tabRouter(for:)`, `findRouterInTabRouter(for:)`, and `deepestRouter()` always return `nil` on `RouterSpy` — there's no real router hierarchy behind it. Test code that depends on those against a real `Router` instead.

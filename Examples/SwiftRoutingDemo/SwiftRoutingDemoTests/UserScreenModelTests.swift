@@ -28,15 +28,15 @@ struct UserScreenModelTests {
   }
 
   @MainActor
-  struct Back {
+  struct Pop {
     @Test
-    func back_return_backCalledOnce() {
+    func pop_return_popCalledOnce() {
       let spy = RouterSpy(root: AppRoute.home(name: "Test"))
       let model = UserScreenModel(name: "Me", router: spy)
 
-      model.back()
+      model.pop()
 
-      #expect(spy.backCallCount == 1)
+      #expect(spy.popCallCount == 1)
     }
   }
 

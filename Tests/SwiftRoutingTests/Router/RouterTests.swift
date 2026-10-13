@@ -514,8 +514,8 @@ struct RouterTests {
     }
 
     @Test
-    func pathHasElements_popToRoot_return_onlyActionPopToRootLoggedNotBackCount() {
-      // Regression test: path's didSet must not also auto-log a generic .action(.back(count:))
+    func pathHasElements_popToRoot_return_onlyActionPopToRootLoggedNotPopCount() {
+      // Regression test: path's didSet must not also auto-log a generic .action(.pop(count:))
       // for the shrink popToRoot() itself already logged as the more specific .action(.popToRoot).
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
@@ -532,14 +532,66 @@ struct RouterTests {
   }
 
   @MainActor
-  struct Back: RouterTestSuite {
+  struct Pop: RouterTestSuite {
     let router: Router
 
     @Test
-    func pathHasElements_back_return_removeLastElement() {
+    func pathHasElements_pop_return_removeLastElement() {
       router.push(TestRoute.home)
       router.push(TestRoute.details(id: "42"))
       #expect(router.path.count == 2)
+
+      router.pop()
+
+      #expect(router.path.count == 1)
+      #expect((router.currentRoute.wrapped as? TestRoute) == .home)
+    }
+
+    @Test
+    func pathIsEmpty_pop_return_noChange() {
+      router.pop()
+
+      #expect(router.path.isEmpty)
+      #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
+    }
+
+    @Test
+    func pathHasElements_pop_return_loggerCalledWithActionPop() {
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedLoggerSpy.receivedMessage = nil
+      expectedLoggerSpy.receivedRouterId = nil
+
+      expectedRouter.pop()
+
+      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.pop()))
+    }
+
+    @Test
+    func pathHasElements_pop_return_onlyActionPopLoggedNotNavigation() {
+      // Regression test: path's didSet only logs .navigation on growth -- pop() shrinking
+      // the path must not also trigger a spurious .navigation log alongside .action(.pop()).
+      let setup = makeRouterWithLoggerSpy()
+      let expectedRouter = setup.router
+      let expectedLoggerSpy = setup.loggerSpy
+      expectedRouter.push(TestRoute.home)
+      expectedLoggerSpy.clearReceivedMessages()
+
+      expectedRouter.pop()
+
+      #expect(expectedLoggerSpy.receivedMessages.count == 1)
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.pop()))
+    }
+
+    // Regression tests for the deprecated `back()` alias: keep them for as long as the alias
+    // exists, and remove them together with `back()`.
+    @Test
+    func pathHasElements_deprecatedBack_return_removeLastElement() {
+      router.push(TestRoute.home)
+      router.push(TestRoute.details(id: "42"))
 
       router.back()
 
@@ -548,32 +600,7 @@ struct RouterTests {
     }
 
     @Test
-    func pathIsEmpty_back_return_noChange() {
-      router.back()
-
-      #expect(router.path.isEmpty)
-      #expect((router.currentRoute.wrapped as? DefaultRoute) == .main)
-    }
-
-    @Test
-    func pathHasElements_back_return_loggerCalledWithActionBack() {
-      let setup = makeRouterWithLoggerSpy()
-      let expectedRouter = setup.router
-      let expectedLoggerSpy = setup.loggerSpy
-      expectedRouter.push(TestRoute.home)
-      expectedLoggerSpy.receivedMessage = nil
-      expectedLoggerSpy.receivedRouterId = nil
-
-      expectedRouter.back()
-
-      #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
-      assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
-    }
-
-    @Test
-    func pathHasElements_back_return_onlyActionBackLoggedNotNavigation() {
-      // Regression test: path's didSet only logs .navigation on growth -- back() shrinking
-      // the path must not also trigger a spurious .navigation log alongside .action(.back()).
+    func pathHasElements_deprecatedBack_return_onlyActionPopLogged() {
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
       let expectedLoggerSpy = setup.loggerSpy
@@ -583,15 +610,15 @@ struct RouterTests {
       expectedRouter.back()
 
       #expect(expectedLoggerSpy.receivedMessages.count == 1)
-      assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.pop()))
     }
 
     @Test
-    func pathMutatedDirectlyByOneElement_return_loggerCalledWithActionBack() {
+    func pathMutatedDirectlyByOneElement_return_loggerCalledWithActionPop() {
       // Regression test: a native swipe-back/back-button tap mutates `path` directly through
-      // `NavigationStack(path: $router.path)`'s binding, bypassing back() entirely -- same
+      // `NavigationStack(path: $router.path)`'s binding, bypassing pop() entirely -- same
       // class of gap as NavigationLink bypassing push(_:). Simulated here by mutating `path`
-      // directly instead of calling back().
+      // directly instead of calling pop().
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
       let expectedLoggerSpy = setup.loggerSpy
@@ -602,11 +629,11 @@ struct RouterTests {
       expectedRouter.path.removeLast()
 
       #expect(expectedLoggerSpy.receivedMessages.count == 1)
-      assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 1)))
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.pop(count: 1)))
     }
 
     @Test
-    func pathMutatedDirectlyByMultipleElements_return_loggerCalledWithActionBackCount() {
+    func pathMutatedDirectlyByMultipleElements_return_loggerCalledWithActionPopCount() {
       // Simulates a long-press-back-button jump to an ancestor, which also mutates `path`
       // directly by more than one element at once.
       let setup = makeRouterWithLoggerSpy()
@@ -620,7 +647,7 @@ struct RouterTests {
       expectedRouter.path.removeLast(2)
 
       #expect(expectedLoggerSpy.receivedMessages.count == 1)
-      assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 2)))
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.pop(count: 2)))
     }
   }
 
@@ -1440,7 +1467,7 @@ struct RouterTests {
   @MainActor
   struct RemoveContextOnPathChange {
     @Test
-    func contextExistsOnRemovedRoute_back_return_contextRemovedAndLoggerCalled() {
+    func contextExistsOnRemovedRoute_pop_return_contextRemovedAndLoggerCalled() {
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
       let expectedLoggerSpy = setup.loggerSpy
@@ -1449,7 +1476,7 @@ struct RouterTests {
       #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
       expectedLoggerSpy.clearReceivedMessages()
 
-      expectedRouter.back()
+      expectedRouter.pop()
 
       #expect(expectedRouter.contexts.all(for: StringContext.self).isEmpty)
       assertLogMessagesContain(
@@ -1486,7 +1513,7 @@ struct RouterTests {
     }
 
     @Test
-    func contextExistsOnRootOnly_back_return_rootContextPreserved() {
+    func contextExistsOnRootOnly_pop_return_rootContextPreserved() {
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
       let expectedLoggerSpy = setup.loggerSpy
@@ -1495,20 +1522,20 @@ struct RouterTests {
       #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
       expectedLoggerSpy.clearReceivedMessages()
 
-      expectedRouter.back()
+      expectedRouter.pop()
 
       #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
     }
 
     @Test
-    func noContextOnRemovedRoute_back_return_noContextRemoveLoggerCall() {
+    func noContextOnRemovedRoute_pop_return_noContextRemoveLoggerCall() {
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
       let expectedLoggerSpy = setup.loggerSpy
       expectedRouter.push(TestRoute.home)
       expectedLoggerSpy.clearReceivedMessages()
 
-      expectedRouter.back()
+      expectedRouter.pop()
 
       let hasContextRemoveLog = expectedLoggerSpy.receivedMessages.contains { message in
         if case .context(.remove(_, context: _)) = message {
@@ -1535,7 +1562,7 @@ struct RouterTests {
     }
 
     @Test
-    func multipleContextsSameTypeOnDifferentRoutes_backOne_return_onlyCurrentRouteContextRemoved() {
+    func multipleContextsSameTypeOnDifferentRoutes_popOne_return_onlyCurrentRouteContextRemoved() {
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
       let expectedLoggerSpy = setup.loggerSpy
@@ -1546,7 +1573,7 @@ struct RouterTests {
       #expect(expectedRouter.contexts.all(for: StringContext.self).count == 2)
       expectedLoggerSpy.clearReceivedMessages()
 
-      expectedRouter.back()
+      expectedRouter.pop()
 
       #expect(expectedRouter.contexts.all(for: StringContext.self).count == 1)
       assertLogMessagesContain(
@@ -1561,7 +1588,7 @@ struct RouterTests {
     let router: Router
 
     @Test
-    func contextExistsInPreviousRoute_terminate_return_popToContextRouteAndLoggerBackCount() {
+    func contextExistsInPreviousRoute_terminate_return_popToContextRouteAndLoggerPopCount() {
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
       let expectedLoggerSpy = setup.loggerSpy
@@ -1581,12 +1608,12 @@ struct RouterTests {
       #expect(expectedRouter.path.count == 1)
       #expect((expectedRouter.currentRoute.wrapped as? TestRoute) == .home)
       #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
-      assertLogMessageKind(expectedLoggerSpy, is: .action(.back(count: 1)))
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.pop(count: 1)))
     }
 
     @Test
-    func contextExistsInPreviousRoute_terminate_return_onlyActionBackCountLoggedNotDuplicated() {
-      // Regression test: path's didSet must not also auto-log a generic .action(.back(count:))
+    func contextExistsInPreviousRoute_terminate_return_onlyActionPopCountLoggedNotDuplicated() {
+      // Regression test: path's didSet must not also auto-log a generic .action(.pop(count:))
       // alongside the one terminate(_:) already logs explicitly for the same pop.
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
@@ -1599,10 +1626,10 @@ struct RouterTests {
       expectedRouter.terminate(StringContext(value: "42"))
 
       // `terminate(_:)` also logs `.context(.execute(...))` when the matched context's
-      // handler runs, in addition to `.action(.back(count:))` -- two messages total, not
+      // handler runs, in addition to `.action(.pop(count:))` -- two messages total, not
       // three (i.e. path's didSet didn't also auto-log the same pop a second time).
       #expect(expectedLoggerSpy.receivedMessages.count == 2)
-      assertLogMessagesContain(expectedLoggerSpy, expected: .action(.back(count: 1)))
+      assertLogMessagesContain(expectedLoggerSpy, expected: .action(.pop(count: 1)))
     }
 
     @Test
@@ -1625,7 +1652,7 @@ struct RouterTests {
     }
 
     @Test
-    func contextDoesNotExistAndPathHasElements_terminate_return_backOneAndLoggerBack() {
+    func contextDoesNotExistAndPathHasElements_terminate_return_popOneAndLoggerPop() {
       let setup = makeRouterWithLoggerSpy()
       let expectedRouter = setup.router
       let expectedLoggerSpy = setup.loggerSpy
@@ -1639,7 +1666,7 @@ struct RouterTests {
       #expect(expectedRouter.path.count == 1)
       #expect((expectedRouter.currentRoute.wrapped as? TestRoute) == .home)
       #expect(expectedLoggerSpy.receivedRouterId == expectedRouter.id)
-      assertLogMessageKind(expectedLoggerSpy, is: .action(.back()))
+      assertLogMessageKind(expectedLoggerSpy, is: .action(.pop()))
     }
 
     @Test
