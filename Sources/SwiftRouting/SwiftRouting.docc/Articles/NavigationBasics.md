@@ -84,7 +84,7 @@ router.cover(HomeRoute.onboarding)
 Remove the top route from the stack:
 
 ```swift
-router.back()
+router.pop()
 ```
 
 ### Pop to Root
@@ -153,7 +153,7 @@ let current = router.currentRoute
 
 // Check navigation depth
 if router.routeCount > 1 {
-    Button("Back") { router.back() }
+    Button("Back") { router.pop() }
 }
 ```
 

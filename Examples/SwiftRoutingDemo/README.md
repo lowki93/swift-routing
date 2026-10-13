@@ -15,7 +15,7 @@ An Xcode project demonstrating SwiftRouting's navigation patterns. Open `SwiftRo
 
 | Folder | Demonstrates | Related article |
 |---|---|---|
-| `Screens/Basic/` | `push`, `NavigationLink(route:)`, `present`/`cover`, `back`/`popToRoot`/`close`, `terminate()`, `RouteContext`, explicit form flow (`FormFlowScreen`/`FormScreen`) returning a typed `FormResult` via `terminate()` from both a pushed and a presented screen, `canTerminate()` guarding submission when no listener is registered, `SettingsScreen` using a payload-free `ChoiceReset` context + `terminate()` to reset the paradigm and return to the picker, injecting `any RouterModel` into a ViewModel (`UserScreen`/`UserScreenModel`) for testability | Navigation Basics, Route Context, Testing |
+| `Screens/Basic/` | `push`, `NavigationLink(route:)`, `present`/`cover`, `pop`/`popToRoot`/`close`, `terminate()`, `RouteContext`, explicit form flow (`FormFlowScreen`/`FormScreen`) returning a typed `FormResult` via `terminate()` from both a pushed and a presented screen, `canTerminate()` guarding submission when no listener is registered, `SettingsScreen` using a payload-free `ChoiceReset` context + `terminate()` to reset the paradigm and return to the picker, injecting `any RouterModel` into a ViewModel (`UserScreen`/`UserScreenModel`) for testability | Navigation Basics, Route Context, Testing |
 | `Screens/Tabs/` | Tab-scoped stacks, per-tab `hideTabBarOnPush`, programmatic tab change (`tabRouter.change/push/update/present/cover/popToRoot`), cross-tab modal presentation, pushing into a never-visited tab, `onTabReselected`, injecting `any TabRouterModel` into a ViewModel (`ProfileScreen`/`ProfileViewModel`) for testability | Tab Navigation, Testing |
 | `Screens/Split/` | `RoutingSplitView`, `select(content:)`/`select(detail:)`, `isCompact` guard on auto-selection, deep linking into both the 2-column and 3-column layouts (`PlayerSplitDeeplinkHandler`/`PlayerListDeeplinkHandler`) | Split Navigation |
 
@@ -85,7 +85,7 @@ Each one selects the paradigm (if not already selected) and navigates to the tar
 
 The `SwiftRoutingDemoTests` unit-test target shows how to unit-test navigation without exercising any UI. It links the local `SwiftRoutingTestSupport` product and uses its spies in place of the real routers:
 
-- `UserScreenModelTests` — `RouterSpy` injected as `any RouterModel` (`pushBen()`/`back()`/`popToRoot()`)
+- `UserScreenModelTests` — `RouterSpy` injected as `any RouterModel` (`pushBen()`/`pop()`/`popToRoot()`)
 - `ProfileViewModelTests` — `TabRouterSpy` injected as `any TabRouterModel` (`presentSearch()`/`coverAbout()`/`presentSearchInNotifications()`/`resetHomeTab()`)
 
 Both follow the patterns in the Testing article ("Strategy 1: RouterSpy" and "Strategy 2: Test ViewModel Navigation"). Run them from Xcode with the `SwiftRoutingDemo` scheme (⌘U), or from the command line on any supported platform:

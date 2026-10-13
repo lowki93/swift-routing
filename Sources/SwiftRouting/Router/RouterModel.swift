@@ -61,10 +61,18 @@ public protocol RouterModel: BaseRouterModel, ContextModel, PresentationModel, S
   /// > **Warning:** This function is only available if the stack is presented.
   func close()
 
-  /// Removes the last element from the navigation path, navigating back one step.
-  func back()
+  /// Removes the last element from the navigation path, popping one step.
+  func pop()
 
-  /// End navigation flows that depend on a specific context, ensuring all related actions are completed before navigating back or closing.
-  /// - Parameter value: `RouteContext` to execute before the back or close operation.
+  /// End navigation flows that depend on a specific context, ensuring all related actions are completed before popping or closing.
+  /// - Parameter value: `RouteContext` to execute before the pop or close operation.
   func terminate(_ value: some RouteContext)
+}
+
+extension RouterModel {
+  /// Removes the last element from the navigation path, navigating back one step.
+  @available(*, deprecated, renamed: "pop()")
+  public func back() {
+    pop()
+  }
 }

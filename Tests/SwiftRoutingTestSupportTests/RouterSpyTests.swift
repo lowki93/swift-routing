@@ -57,7 +57,7 @@ struct RouterSpyTests {
     }
   }
 
-  struct PopToRootBackClose {
+  struct PopToRootPopClose {
     @Test
     func popToRoot_return_currentRouteResetAndCallCounted() {
       let spy = RouterSpy(root: FixtureRoute.home)
@@ -71,13 +71,26 @@ struct RouterSpyTests {
     }
 
     @Test
-    func back_return_pathCountDecrementedAndCallCounted() {
+    func pop_return_pathCountDecrementedAndCallCounted() {
+      let spy = RouterSpy(root: FixtureRoute.home)
+      spy.push(FixtureRoute.details(id: "42"))
+
+      spy.pop()
+
+      #expect(spy.popCallCount == 1)
+      #expect(spy.pathCount == 0)
+    }
+
+    // Regression test for the deprecated `back()` alias: keep it for as long as the alias
+    // exists, and remove it together with `back()`.
+    @Test
+    func deprecatedBack_return_pathCountDecrementedAndPopCounted() {
       let spy = RouterSpy(root: FixtureRoute.home)
       spy.push(FixtureRoute.details(id: "42"))
 
       spy.back()
 
-      #expect(spy.backCallCount == 1)
+      #expect(spy.popCallCount == 1)
       #expect(spy.pathCount == 0)
     }
 

@@ -51,7 +51,7 @@ public final class RouterSpy: ObservableObject, RouterModel, @unchecked Sendable
   public private(set) var popToRootCallCount = 0
   public private(set) var closeCallCount = 0
   public private(set) var closeChildrenCallCount = 0
-  public private(set) var backCallCount = 0
+  public private(set) var popCallCount = 0
   public private(set) var terminatedContexts: [Any] = []
   public private(set) var dispatchedContexts: [Any] = []
   public private(set) var addedContextTypes: [Any.Type] = []
@@ -93,8 +93,8 @@ public final class RouterSpy: ObservableObject, RouterModel, @unchecked Sendable
     pathCount = 0
   }
 
-  public func back() {
-    backCallCount += 1
+  public func pop() {
+    popCallCount += 1
     pathCount = max(0, pathCount - 1)
   }
 

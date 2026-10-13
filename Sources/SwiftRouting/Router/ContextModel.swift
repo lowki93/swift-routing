@@ -54,7 +54,7 @@ public protocol ContextModel {
   /// Indicates whether an observer for the given ``RouteContext`` type is registered
   /// anywhere in the router hierarchy (this router or any ancestor).
   ///
-  /// `terminate(_:)` always performs a navigation action (pop to context, close, or back)
+  /// `terminate(_:)` always performs a navigation action (pop to context, close, or pop)
   /// even when nobody observes the context — this lets you check in advance whether the
   /// context itself will actually reach a listener, for example to disable a "Confirm"
   /// button when no parent screen registered `add(context:perform:)` for that type.
