@@ -1,6 +1,8 @@
-# Split View Navigation in SwiftUI: Taming Sidebar Routing with RoutingSplitView
+# SplitView Navigation in SwiftUI: Taming Sidebar Routing with RoutingSplitView
 
-*Part 4 of the swift-routing series. If you're new here, start with [Part 1: Type-Safe Navigation in SwiftUI with swift-routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270) and [Part 2: The RouteContext Pattern](https://medium.com/@budainkevin/two-way-navigation-in-swiftui-the-routecontext-pattern-0af28310b407). Part 3 covered tab navigation with `TabRouter` — this one covers the other kind of multi-column app: sidebar, content, and detail on iPad and Mac.*
+*Part 4 of the swift-routing series. If you're new here, start with [Part 1: Type-Safe Navigation in SwiftUI with swift-routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270), [Part 2: The RouteContext Pattern](https://medium.com/@budainkevin/two-way-navigation-in-swiftui-the-routecontext-pattern-0af28310b407), and [Part 3: Tab Navigation in SwiftUI: Taming Cross-Tab Routing with TabRouter](https://medium.com/@budainkevin/tab-navigation-in-swiftui-taming-cross-tab-routing-with-tabrouter-dc7b4f595b45).*
+
+This one covers the other kind of multi-column app: sidebar, content, and detail on iPad and Mac.
 
 Every Mail-like or Notes-like app on iPad and Mac faces the same three-column problem: a sidebar picks a folder, the folder picks a list of items, an item picks a detail view — and on iPhone, all three collapse into a single pushed stack. SwiftUI gives you `NavigationSplitView` to draw the columns. It gives you nothing to keep their selections in sync, coordinate them from outside the view that owns them, or handle the iPhone case without writing the same `if isCompact` branch in every screen that touches selection.
 
@@ -51,7 +53,7 @@ Then there's iPhone. `NavigationSplitView` collapses to a single column there, a
 @Environment(\.router) var router
 ```
 
-**2-column** (sidebar + detail):
+2-column (sidebar + detail):
 
 ```swift
 RoutingSplitView(destination: AppRoute.self, sidebar: .sidebar) { (folder: Folder) in
@@ -59,7 +61,7 @@ RoutingSplitView(destination: AppRoute.self, sidebar: .sidebar) { (folder: Folde
 }
 ```
 
-**3-column** (sidebar + content + detail) — add a `detail:` closure and the middle column appears, driven by whatever the content closure returns:
+3-column (sidebar + content + detail) — add a `detail` closure and the middle column appears, driven by whatever the content closure returns:
 
 ```swift
 RoutingSplitView(destination: AppRoute.self, sidebar: .sidebar) { (folder: Folder) in
@@ -75,7 +77,7 @@ Same router, same environment key, in both cases — the number of trailing clos
 
 ## Driving Selections
 
-`router.detailBinding(as:)` and `router.contentBinding(as:)` wire a `List` selection directly, exactly like SwiftUI's own `selection:` parameter — because that's what they are under the hood:
+`router.detailBinding(as:)` and `router.contentBinding(as:)` wire a `List` selection directly, exactly like SwiftUI's own `selection`: parameter — because that's what they are under the hood:
 
 ```swift
 struct SidebarScreen: View {
@@ -94,7 +96,7 @@ struct SidebarScreen: View {
 }
 ```
 
-Tapping a row and calling `router.select(detail:)` programmatically go through the exact same path — a selection made by a tap logs the same `.navigation` event a manual call would, so there's nothing separate to test or reason about.
+Tapping a row and calling `router.select(detail:)` programmatically goes through the same path — a selection made by a tap logs the same `.navigation` event a manual call would, so there's nothing separate to test or reason about.
 
 When a screen needs to work for *either* layout, `router.hasContentColumn` tells you which column you're actually driving:
 
@@ -122,7 +124,7 @@ One property, checked once, and both platforms get the behavior that's actually 
 
 Since sidebar, content, and detail all share the *same* router, `router.push(_:)` always pushes onto the one navigation stack that exists — and that stack only ever renders in the detail column. Push from the sidebar's own code, and it still shows up in detail, not as a new sidebar screen.
 
-`router.present(_:)` and `router.cover(_:)` work the same way, router-wide rather than per-column: call either from any of the three columns and you get one sheet or cover over the whole split view, not three independent presentation layers to keep untangled.
+`router.present(_:)` and `router.cover(_:)` work the same way, router-wide rather than per-column: call either from any of the three columns, and you get one sheet or cover over the whole split view, not three independent presentation layers to keep untangled.
 
 ---
 
@@ -130,7 +132,7 @@ Since sidebar, content, and detail all share the *same* router, `router.push(_:)
 
 A concrete trigger: something *outside* the split view — a "View in Notes" button from a share sheet, say — needs to open the app on a specific folder *and* note, in whichever column layout is currently showing.
 
-**Before — three pieces of state, and a compact-mode branch to get right by hand:**
+Before — three pieces of state, and a compact-mode branch to get right by hand:
 
 ```swift
 final class PendingSelection: ObservableObject {
@@ -154,7 +156,7 @@ func openNote(_ note: Note) {
 }
 ```
 
-**After — two calls on the router, layout-agnostic:**
+After — two calls on the router, layout-agnostic:
 
 ```swift
 final class NoteOpener {
@@ -167,16 +169,14 @@ final class NoteOpener {
 }
 ```
 
-`select(content:)` already no-ops safely if the router has no content column, so the exact same two calls work whether the app is currently showing 2 or 3 columns — no `horizontalSizeClass` check, no separate compact-mode branch to keep in sync with the one in `SidebarScreen`, and no extra state to own: `NoteOpener` doesn't need to be a view or touch SwiftUI at all.
+`select(content:)` already no-ops safely if the router has no content column, so the same two calls work whether the app is currently showing 2 or 3 columns — no `horizontalSizeClass` check, no separate compact-mode branch to keep in sync with the one in `SidebarScreen`, and no extra state to own: `NoteOpener` doesn't need to be a view or touch SwiftUI at all.
 
 ---
 
 ## Why This Matters
 
-Sidebar/content/detail navigation is the default shape for any serious iPad or Mac app, and it's noticeably less covered than tab-based navigation — most SwiftUI navigation writing stops at `NavigationStack`. The gap isn't whether `NavigationSplitView` *can* do this; it's that keeping three columns' selections coherent, reachable from outside the view that draws them, and correct in compact mode, is left entirely to you.
+Sidebar/content/detail navigation is the default shape for any serious iPad or Mac app, and it's noticeably less covered than tab-based navigation — most SwiftUI navigation writing stops at `NavigationStack`. The gap isn't whether `NavigationSplitView` *can* do this; it's that keeping three columns' selections coherent, reachable from outside the view that draws them, and correct in compact mode is left entirely to you.
 
-`RoutingSplitView` closes that gap the same way the rest of swift-routing does: one router, typed selections instead of loose `@State`, reachable from anywhere -- on iPad, on Mac, and on iPhone once it collapses.
-
-*Deep linking a specific column selection from a URL is its own topic -- coming up later in this series.*
+`RoutingSplitView` closes that gap the same way the rest of swift-routing does: one router, typed selections instead of loose `@State`, reachable from anywhere — on iPad, on Mac, and on iPhone once it collapses.
 
 The library is open source — explore the code, open issues, or contribute: [github.com/lowki93/swift-routing](https://github.com/lowki93/swift-routing)
