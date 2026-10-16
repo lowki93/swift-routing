@@ -223,6 +223,7 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 - [Two-Way Navigation in SwiftUI: The RouteContext Pattern](https://medium.com/@budainkevin/two-way-navigation-in-swiftui-the-routecontext-pattern-0af28310b407)
 - [Tab Navigation in SwiftUI: Taming Cross-Tab Routing with TabRouter](https://medium.com/@budainkevin/tab-navigation-in-swiftui-taming-cross-tab-routing-with-tabrouter-dc7b4f595b45)
 - [SplitView Navigation in SwiftUI: Taming Sidebar Routing with RoutingSplitView](https://medium.com/@budainkevin/splitview-navigation-in-swiftui-taming-sidebar-routing-with-routingsplitview-b19cf97bfa9b)
+- [Testing SwiftUI Navigation Without Mounting a Single View](https://medium.com/@budainkevin/testing-swiftui-navigation-without-mounting-a-single-view-43e8ef870716)
 
 ## AI Skills
 
