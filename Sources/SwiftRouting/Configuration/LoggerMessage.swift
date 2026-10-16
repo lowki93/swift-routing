@@ -19,7 +19,7 @@ import Foundation
 /// - Router creation and destruction
 /// - Navigation between routes (push, present, cover)
 /// - View lifecycle events (appear, disappear)
-/// - User-initiated actions (back, close, tab changes)
+/// - User-initiated actions (pop, close, tab changes)
 /// - Context observer lifecycle and execution
 ///
 /// ## Example
@@ -31,8 +31,8 @@ import Foundation
 ///   switch message.message {
 ///   case .navigation(let from, let to, let type):
 ///     print("Navigate: \(from.name) → \(to.name) via \(type)")
-///   case .action(.back):
-///     print("User navigated back")
+///   case .action(.pop):
+///     print("User popped")
 ///   default:
 ///     break
 ///   }
@@ -113,7 +113,7 @@ public extension LoggerMessage {
   /// Represents user-initiated navigation actions that can be logged.
   ///
   /// These actions are triggered by programmatic navigation calls
-  /// such as `back()`, `close()`, or `popToRoot()`.
+  /// such as `pop()`, `close()`, or `popToRoot()`.
   enum Action {
     /// Logs a navigation reset to the root route.
     ///
@@ -125,11 +125,11 @@ public extension LoggerMessage {
     /// Triggered when `close()` is called on a sheet or cover.
     case close
 
-    /// Logs a backward navigation in the stack.
+    /// Logs a pop in the stack.
     ///
     /// - Parameter count: The number of routes removed from the stack.
-    ///   `nil` indicates a single back navigation.
-    case back(count: Int? = nil)
+    ///   `nil` indicates a single pop.
+    case pop(count: Int? = nil)
 
     /// Logs the dismissal of all child routers.
     ///
@@ -141,7 +141,7 @@ public extension LoggerMessage {
     /// - Parameter tab: The newly selected tab route.
     case changeTab(any TabRoute)
 
-    /// `.changeTab` activates a different tab's subtree, and `.back`/`.popToRoot` change
+    /// `.changeTab` activates a different tab's subtree, and `.pop`/`.popToRoot` change
     /// which route is current, both worth re-printing. `.close`/`.closeChildren` are
     /// excluded since they're followed by the closed router's own `.delete` once it
     /// deinitializes, so notifying here too would just duplicate that signal.
@@ -149,7 +149,7 @@ public extension LoggerMessage {
       switch self {
       case .close, .closeChildren:
         false
-      case .changeTab, .back, .popToRoot:
+      case .changeTab, .pop, .popToRoot:
         true
       }
     }

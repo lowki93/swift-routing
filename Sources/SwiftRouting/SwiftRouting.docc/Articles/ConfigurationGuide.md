@@ -97,7 +97,7 @@ SwiftRouting logs various events through ``LoggerMessage``:
 
 | Message | Description |
 |---------|-------------|
-| `.action(.back)` | User navigated back |
+| `.action(.pop)` | User popped one or more routes |
 | `.action(.popToRoot)` | Navigation reset to root |
 | `.action(.close)` | Modal was dismissed |
 | `.action(.closeChildren)` | Child routers were closed |
