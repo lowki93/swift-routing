@@ -109,7 +109,7 @@ struct HomeView: View {
 | `push(_:)` | Push onto the navigation stack |
 | `present(_:)` | Present as a modal sheet |
 | `cover(_:)` | Present as a full-screen cover |
-| `back()` | Pop one level |
+| `pop()` | Pop one level |
 | `popToRoot()` | Return to root |
 | `close()` | Dismiss presented modal |
 

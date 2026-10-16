@@ -52,7 +52,7 @@ public protocol RouterModel {
     func push(_ route: some Route)
     func present(_ route: some Route, withStack: Bool)
     func cover(_ route: some Route)
-    func back()
+    func pop()
     func popToRoot()
     func close()
     // ...
@@ -174,7 +174,7 @@ push(_:)
     │
     ├── Appends route to NavigationStack path
     ├── Same Router instance handles the new route
-    └── back() or popToRoot() to unwind
+    └── pop() or popToRoot() to unwind
 
 present(_:)  /  cover(_:)
     │
@@ -188,7 +188,7 @@ User Action        Router Method         State Change         SwiftUI Result
 ─────────────      ─────────────         ────────────         ──────────────
 Button tap    ──▶  push(.detail)    ──▶  path += [.detail]  ──▶  New view pushed
 Link tapped   ──▶  present(.form)   ──▶  child Router set   ──▶  Sheet appears
-Back gesture  ──▶  back()           ──▶  path.removeLast()  ──▶  View popped
+Back gesture  ──▶  pop()            ──▶  path.removeLast()  ──▶  View popped
 Dismiss swipe ──▶  close()          ──▶  child Router = nil ──▶  Sheet dismissed
 Deep link     ──▶  handle(_:)       ──▶  path replaced      ──▶  Stack rebuilt
 ```
@@ -260,7 +260,7 @@ router.push(.list)
 router.add(context: SelectionContext.self) { ... }
 
 // When .list is popped, the observer is automatically removed
-router.back()
+router.pop()
 ```
 
 ## Best Practices
@@ -307,7 +307,7 @@ class MyViewModel {
 
 ### Prefer terminate() Over Manual Navigation
 
-When completing a flow with context, use `terminate()` instead of manual `back()` or `close()`:
+When completing a flow with context, use `terminate()` instead of manual `pop()` or `close()`:
 
 ```swift
 // Good: Let the framework handle navigation
@@ -315,7 +315,7 @@ router.terminate(SelectionContext(item: selectedItem))
 
 // Avoid: Manual navigation after context
 router.context(SelectionContext(item: selectedItem))
-router.back() // or router.close()
+router.pop() // or router.close()
 ```
 
 ## Topics

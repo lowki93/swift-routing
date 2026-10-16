@@ -109,7 +109,7 @@ router.push(SettingsRoute.profile)
 
 ### Back navigation with a count greater than the stack size
 
-Calling `back()` on an empty stack or with a count exceeding the current path length has no effect. SwiftRouting does not crash in this case, but the navigation state is unchanged.
+Calling `pop()` on an empty stack or with a count exceeding the current path length has no effect. SwiftRouting does not crash in this case, but the navigation state is unchanged.
 
 ### RouteContext across router instances
 

@@ -3,7 +3,7 @@ import Testing
 
 /// Concurrency tests for `Router`/`BaseRouter`.
 ///
-/// Most navigation methods (`push`, `back`, `add(context:)`, etc.) are `@MainActor`-isolated,
+/// Most navigation methods (`push`, `pop`, `add(context:)`, etc.) are `@MainActor`-isolated,
 /// so concurrent calls to them are serialized by the actor and can't race by construction --
 /// those tests below mainly guard against regressions (e.g. someone removing `@MainActor`).
 ///
