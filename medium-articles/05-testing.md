@@ -1,6 +1,6 @@
 # Testing SwiftUI Navigation Without Mounting a Single View
 
-*Part 5 of the swift-routing series. If you're new here, start with [Part 1: Type-Safe Navigation in SwiftUI with swift-routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270) and [Part 2: The RouteContext Pattern](https://medium.com/@budainkevin/two-way-navigation-in-swiftui-the-routecontext-pattern-0af28310b407). Parts 3 and 4 covered tab and split-view navigation — this one is about testing all of it.*
+*Part 5 of the swift-routing series. If you're new here, start with [Part 1: Type-Safe Navigation in SwiftUI with swift-routing](https://medium.com/@budainkevin/stop-fighting-swiftui-navigation-a-type-safe-approach-with-swift-routing-7cbd328f0270), [Part 2: The RouteContext Pattern](https://medium.com/@budainkevin/two-way-navigation-in-swiftui-the-routecontext-pattern-0af28310b407), [Part 3: Tab Navigation in SwiftUI: Taming Cross-Tab Routing with TabRouter](https://medium.com/@budainkevin/tab-navigation-in-swiftui-taming-cross-tab-routing-with-tabrouter-dc7b4f595b45), and [Part 4: SplitView Navigation in SwiftUI: Taming Sidebar Routing with RoutingSplitView](https://medium.com/@budainkevin/splitview-navigation-in-swiftui-taming-sidebar-routing-with-routingsplitview-b19cf97bfa9b)*
 
 Ask most iOS developers how they test navigation and the honest answer is: they don't, not really. Maybe a UI test clicks through a happy path once. The actual logic — "tapping this button should push that screen" — usually ships unverified, because testing it the obvious way means mounting a view hierarchy, injecting a fake `@Environment`, and asserting on whatever `NavigationPath` happens to look like afterward. That's expensive to write and brittle to maintain, so most teams just... don't.
 
@@ -90,7 +90,7 @@ init(router: any RouterModel) { ... }
 
 ## A Complete Example: Testing a Button's Navigation Intent
 
-Put the two together and a navigation test is a handful of lines, no view in sight:
+Put the two together, and a navigation test is a handful of lines, no view in sight:
 
 ```swift
 import Testing
@@ -145,6 +145,7 @@ func selectUser_terminatesWithContext() {
   viewModel.selectUser(user)
 
   #expect(spy.terminatedContexts.count == 1)
+
   let context = spy.terminatedContexts.first as? UserSelectionContext
   #expect(context?.selectedUser.id == "1")
 }
@@ -187,7 +188,9 @@ func crossTabNavigation_pushesToCorrectTab() {
   viewModel.goToProfile(userId: "123")
 
   #expect(spy.pushedRoutes.count == 1)
+
   let call = spy.pushedRoutes.first
+
   #expect((call?.route as? AppRoute) == .profile(userId: "123"))
   #expect((call?.tab as? AppTab) == .profile)
 }
@@ -218,12 +221,20 @@ struct ProfileScreen: View {
 ```swift
 final class ProfileViewModel {
   private let router: any RouterModel
-  init(router: any RouterModel) { self.router = router }
-  func editProfile() { router.push(AppRoute.editProfile) }
+
+  init(router: any RouterModel) {
+    self.router = router
+  }
+
+  func editProfile() {
+    router.push(AppRoute.editProfile)
+  }
 }
 
 let spy = RouterSpy(root: AppRoute.profile)
+
 ProfileViewModel(router: spy).editProfile()
+
 #expect((spy.pushedRoutes.first as? AppRoute) == .editProfile)
 ```
 
