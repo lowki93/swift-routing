@@ -87,7 +87,7 @@ private func assertAction(_ expected: LoggerMessage.Action, _ actual: LoggerMess
     true
   case (.close, .close):
     true
-  case let (.back(expectedCount), .back(count)):
+  case let (.pop(expectedCount), .pop(count)):
     expectedCount == count
   case let (.closeChildren(expectedRouter), .closeChildren(router)):
     expectedRouter.id == router.id

@@ -44,7 +44,7 @@
   <!-- Detail → Root (back) -->
   <path d="M 250 420 Q 150 320 620 240" stroke="#4A90D9" stroke-width="2" fill="none" stroke-dasharray="5,5" marker-end="url(#arrow-blue)"/>
   <rect x="145" y="295" width="165" height="32" rx="8" fill="#1a1a2e" opacity="0.85"/>
-  <text x="228" y="316" text-anchor="middle" font-family="SF Mono, monospace" font-size="12" fill="#80c0ff">router.back()</text>
+  <text x="228" y="316" text-anchor="middle" font-family="SF Mono, monospace" font-size="12" fill="#80c0ff">router.pop()</text>
 
   <!-- Profile → Root (close) -->
   <path d="M 720 420 Q 680 370 720 280" stroke="#7B68EE" stroke-width="2" fill="none" stroke-dasharray="5,5" marker-end="url(#arrow-purple2)"/>

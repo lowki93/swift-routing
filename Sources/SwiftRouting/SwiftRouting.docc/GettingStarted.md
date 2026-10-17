@@ -118,7 +118,7 @@ The ``Router`` provides several navigation methods:
 | `push(_:)` | Pushes a route onto the navigation stack |
 | `present(_:)` | Presents a route as a modal sheet |
 | `cover(_:)` | Presents a route as a full-screen cover |
-| `back()` | Navigates back one step |
+| `pop()` | Navigates back one step |
 | `popToRoot()` | Returns to the root of the stack |
 | `close()` | Dismisses a presented modal |
 

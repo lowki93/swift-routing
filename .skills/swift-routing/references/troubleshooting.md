@@ -127,7 +127,7 @@ Use this guide to quickly diagnose common SwiftRouting issues.
 ## `terminate(_:)` Behavior Is Not What You Expected
 
 **Symptom**
-- You expected a specific back target, but got `close()` or a single `back()`.
+- You expected a specific back target, but got `close()` or a single `pop()`.
 
 **Why it happens**
 - `terminate(_:)` executes observers, then navigation completion depends on current router state:
