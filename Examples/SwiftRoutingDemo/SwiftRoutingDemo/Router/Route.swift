@@ -8,71 +8,50 @@
 import SwiftUI
 import SwiftRouting
 
-enum AppRoute: Route {
+@Routable(nameStyle: .capitalized)
+enum AppRoute {
+  @RouteName(#"Home(\(name))"#)
   case home(name: String)
+  @RouteName(.delegate)
   case notifications(NotificationsRoute)
   case profile
+  @RouteName(#"User(\(name))"#)
   case user(name: String)
   case search
   case settings
   case about
   case sidebar
+  @RouteName(.delegate)
   case players(PlayersRoute)
+  @RouteName(.delegate)
   case form(FormRoute)
-
-  var name: String {
-    switch self {
-    case let .home(name):  "Home(\(name))"
-    case let .notifications(child): "Notifications.\(child.name)"
-    case .profile: "Profile"
-    case let .user(name): "User(\(name))"
-    case .search: "Search"
-    case .settings: "Settings"
-    case .about: "About"
-    case .sidebar: "Sidebar"
-    case let .players(child): "Players.\(child.name)"
-    case let .form(child): "Form.\(child.name)"
-    }
-  }
 }
 
 // Demonstrates the "Nested Routes and Nested Destinations" pattern from DefiningRoutes.md:
 // a subflow modeled as its own Route enum, exposed through a single case of the parent
 // route, rendered via a dedicated destination view (see PlayersRouteDestination below).
-enum PlayersRoute: Route {
+@Routable
+enum PlayersRoute {
+  @RouteName(#"Players(\(arg0))"#)
   case list(PlayerType)
+  @RouteName(#"Player(\(arg0.name))"#)
   case detail(Player)
-
-  var name: String {
-    switch self {
-    case let .list(type): "Players(\(type))"
-    case let .detail(player): "Player(\(player.name))"
-    }
-  }
 }
 
-enum FormRoute: Route {
+@Routable
+enum FormRoute {
+  @RouteName(#"FormFlow"#)
   case flow // FormFlowScreen, the coordinator
+  @RouteName(#"Form"#)
   case entry // FormScreen, the form itself
-
-  var name: String {
-    switch self {
-    case .flow: "FormFlow"
-    case .entry: "Form"
-    }
-  }
 }
 
-enum NotificationsRoute: Route {
+@Routable
+enum NotificationsRoute {
+  @RouteName(#"Notifications"#)
   case list
+  @RouteName(#"Notification(\(id))"#)
   case detail(id: Int)
-
-  var name: String {
-    switch self {
-    case .list: "Notifications"
-    case let .detail(id): "Notification(\(id))"
-    }
-  }
 }
 
 extension AppRoute: RouteDestination {
@@ -142,12 +121,7 @@ struct NotificationsRouteDestination: View {
   }
 }
 
-enum FailedRoute: Route {
+@Routable
+enum FailedRoute {
   case failed
-
-  var name: String {
-    switch self {
-    case .failed: "failed"
-    }
-  }
 }
