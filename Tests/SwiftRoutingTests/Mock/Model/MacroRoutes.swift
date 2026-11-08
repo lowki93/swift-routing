@@ -1,4 +1,5 @@
 import SwiftRouting
+import SwiftRoutingMacros
 
 enum MacroPlayerType: String, Hashable, Sendable {
   case footballer
@@ -51,6 +52,17 @@ enum MacroAppRoute: Route {
   case players(MacroPlayersRoute)
   @RouteName(.delegate)
   case form(MacroFormRoute)
+}
+
+enum MacroOrderTab: Hashable, Sendable {
+  case shipping
+}
+
+/// Mirrors the mixed labeled/positional example in `RoutableMacro.md`.
+@Routable
+enum MacroOrderRoute {
+  @RouteName(#"Order(\(id), \(arg1))"#)
+  case detail(id: String, MacroOrderTab)
 }
 
 /// Deliberately omits `: Route` -- its conformance comes only from `@Routable`'s

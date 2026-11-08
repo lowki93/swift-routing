@@ -37,6 +37,8 @@ The `name` property provides a human-readable identifier used for:
 
 Include relevant associated values in the name to make logs more informative.
 
+> Tip: To generate `name` from the cases instead of writing the `switch` by hand, use the opt-in `@Routable` macro. See <doc:RoutableMacro>.
+
 ## Mapping Routes to Views
 
 Conform your route to ``RouteDestination`` to define which view each route displays:

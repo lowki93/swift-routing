@@ -9,7 +9,7 @@ import SwiftSyntaxMacros
 /// Generates `var name: String` from an enum's cases, and adds the `Route` conformance
 /// via extension when it isn't already declared explicitly.
 ///
-/// See `Sources/SwiftRouting/Macros/Routable.swift` for the public macro declaration and
+/// See `Sources/SwiftRoutingMacros/Routable.swift` for the public macro declaration and
 /// user-facing documentation.
 public enum RoutableMacro: MemberMacro {
 
@@ -29,7 +29,7 @@ public enum RoutableMacro: MemberMacro {
       return []
     }
 
-    let style = nameStyle(from: node)
+    let style = nameStyle(from: node, context: context)
     let access = accessModifier(of: enumDecl)
 
     var lines: [String] = []
@@ -86,13 +86,19 @@ public enum RoutableMacro: MemberMacro {
 
   // MARK: - nameStyle
 
-  private static func nameStyle(from node: AttributeSyntax) -> NameStyle {
-    guard let args = node.arguments?.as(LabeledExprListSyntax.self) else { return .verbatim }
-    for arg in args where arg.label?.text == "nameStyle" {
-      if let member = arg.expression.as(MemberAccessExprSyntax.self), member.declName.baseName.text == "capitalized" {
-        return .capitalized
+  private static func nameStyle(from node: AttributeSyntax, context: some MacroExpansionContext) -> NameStyle {
+    guard let args = node.arguments?.as(LabeledExprListSyntax.self),
+          let arg = args.first(where: { $0.label?.text == "nameStyle" }) else { return .verbatim }
+
+    if let member = arg.expression.as(MemberAccessExprSyntax.self), member.base == nil {
+      switch member.declName.baseName.text {
+      case "verbatim": return .verbatim
+      case "capitalized": return .capitalized
+      default: break
       }
     }
+
+    context.diagnose(.invalidNameStyle, at: arg.expression)
     return .verbatim
   }
 

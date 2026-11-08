@@ -23,6 +23,11 @@ struct RoutableDiagnostic: DiagnosticMessage {
     "'@Routable' can only be applied to an enum"
   )
 
+  static let invalidNameStyle = RoutableDiagnostic(
+    "invalidNameStyle",
+    "'nameStyle' must be a literal `.verbatim` or `.capitalized`"
+  )
+
   static let notACase = RoutableDiagnostic(
     "notACase",
     "'@RouteName' can only be applied to an enum case"

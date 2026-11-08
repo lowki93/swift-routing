@@ -3,7 +3,7 @@ import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacrosGenericTestSupport
-@testable import SwiftRoutingMacros
+@testable import SwiftRoutingMacrosPlugin
 
 private func assertExpansion(
   _ originalSource: String,
@@ -420,6 +420,36 @@ struct RoutableMacroExpansionTests {
           """,
         diagnostics: [
           DiagnosticSpec(message: "'@RouteName' expects a raw string literal (`#\"...\"#`) or `.delegate`", line: 3, column: 14)
+        ]
+      )
+    }
+
+    @Test
+    func nonLiteralNameStyle_emits_diagnostic() {
+      assertExpansion(
+        """
+        @Routable(nameStyle: style)
+        enum AppRoute {
+          case home
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case home
+
+            var name: String {
+              switch self {
+              case .home:
+                "home"
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'nameStyle' must be a literal `.verbatim` or `.capitalized`", line: 1, column: 22)
         ]
       )
     }

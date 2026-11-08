@@ -60,6 +60,13 @@ struct RoutableBehaviorTests {
     }
   }
 
+  struct MixedBindings {
+    @Test
+    func labeledAndPositionalValues_return_labelAndGlobalPositionBindings() {
+      #expect(MacroOrderRoute.detail(id: "42", .shipping).name == "Order(42, shipping)")
+    }
+  }
+
   struct Delegation {
     @Test
     func delegateCase_return_prefixDotChildName() {
