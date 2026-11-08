@@ -13,6 +13,7 @@
 		71907CB82D693A6C00E91B2D /* SwiftRouting in Frameworks */ = {isa = PBXBuildFile; productRef = 71907CB72D693A6C00E91B2D /* SwiftRouting */; };
 		A52A232727DD6E89C5180D72 /* URLRouting in Frameworks */ = {isa = PBXBuildFile; productRef = F2E362FC6E06CDC80E46E507 /* URLRouting */; };
 		7D5300082E00000100A1B2C3 /* SwiftRoutingTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 7D5300072E00000100A1B2C3 /* SwiftRoutingTestSupport */; };
+		7D53000F2E00000100A1B2C3 /* SwiftRoutingMacros in Frameworks */ = {isa = PBXBuildFile; productRef = 7D53000E2E00000100A1B2C3 /* SwiftRoutingMacros */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +66,7 @@
 				6C08D2B22D4063040013100F /* SwiftRouting in Frameworks */,
 				71907CB82D693A6C00E91B2D /* SwiftRouting in Frameworks */,
 				A52A232727DD6E89C5180D72 /* URLRouting in Frameworks */,
+				7D53000F2E00000100A1B2C3 /* SwiftRoutingMacros in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,6 +124,7 @@
 				6CB19B942D727873007764BF /* SwiftRouting */,
 				715FF8352D7656A500ACECB7 /* SwiftRouting */,
 				F2E362FC6E06CDC80E46E507 /* URLRouting */,
+				7D53000E2E00000100A1B2C3 /* SwiftRoutingMacros */,
 			);
 			productName = SwiftRoutingDemo;
 			productReference = 6C08D29E2D4062EA0013100F /* SwiftRoutingDemo.app */;
@@ -562,6 +565,10 @@
 		7D5300072E00000100A1B2C3 /* SwiftRoutingTestSupport */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftRoutingTestSupport;
+		};
+		7D53000E2E00000100A1B2C3 /* SwiftRoutingMacros */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftRoutingMacros;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
