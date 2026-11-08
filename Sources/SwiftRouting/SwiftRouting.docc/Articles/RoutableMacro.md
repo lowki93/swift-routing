@@ -29,6 +29,8 @@ import SwiftRouting
 import SwiftRoutingMacros
 ```
 
+> Note: Both imports are needed. `SwiftRoutingMacros` doesn't re-export `SwiftRouting`: an `@_exported import` would let you write a single import, but `@_exported` isn't an official Swift API, so the package keeps the two imports explicit.
+
 ## Default Names
 
 Attach `@Routable` to the enum. Each case without an override is named after itself. `nameStyle` sets the format:
