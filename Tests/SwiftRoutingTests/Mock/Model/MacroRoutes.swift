@@ -1,4 +1,3 @@
-import SwiftRouting
 import SwiftRoutingMacros
 
 enum MacroPlayerType: String, Hashable, Sendable {

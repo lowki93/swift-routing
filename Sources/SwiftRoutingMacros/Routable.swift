@@ -3,7 +3,8 @@
 //  SwiftRoutingMacros
 //
 
-import SwiftRouting
+// Re-exported so adopters only need `import SwiftRoutingMacros`.
+@_exported import SwiftRouting
 
 /// Controls the format used for a case's `name` when it has no `@RouteName` override.
 public enum RouteNameStyle: Sendable {

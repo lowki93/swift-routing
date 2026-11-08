@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftRouting
 import SwiftRoutingMacros
 
 @Routable(nameStyle: .capitalized)

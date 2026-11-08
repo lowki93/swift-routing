@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `@Routable` / `@RouteName` macros generate a `Route` enum's `name` from its cases. `@Routable(nameStyle: .verbatim | .capitalized)` sets the default format; `@RouteName(#"..."#)` overrides a single case with a raw-string template (associated values by label, or `arg0`, `arg1`, ... when unlabeled); `@RouteName(.delegate)` composes with a child `Route` (`"Notifications.\(child.name)"`). `@Routable` also adds the `Route` conformance, so `: Route` becomes optional. Invalid uses (template referencing an unknown value, `.delegate` without exactly one associated value, non-literal `nameStyle`, ...) are reported on the attribute itself (#150)
-- New opt-in `SwiftRoutingMacros` product (`import SwiftRoutingMacros`) for the macros above. `SwiftRouting` itself does not depend on it, so only adopters compile swift-syntax (supported range: 600.0.0..<700.0.0) (#150)
+- New opt-in `SwiftRoutingMacros` product for the macros above. It re-exports `SwiftRouting`, so `import SwiftRoutingMacros` alone is enough. `SwiftRouting` itself does not depend on it, so only adopters compile swift-syntax (supported range: 600.0.0..<700.0.0) (#150)
 
 ### Documentation
 
