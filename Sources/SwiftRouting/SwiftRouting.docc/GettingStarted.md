@@ -147,6 +147,7 @@ Now that you have the basics, explore these topics:
 - <doc:TabNavigation> - Set up tab-based navigation
 - <doc:SplitNavigation> - Build sidebar/content/detail layouts with `RoutingSplitView`
 - <doc:Deeplinks> - Handle deep links in your app
+- <doc:DeeplinkRouteGuide> - Define deep link routes with swift-url-routing
 - <doc:RouteContextGuide> - Pass data between routes
 - <doc:ConfigurationGuide> - Configure SwiftRouting and customize logging behavior
 - <doc:Architecture> - Understand the design principles behind SwiftRouting

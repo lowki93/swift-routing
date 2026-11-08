@@ -30,12 +30,12 @@ import SwiftUI
 ///   }
 /// }
 /// ```
-public struct RouterPresentModifier: ViewModifier {
+struct RouterPresentModifier: ViewModifier {
 
   @Environment(\.router) private var router: Router
   let perform: (Bool, BaseRouter) -> Void
 
-  public func body(content: Content) -> some View {
+  func body(content: Content) -> some View {
     content.onReceive(router.present, perform: perform)
   }
 }
