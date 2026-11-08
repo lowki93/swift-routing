@@ -33,13 +33,13 @@ import SwiftUI
 ///
 /// > Warning: If you capture class references (for example a view model),
 /// > use weak captures to prevent retain cycles.
-public struct RouterContextModifier<R: RouteContext>: ViewModifier {
+struct RouterContextModifier<R: RouteContext>: ViewModifier {
 
   @Environment(\.router) private var router
   let object: R.Type
   let perform: (R) -> Void
 
-  public func body(content: Content) -> some View {
+  func body(content: Content) -> some View {
     content
       .onAppear {
         router.add(context: object, perform: perform)

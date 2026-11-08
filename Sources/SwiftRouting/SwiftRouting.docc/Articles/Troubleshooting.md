@@ -34,7 +34,7 @@ router.push(SettingsRoute.profile)
 
 ## ErrorView Behavior
 
-When a route cannot be resolved, an error view is rendered. Its behavior depends on ``Configuration/shouldCrashOnRouteNotFound``:
+When a route cannot be resolved, an error view is rendered. Its behavior depends on `Configuration.shouldCrashOnRouteNotFound`:
 
 | `shouldCrashOnRouteNotFound` | Behavior |
 |---|---|

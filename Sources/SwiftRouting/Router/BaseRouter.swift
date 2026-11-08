@@ -47,7 +47,7 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// The currently visible route managed by this router.
   ///
   /// Subclasses override this to return their active route.
-  /// Defaults to ``DefaultRoute/main`` for base instances.
+  /// Defaults to `DefaultRoute.main` for base instances.
   public var currentRoute: AnyRoute {
     root
   }

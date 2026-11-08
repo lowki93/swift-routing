@@ -14,7 +14,7 @@ SwiftRouting is designed with testability in mind. The protocol-based architectu
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "0.2.0"))
+    .package(url: "https://github.com/lowki93/swift-routing.git", .upToNextMajor(from: "1.0.0"))
 ]
 ```
 

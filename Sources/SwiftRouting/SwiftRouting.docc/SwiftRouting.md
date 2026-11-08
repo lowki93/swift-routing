@@ -109,6 +109,8 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 - <doc:NavigationBasics>
 - ``RouterModel``
 - ``BaseRouterModel``
+- ``BaseRouter``
+- ``PresentationModel``
 
 ### Tab Navigation
 
@@ -128,6 +130,7 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 ### Deep Linking
 
 - <doc:Deeplinks>
+- <doc:DeeplinkRouteGuide>
 - ``DeeplinkHandler``
 - ``TabDeeplinkHandler``
 - ``SplitDeeplinkHandler``
@@ -138,6 +141,8 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 ### Route Context
 
 - <doc:RouteContextGuide>
+- ``RouteContext``
+- ``ContextModel``
 
 ### View Modifiers
 

@@ -27,7 +27,7 @@ import Foundation
 ///
 /// ## Crash behavior
 ///
-/// When ``Configuration/shouldCrashOnRouteNotFound`` is `true`, a `fatalError`
+/// When `Configuration.shouldCrashOnRouteNotFound` is `true`, a `fatalError`
 /// is triggered in addition to the log. This is recommended during development
 /// to surface misconfigured destinations early.
 public enum RouterError: Error, CustomStringConvertible {

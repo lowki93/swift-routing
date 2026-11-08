@@ -335,6 +335,13 @@ Button("Close") {
 
 `router.close()` dismisses the current presented modal. It is a no-op if the router is not presented.
 
+## Upgrading to 1.0
+
+- `back()` is renamed `pop()`. `back()` still works but is deprecated.
+- Logger: `.action(.back)` is now `.action(.pop)`.
+- `RouterSpy.backCallCount` is now `popCallCount`.
+- `PresentableRouter` has been merged into `Router`. This is an internal change only — `PresentableRouter` was never part of the public API, so no migration is required.
+
 ## Topics
 
 ### Related
