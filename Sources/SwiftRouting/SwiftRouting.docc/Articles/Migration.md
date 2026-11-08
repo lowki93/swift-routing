@@ -341,6 +341,8 @@ Button("Close") {
 - Logger: `.action(.back)` is now `.action(.pop)`.
 - `RouterSpy.backCallCount` is now `popCallCount`.
 - `PresentableRouter` has been merged into `Router`. This is an internal change only — `PresentableRouter` was never part of the public API, so no migration is required.
+- `DefaultRoute`, `RouterContextModifier`, and `RouterPresentModifier` are now `internal`. Only relevant if you referenced these types directly (not through the public `routerContext(_:perform:)`/`routerPresent(perform:)` extensions or `Router.init`).
+- `back()` and `DeeplinkRoute`'s old `init(root:type:route:path:)` stay deprecated (not removed) in 1.0 — both are slated for removal in 2.0. Migrate now to `pop()` and to `DeeplinkRoute`'s factory methods (`.push()`, `.present()`, `.cover()`, `.popToRoot()`, `.updateRoot()`) to avoid a 2.0 break.
 
 ## Topics
 

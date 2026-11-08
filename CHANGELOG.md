@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `RouterSpy.backCallCount` is renamed `popCallCount`; it counts calls made through either `pop()` or the deprecated `back()`
 
 - Merged `PresentableRouter` into `Router` -- the intermediate class added no polymorphism (`Router` was its only, `final` subclass) and just split the implementation across two files. Not a breaking change: `PresentableRouter` was never part of the public type hierarchy consumers could actually reach (#124)
+- `DefaultRoute`, `RouterContextModifier`, and `RouterPresentModifier` are now `internal` -- none were used outside their own public entry points (`Router.init`'s root route, and the `routerContext(_:perform:)`/`routerPresent(perform:)` view extensions respectively). Source-breaking only for code that referenced these types directly, which the public API surface never required
 
 ### Fixed
 
