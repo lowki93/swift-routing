@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-08
+
+### Added
+
+- Prepares the DocC catalog for the 1.0.0 release — no tag/release in this PR, documentation only. (#147)
+- Follow-up to #147 (review feedback, received after that PR merged): (#148)
+
 ### Deprecated
 
 - `RouterModel.back()` is deprecated in favor of `pop()`, named consistently with `push(_:)` and `popToRoot()`. `back()` remains available as a deprecated alias (a `RouterModel` extension method that calls `pop()`) and will be removed in a future release. Migration: replace `router.back()` with `router.pop()`. Custom `RouterModel` conformances that implemented `back()` should implement `pop()` instead; they keep compiling either way
@@ -24,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Merged `PresentableRouter` into `Router` -- the intermediate class added no polymorphism (`Router` was its only, `final` subclass) and just split the implementation across two files. Not a breaking change: `PresentableRouter` was never part of the public type hierarchy consumers could actually reach (#124)
 - `DefaultRoute`, `RouterContextModifier`, and `RouterPresentModifier` are now `internal` -- none were used outside their own public entry points (`Router.init`'s root route, and the `routerContext(_:perform:)`/`routerPresent(perform:)` view extensions respectively). Source-breaking only for code that referenced these types directly, which the public API surface never required
+- `pop()` is now the `RouterModel` requirement and `Router`/`RouterSpy` implementation, consistent with `push(_:)` and `popToRoot()`. `back()` is no longer a requirement: it only exists as a `@available(*, deprecated, renamed: "pop()")` extension method that calls `pop()`, so existing conformances and callers keep compiling. `LoggerMessage.Action.back(count:)` is renamed `pop(count:)` and the default logger prints `pop` instead of `back`. Tests, demo app, README, DocC, skills, medium articles, diagram and CHANGELOG are updated; regression tests keep covering the deprecated `back()` on `Router` and `RouterSpy`. (#146)
 
 ### Fixed
 
@@ -34,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - "Next Steps" in the Getting Started guide only linked 5 of the 12 articles -- now links all of them, in the same order as the landing page's Topics section
 - Curated 5 public `View` extension modifiers (`onTabReselected`, `routerContext`, `routerPresent`, `printRouter(trigger:)`, `printRouterOnChange()`) into a new "View Modifiers" DocC Topics group -- previously only discoverable via the auto-generated "Extensions to View" catch-all (#128)
 - Documented a SwiftUI rendering-order quirk: `onAppear` on a route pushed into a never-before-shown tab can fire before that tab's root `onAppear` -- not fixable without breaking the synchronous contract of `push`/`present`/`cover`/`popToRoot`/`update(root:in:)` (#121)
+- The "Next Steps" section on the first page of the docs (Getting Started) only linked 5 of the 12 existing DocC articles — missing `SplitNavigation`, `ConfigurationGuide`, `Architecture`, `Testing`, `Migration`, `Troubleshooting`, and `FAQ`. Someone landing there had no path to those unless they already knew the landing page's own Topics section existed. (#118)
 
 ### Tests
 
@@ -382,7 +391,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project foundation (#1, #2, #3, #4)
 
-[Unreleased]: https://github.com/lowki93/swift-routing/compare/0.7.0...HEAD
+[Unreleased]: https://github.com/lowki93/swift-routing/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/lowki93/swift-routing/compare/0.7.0...1.0.0
 [0.7.0]: https://github.com/lowki93/swift-routing/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/lowki93/swift-routing/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/lowki93/swift-routing/compare/0.4.0...0.5.0
