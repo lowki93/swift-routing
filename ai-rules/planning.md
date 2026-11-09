@@ -4,7 +4,7 @@ This file defines how to plan a task before implementing it.
 
 ## Process
 
-1. **Delegate exploration + drafting** to the `planner` custom subagent (`.claude/agents/planner.md`, pinned to `claude-opus-5-5` with `effort: high`) via the Agent tool with `subagent_type: "planner"`. The main thread stays on its own model.
+1. **Delegate exploration + drafting** to the `planner` custom subagent (`.claude/agents/planner.md`; model and effort in `ai-rules/linear_flow.md`) via the Agent tool with `subagent_type: "planner"`. The main thread stays on its own model.
 2. **Submit the plan for approval** via plan mode (`ExitPlanMode`).
 3. **Do not start implementing** until the user explicitly approves the plan.
 

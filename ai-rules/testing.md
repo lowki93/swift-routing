@@ -80,7 +80,12 @@ Rules:
 
 - Tests must be deterministic (no randomness, no timing dependency).
 - Prefer pure state verification over logs.
-- Run `swift test` after each test change.
+- Run the tests after each test change, one target at a time (plain `swift test` has been seen running only one target locally):
+  - `swift test --filter SwiftRoutingTests`
+  - `swift test --filter SwiftRoutingTestSupportTests`
+  - `swift test --filter SwiftRoutingMacrosTests`
+- For concurrency-related changes, also run the ThreadSanitizer pass that CI runs: `swift test --sanitize=thread --filter ConcurrencyTests`.
+- This is the single source for test commands; other docs point here.
 
 ## 7) Logger Assertions
 
