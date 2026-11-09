@@ -14,6 +14,8 @@ See `ai-rules/swift_conventions.md` for the full Swift code conventions.
 
 See `ai-rules/planning.md` for how to draft and get approval on an implementation plan before coding.
 
+The workflow uses three subagents (`.claude/agents/`): `planner` (Opus 5.5, high) plans, `dev` (Sonnet 5.5) implements, and `reviewer` (Opus 5.5, medium) does a context-free Swift code review before every PR. See `ai-rules/linear_flow.md`.
+
 ## Versioning
 
 See `ai-rules/versionning.md` for the full branch, commit, and PR conventions.
