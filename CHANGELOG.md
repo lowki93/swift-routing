@@ -16,11 +16,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `@Routable` / `@RouteName` macros generate a `Route` enum's `name` from its cases. `@Routable(nameStyle: .verbatim | .capitalized)` sets the default format; `@RouteName(#"..."#)` overrides a single case with a raw-string template (associated values by label, or `arg0`, `arg1`, ... when unlabeled); `@RouteName(.delegate)` composes with a child `Route` (`"Notifications.\(child.name)"`). `@Routable` also adds the `Route` conformance, so `: Route` becomes optional. Invalid uses (template referencing an unknown value, `.delegate` without exactly one associated value, non-literal `nameStyle`, ...) are reported on the attribute itself (#150)
 - New opt-in `SwiftRoutingMacros` product for the macros above. It re-exports `SwiftRouting`, so `import SwiftRoutingMacros` alone is enough. `SwiftRouting` itself does not depend on it, so only adopters compile swift-syntax (supported range: 600.0.0..<700.0.0) (#150)
+- `@Sheet(withStack: Bool = true)` / `@Cover` markers for `@Routable` cases. When at least one case has a marker, `@Routable` also generates `routingType` (`.sheet(withStack:)` / `.cover`, unmarked cases `.push`); without markers nothing is generated, so existing enums and hand-written `routingType` are unaffected. Markers compose with `@RouteName(.delegate)`. Misuse (several markers on a case, non-literal `withStack`, marker next to a hand-written `routingType`, marker on a non-case) is reported on the attribute (#152)
 
 ### Documentation
 
 - New "Generating Route Names with @Routable" article, linked from Defining Routes and Getting Started (#150)
 - The demo app's route enums now use `@Routable` / `@RouteName` (#150)
+- The "Generating Route Names with @Routable" article is now "Generating Route Names and Routing Types with @Routable" and documents `@Sheet` / `@Cover` (#152)
 
 ## [1.0.0] - 2026-11-08
 

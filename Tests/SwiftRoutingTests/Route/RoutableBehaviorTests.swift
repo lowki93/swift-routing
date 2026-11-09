@@ -94,4 +94,33 @@ struct RoutableBehaviorTests {
       #expect(route.name == "plain")
     }
   }
+
+  struct RoutingTypeBehavior {
+    @Test(arguments: [
+      (MacroPresentationRoute.home, "push"),
+      (MacroPresentationRoute.settings, "sheet(withStack: true)"),
+      (MacroPresentationRoute.filters, "sheet(withStack: false)"),
+      (MacroPresentationRoute.onboarding, "cover"),
+      (MacroPresentationRoute.order(id: "1"), "cover"),
+      (MacroPresentationRoute.form(.flow), "sheet(withStack: true)"),
+    ])
+    func presentationRouteCases_routingType_matchMarker(route: MacroPresentationRoute, expected: String) {
+      #expect(route.routingType.description == expected)
+    }
+
+    @Test
+    func delegateCaseWithSheet_return_delegatedName() {
+      #expect(MacroPresentationRoute.form(.flow).name == "form.FormFlow")
+    }
+
+    @Test
+    func manualRoutingTypeWithoutMarkers_return_root() {
+      #expect(MacroManualRoutingTypeRoute.login.routingType.description == "root")
+    }
+
+    @Test
+    func unmarkedRoutableEnum_return_defaultPush() {
+      #expect(MacroFormRoute.flow.routingType.description == "push")
+    }
+  }
 }

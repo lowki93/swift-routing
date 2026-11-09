@@ -72,3 +72,32 @@ enum MacroSynthesizedRoute {
   case detail(id: Int)
   case plain
 }
+
+@Routable
+enum MacroPresentationRoute: Route {
+  case home
+  @Sheet
+  case settings
+  @Sheet(withStack: false)
+  case filters
+  @Cover
+  case onboarding
+  @Cover
+  case order(id: String)
+  @Sheet
+  @RouteName(.delegate)
+  case form(MacroFormRoute)
+}
+
+/// `@Routable` without markers + hand-written `routingType`: must keep compiling (no generated `routingType`).
+@Routable
+enum MacroManualRoutingTypeRoute: Route {
+  case home
+  case login
+  var routingType: RoutingType {
+    switch self {
+    case .home: .push
+    case .login: .root
+    }
+  }
+}

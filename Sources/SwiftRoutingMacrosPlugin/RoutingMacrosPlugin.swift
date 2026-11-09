@@ -11,5 +11,7 @@ struct RoutingMacrosPlugin: CompilerPlugin {
   let providingMacros: [Macro.Type] = [
     RoutableMacro.self,
     RouteNameMacro.self,
+    SheetMacro.self,
+    CoverMacro.self,
   ]
 }
