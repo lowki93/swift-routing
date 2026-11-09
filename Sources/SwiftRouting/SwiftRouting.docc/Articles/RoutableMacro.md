@@ -1,10 +1,10 @@
-# Generating Route Names with @Routable
+# Generating Route Names and Routing Types with @Routable
 
-Generate a route's `name` from its cases instead of writing the `switch` by hand.
+Generate a route's `name` (and, optionally, its `routingType`) from its cases instead of writing the `switch` by hand.
 
 ## Overview
 
-Every ``Route`` needs a `name`, used for logging, debugging and analytics. For most enums this is a mechanical `switch` over the cases. The `@Routable` macro writes that `switch` for you, and `@RouteName` overrides the cases that need a custom format.
+Every ``Route`` needs a `name`, used for logging, debugging and analytics. For most enums this is a mechanical `switch` over the cases. The `@Routable` macro writes that `switch` for you, and `@RouteName` overrides the cases that need a custom format. `@Sheet` and `@Cover` mark the cases that are presented modally so `@Routable` can generate `routingType` too.
 
 The macros ship in a separate, opt-in product so that apps which don't use them never compile swift-syntax.
 
@@ -105,6 +105,39 @@ enum AppRoute {
 
 The prefix follows the enum's `nameStyle`. `.delegate` requires exactly one associated value.
 
+## Presentation Style
+
+Mark a case with `@Sheet` or `@Cover` and `@Routable` also generates `routingType`:
+
+```swift
+@Routable
+enum AppRoute {
+    case home
+    @Sheet(withStack: true)
+    case settings
+    @Cover
+    case onboarding
+    case order(id: String)
+}
+// AppRoute.home.routingType == .push
+// AppRoute.settings.routingType == .sheet(withStack: true)
+// AppRoute.onboarding.routingType == .cover
+// AppRoute.order(id: "1").routingType == .push
+```
+
+| Marker | Generated `routingType` |
+|---|---|
+| none | `.push` |
+| `@Sheet` or `@Sheet()` | `.sheet(withStack: true)` |
+| `@Sheet(withStack: false)` | `.sheet(withStack: false)` |
+| `@Cover` | `.cover` |
+
+- `routingType` is generated only when at least one case has a marker. Without any marker nothing is generated, so the default `.push` of ``Route`` applies and a hand-written `routingType` keeps compiling.
+- Markers compose with `@RouteName(.delegate)`. `.delegate` only affects `name`; the parent's marker decides the `routingType` (the child's `routingType` is never consulted). `@Sheet @RouteName(.delegate) case form(FormRoute)` presents the child flow in a sheet and derives its name from the child.
+- A marker on a case declaring several elements (`@Cover case a, b`) applies to every element.
+- `withStack` must be a literal `true` or `false`.
+- The generated property uses the enum's access level, like `name`.
+
 ## Compile-Time Checks
 
 The macros report mistakes on the attribute itself:
@@ -115,12 +148,18 @@ The macros report mistakes on the attribute itself:
 - `@RouteName` argument that is neither a raw string nor `.delegate`.
 - A template referencing a name that isn't one of the case's associated values (for example `\(idd)` instead of `\(id)`).
 - `.delegate` on a case without exactly one associated value.
+- `@Sheet` or `@Cover` on something other than an enum case.
+- Several routing type markers on the same case (`@Sheet @Cover`, or the same marker twice). A case can carry only one.
+- `withStack` that isn't a literal `true` or `false`.
+- A marker combined with a hand-written `routingType` in the enum body.
 
 Only the first identifier of each `\(...)` is checked. Errors further in the expression, such as a missing property in `\(arg0.title)`, are reported by the compiler on the generated code.
 
 ## Limits
 
-- `@Routable` generates `name` only. Set `routingType` by hand, as described in <doc:DefiningRoutes>.
+- There is no marker for `.root`. An enum that needs it keeps a hand-written `routingType` (and then uses no markers), as described in <doc:DefiningRoutes>.
+- Module-qualified markers (`@SwiftRoutingMacros.Sheet`) aren't recognised, so the case falls back to `.push`, same as `@RouteName`.
+- A `routingType` declared in a separate extension isn't detected when combined with markers; the compiler reports a redeclaration instead.
 - The generated `name` uses the enum's access level (`public`, `package` or internal).
 - Raw strings using `\#(...)` interpolation aren't supported.
 

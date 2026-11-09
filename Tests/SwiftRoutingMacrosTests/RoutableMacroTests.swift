@@ -22,6 +22,8 @@ private func assertExpansion(
     macroSpecs: [
       "Routable": MacroSpec(type: RoutableMacro.self, conformances: conformances),
       "RouteName": MacroSpec(type: RouteNameMacro.self),
+      "Sheet": MacroSpec(type: SheetMacro.self),
+      "Cover": MacroSpec(type: CoverMacro.self),
     ],
     indentationWidth: .spaces(2),
     failureHandler: { spec in
@@ -298,6 +300,321 @@ struct RoutableMacroExpansionTests {
     }
   }
 
+  @Suite("routingType")
+  struct RoutingTypeTests {
+    @Test
+    func sheetAndCoverMarkers_expand_toRoutingTypeSwitch() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          case home
+          @Sheet(withStack: true)
+          case settings
+          @Cover
+          case onboarding
+          case order(id: String)
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case home
+            case settings
+            case onboarding
+            case order(id: String)
+
+            var name: String {
+              switch self {
+              case .home:
+                "home"
+              case .settings:
+                "settings"
+              case .onboarding:
+                "onboarding"
+              case .order(_):
+                "order"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .home:
+                .push
+              case .settings:
+                .sheet(withStack: true)
+              case .onboarding:
+                .cover
+              case .order(_):
+                .push
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func bareSheet_expands_toSheetWithStackTrue() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Sheet
+          case a
+          @Sheet()
+          case b
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case a
+            case b
+
+            var name: String {
+              switch self {
+              case .a:
+                "a"
+              case .b:
+                "b"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .a:
+                .sheet(withStack: true)
+              case .b:
+                .sheet(withStack: true)
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func sheetWithStackFalse_expands_toSheetWithStackFalse() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Sheet(withStack: false)
+          case filters
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case filters
+
+            var name: String {
+              switch self {
+              case .filters:
+                "filters"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .filters:
+                .sheet(withStack: false)
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func markerOnAssociatedValueCases_expands_withWildcardPatterns() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Cover
+          case order(id: String)
+          @Sheet
+          case pair(Int, Int)
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case order(id: String)
+            case pair(Int, Int)
+
+            var name: String {
+              switch self {
+              case .order(_):
+                "order"
+              case .pair(_, _):
+                "pair"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .order(_):
+                .cover
+              case .pair(_, _):
+                .sheet(withStack: true)
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func markerWithDelegate_expands_bothDelegatedNameAndRoutingType() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Sheet
+          @RouteName(.delegate)
+          case form(FormRoute)
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case form(FormRoute)
+
+            var name: String {
+              switch self {
+              case .form(let arg0):
+                "form.\\(arg0.name)"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .form(_):
+                .sheet(withStack: true)
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func publicEnum_expands_publicRoutingType() {
+      assertExpansion(
+        """
+        @Routable
+        public enum AppRoute {
+          @Cover
+          case onboarding
+        }
+        """,
+        expandedSource: """
+          public enum AppRoute {
+            case onboarding
+
+            public var name: String {
+              switch self {
+              case .onboarding:
+                "onboarding"
+              }
+            }
+
+            public var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .onboarding:
+                .cover
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func markerOnMultiElementCase_appliesToEveryElement() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Cover
+          case a, b
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case a, b
+
+            var name: String {
+              switch self {
+              case .a:
+                "a"
+              case .b:
+                "b"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .a:
+                .cover
+              case .b:
+                .cover
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func manualRoutingTypeWithoutMarkers_expands_nameOnly() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          case home
+          var routingType: RoutingType { .push }
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case home
+            var routingType: RoutingType { .push }
+
+            var name: String {
+              switch self {
+              case .home:
+                "home"
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+  }
+
   @Suite("Diagnostics")
   struct Diagnostics {
     @Test
@@ -501,6 +818,215 @@ struct RoutableMacroExpansionTests {
           """,
         diagnostics: [
           DiagnosticSpec(message: "'@RouteName' cannot be applied to a case declaration with multiple elements (`case a, b`) -- split them into separate cases", line: 3, column: 3)
+        ]
+      )
+    }
+
+    @Test
+    func sheetAndCoverOnSameCase_emits_diagnostic() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Sheet
+          @Cover
+          case a
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case a
+
+            var name: String {
+              switch self {
+              case .a:
+                "a"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .a:
+                .sheet(withStack: true)
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'@Cover' conflicts with '@Sheet' on the same case -- a case can have only one routing type marker", line: 4, column: 3)
+        ]
+      )
+    }
+
+    @Test
+    func duplicateSheetMarkers_emits_diagnostic() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Sheet
+          @Sheet(withStack: false)
+          case a
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case a
+
+            var name: String {
+              switch self {
+              case .a:
+                "a"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .a:
+                .sheet(withStack: true)
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'@Sheet' is applied more than once to this case", line: 4, column: 3)
+        ]
+      )
+    }
+
+    @Test
+    func nonLiteralWithStack_emits_diagnostic() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Sheet(withStack: flag)
+          case a
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case a
+
+            var name: String {
+              switch self {
+              case .a:
+                "a"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .a:
+                .sheet(withStack: true)
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'withStack' must be a literal `true` or `false`", line: 3, column: 21)
+        ]
+      )
+    }
+
+    @Test
+    func markersWithManualRoutingType_emits_diagnostic() {
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @Sheet
+          case a
+          @Cover
+          case b
+          var routingType: RoutingType { .push }
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            case a
+            case b
+            var routingType: RoutingType { .push }
+
+            var name: String {
+              switch self {
+              case .a:
+                "a"
+              case .b:
+                "b"
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'@Sheet' cannot be combined with a hand-written 'routingType' -- remove the marker or the property", line: 3, column: 3),
+          DiagnosticSpec(message: "'@Cover' cannot be combined with a hand-written 'routingType' -- remove the marker or the property", line: 5, column: 3),
+        ]
+      )
+    }
+
+    @Test
+    func sheetOnNonCase_emits_notACaseDiagnostic() {
+      assertExpansion(
+        """
+        @Sheet
+        struct S {
+        }
+        """,
+        expandedSource: """
+          struct S {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'@Sheet' can only be applied to an enum case", line: 1, column: 1)
+        ]
+      )
+    }
+
+    @Test
+    func coverOnNonCase_emits_notACaseDiagnostic() {
+      assertExpansion(
+        """
+        @Cover
+        struct S {
+        }
+        """,
+        expandedSource: """
+          struct S {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'@Cover' can only be applied to an enum case", line: 1, column: 1)
+        ]
+      )
+    }
+
+    @Test
+    func routeNameOnNonCase_emits_notACaseDiagnostic() {
+      assertExpansion(
+        """
+        @RouteName(#"X"#)
+        struct S {
+        }
+        """,
+        expandedSource: """
+          struct S {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'@RouteName' can only be applied to an enum case", line: 1, column: 1)
         ]
       )
     }

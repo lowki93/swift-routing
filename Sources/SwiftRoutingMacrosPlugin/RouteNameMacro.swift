@@ -16,7 +16,7 @@ public enum RouteNameMacro: PeerMacro {
     in context: some MacroExpansionContext
   ) throws -> [DeclSyntax] {
     if declaration.as(EnumCaseDeclSyntax.self) == nil {
-      context.diagnose(.notACase, at: node)
+      context.diagnose(.notACase("RouteName"), at: node)
     }
     return []
   }

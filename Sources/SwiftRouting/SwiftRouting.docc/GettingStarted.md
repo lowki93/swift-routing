@@ -143,7 +143,7 @@ For modal presentation, use `router.present(...)` or `router.cover(...)`.
 Now that you have the basics, explore these topics:
 
 - <doc:DefiningRoutes> - Learn about route customization and routing types
-- <doc:RoutableMacro> - Generate route names with the opt-in `@Routable` macro
+- <doc:RoutableMacro> - Generate route names and routing types with the opt-in `@Routable` macro
 - <doc:NavigationBasics> - Explore all navigation methods in detail
 - <doc:TabNavigation> - Set up tab-based navigation
 - <doc:SplitNavigation> - Build sidebar/content/detail layouts with `RoutingSplitView`

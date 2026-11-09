@@ -37,7 +37,7 @@ The `name` property provides a human-readable identifier used for:
 
 Include relevant associated values in the name to make logs more informative.
 
-> Tip: To generate `name` from the cases instead of writing the `switch` by hand, use the opt-in `@Routable` macro. See <doc:RoutableMacro>.
+> Tip: To generate `name` (and `routingType`) from the cases instead of writing the `switch` by hand, use the opt-in `@Routable` macro. See <doc:RoutableMacro>.
 
 ## Mapping Routes to Views
 
@@ -161,6 +161,8 @@ enum HomeRoute: Route {
 | `.sheet(withStack: false)` | Sheet without navigation stack |
 | `.cover` | Full-screen cover presentation |
 | `.root` | Replace the current root |
+
+> Tip: With the opt-in `@Routable` macro, mark cases with `@Sheet` / `@Cover` to generate `routingType` instead of writing the `switch` by hand. See <doc:RoutableMacro>.
 
 ## Using Environment in Route Views
 

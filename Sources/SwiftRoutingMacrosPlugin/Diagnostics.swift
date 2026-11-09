@@ -28,10 +28,12 @@ struct RoutableDiagnostic: DiagnosticMessage {
     "'nameStyle' must be a literal `.verbatim` or `.capitalized`"
   )
 
-  static let notACase = RoutableDiagnostic(
-    "notACase",
-    "'@RouteName' can only be applied to an enum case"
-  )
+  static func notACase(_ macroName: String) -> RoutableDiagnostic {
+    RoutableDiagnostic(
+      "notACase",
+      "'@\(macroName)' can only be applied to an enum case"
+    )
+  }
 
   static let multipleElements = RoutableDiagnostic(
     "multipleElements",
@@ -55,6 +57,32 @@ struct RoutableDiagnostic: DiagnosticMessage {
     "delegateArityMismatch",
     "'@RouteName(.delegate)' requires exactly one associated value on this case"
   )
+
+  static func multipleRoutingTypeMarkers(extra: String, first: String) -> RoutableDiagnostic {
+    RoutableDiagnostic(
+      "multipleRoutingTypeMarkers",
+      "'@\(extra)' conflicts with '@\(first)' on the same case -- a case can have only one routing type marker"
+    )
+  }
+
+  static func duplicateRoutingTypeMarker(_ name: String) -> RoutableDiagnostic {
+    RoutableDiagnostic(
+      "duplicateRoutingTypeMarker",
+      "'@\(name)' is applied more than once to this case"
+    )
+  }
+
+  static let withStackNotLiteral = RoutableDiagnostic(
+    "withStackNotLiteral",
+    "'withStack' must be a literal `true` or `false`"
+  )
+
+  static func routingTypeAlreadyDeclared(marker: String) -> RoutableDiagnostic {
+    RoutableDiagnostic(
+      "routingTypeAlreadyDeclared",
+      "'@\(marker)' cannot be combined with a hand-written 'routingType' -- remove the marker or the property"
+    )
+  }
 }
 
 extension MacroExpansionContext {

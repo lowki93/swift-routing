@@ -6,8 +6,9 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-/// Generates `var name: String` from an enum's cases, and adds the `Route` conformance
-/// via extension when it isn't already declared explicitly.
+/// Generates `var name: String` from an enum's cases, and `var routingType: RoutingType`
+/// when at least one case carries a `@Sheet` / `@Cover` marker. Also adds the `Route`
+/// conformance via extension when it isn't already declared explicitly.
 ///
 /// See `Sources/SwiftRoutingMacros/Routable.swift` for the public macro declaration and
 /// user-facing documentation.
@@ -16,6 +17,18 @@ public enum RoutableMacro: MemberMacro {
   private enum NameStyle {
     case verbatim
     case capitalized
+  }
+
+  private enum RoutingTypeMarker {
+    case sheet(withStack: Bool)
+    case cover
+
+    var expression: String {
+      switch self {
+      case .sheet(let withStack): return ".sheet(withStack: \(withStack))"
+      case .cover: return ".cover"
+      }
+    }
   }
 
   public static func expansion(
@@ -33,6 +46,8 @@ public enum RoutableMacro: MemberMacro {
     let access = accessModifier(of: enumDecl)
 
     var lines: [String] = []
+    var routingTypeLines: [String] = []
+    var markerAttributes: [(name: String, attribute: AttributeSyntax)] = []
 
     for member in enumDecl.memberBlock.members {
       guard let caseDecl = member.decl.as(EnumCaseDeclSyntax.self) else { continue }
@@ -46,9 +61,16 @@ public enum RoutableMacro: MemberMacro {
         context.diagnose(.multipleElements, at: caseDecl)
       }
 
+      let caseMarkerAttributes = routingTypeAttributes(of: caseDecl)
+      let marker = routingTypeMarker(from: caseMarkerAttributes, context: context)
+      markerAttributes += caseMarkerAttributes
+
       for element in caseDecl.elements {
         let caseName = element.name.text
         let params = Array(element.parameterClause?.parameters ?? [])
+        routingTypeLines.append(
+          "case \(wildcardPattern(caseName: caseName, paramCount: params.count)): \(marker?.expression ?? ".push")"
+        )
         let bindings = bindingNames(for: params)
 
         let line: String
@@ -81,7 +103,78 @@ public enum RoutableMacro: MemberMacro {
         }
       }
       """
-    return [nameVar]
+
+    guard !markerAttributes.isEmpty else { return [nameVar] }
+
+    if declaresRoutingType(enumDecl) {
+      for entry in markerAttributes {
+        context.diagnose(.routingTypeAlreadyDeclared(marker: entry.name), at: entry.attribute)
+      }
+      return [nameVar]
+    }
+
+    let routingTypeBody = routingTypeLines.joined(separator: "\n")
+    let routingTypeVar: DeclSyntax = """
+      \(raw: access)var routingType: SwiftRouting.RoutingType {
+        switch self {
+        \(raw: routingTypeBody)
+        }
+      }
+      """
+    return [nameVar, routingTypeVar]
+  }
+
+  // MARK: - Routing type markers
+
+  private static let markerNames: Set<String> = ["Sheet", "Cover"]
+
+  private static func routingTypeAttributes(of caseDecl: EnumCaseDeclSyntax) -> [(name: String, attribute: AttributeSyntax)] {
+    caseDecl.attributes.compactMap { element in
+      guard let attribute = element.as(AttributeSyntax.self),
+            let name = attribute.attributeName.as(IdentifierTypeSyntax.self)?.name.text,
+            markerNames.contains(name) else { return nil }
+      return (name, attribute)
+    }
+  }
+
+  private static func routingTypeMarker(
+    from attributes: [(name: String, attribute: AttributeSyntax)],
+    context: some MacroExpansionContext
+  ) -> RoutingTypeMarker? {
+    guard let first = attributes.first else { return nil }
+
+    for extra in attributes.dropFirst() {
+      if extra.name == first.name {
+        context.diagnose(.duplicateRoutingTypeMarker(extra.name), at: extra.attribute)
+      } else {
+        context.diagnose(.multipleRoutingTypeMarkers(extra: extra.name, first: first.name), at: extra.attribute)
+      }
+    }
+
+    switch first.name {
+    case "Cover":
+      return .cover
+    case "Sheet":
+      guard let arg = first.attribute.arguments?.as(LabeledExprListSyntax.self)?
+        .first(where: { $0.label?.text == "withStack" }) else { return .sheet(withStack: true) }
+      if let literal = arg.expression.as(BooleanLiteralExprSyntax.self) {
+        return .sheet(withStack: literal.literal.tokenKind == .keyword(.true))
+      }
+      context.diagnose(.withStackNotLiteral, at: arg.expression)
+      return .sheet(withStack: true)
+    default:
+      return nil
+    }
+  }
+
+  private static func declaresRoutingType(_ enumDecl: EnumDeclSyntax) -> Bool {
+    enumDecl.memberBlock.members.contains { member in
+      guard let variable = member.decl.as(VariableDeclSyntax.self),
+            !variable.modifiers.contains(where: { $0.name.tokenKind == .keyword(.static) }) else { return false }
+      return variable.bindings.contains {
+        $0.pattern.as(IdentifierPatternSyntax.self)?.identifier.text == "routingType"
+      }
+    }
   }
 
   // MARK: - nameStyle
@@ -144,10 +237,14 @@ public enum RoutableMacro: MemberMacro {
 
   // MARK: - Line generation
 
-  private static func defaultLine(caseName: String, paramCount: Int, style: NameStyle) -> String {
-    let pattern = paramCount == 0
+  private static func wildcardPattern(caseName: String, paramCount: Int) -> String {
+    paramCount == 0
       ? ".\(caseName)"
       : ".\(caseName)(\(Array(repeating: "_", count: paramCount).joined(separator: ", ")))"
+  }
+
+  private static func defaultLine(caseName: String, paramCount: Int, style: NameStyle) -> String {
+    let pattern = wildcardPattern(caseName: caseName, paramCount: paramCount)
     let body = "\"" + formatted(caseName, style: style) + "\""
     return "case \(pattern): \(body)"
   }

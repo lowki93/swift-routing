@@ -31,7 +31,7 @@ public struct RouteNameTemplate: ExpressibleByStringLiteral, Sendable {
   public static let delegate = RouteNameTemplate()
 }
 
-/// Generates `var name: String` for an enum conforming to ``Route``, from its cases.
+/// Generates `var name: String` (and, with `@Sheet` / `@Cover` markers, `var routingType`) for an enum conforming to ``Route``, from its cases.
 ///
 /// Attach to an enum whose cases should each report a name derived from the case itself.
 /// Also adds the ``Route`` conformance via an extension -- `: Route` becomes optional on the
@@ -95,7 +95,30 @@ public struct RouteNameTemplate: ExpressibleByStringLiteral, Sendable {
 /// ```
 ///
 /// `.delegate` requires the case to have exactly one associated value.
-@attached(member, names: named(name))
+///
+/// ## Presentation style
+///
+/// Mark cases with ``Sheet(withStack:)`` or ``Cover()`` to also generate `routingType`:
+///
+/// ```swift
+/// @Routable
+/// enum AppRoute {
+///   case home
+///   @Sheet(withStack: true)
+///   case settings
+///   @Cover
+///   case onboarding
+/// }
+/// // AppRoute.home.routingType == .push
+/// // AppRoute.settings.routingType == .sheet(withStack: true)
+/// // AppRoute.onboarding.routingType == .cover
+/// ```
+///
+/// Unmarked cases are `.push`. `routingType` is generated only when at least one case has a
+/// marker; without markers nothing is generated and the ``Route`` default applies. Markers
+/// cannot be combined with a hand-written `routingType` in the enum body, and there is no
+/// marker for `.root` -- write `routingType` by hand for that.
+@attached(member, names: named(name), named(routingType))
 @attached(extension, conformances: Route)
 public macro Routable(nameStyle: RouteNameStyle = .verbatim) = #externalMacro(module: "SwiftRoutingMacrosPlugin", type: "RoutableMacro")
 
@@ -105,3 +128,39 @@ public macro Routable(nameStyle: RouteNameStyle = .verbatim) = #externalMacro(mo
 /// composition).
 @attached(peer)
 public macro RouteName(_ template: RouteNameTemplate) = #externalMacro(module: "SwiftRoutingMacrosPlugin", type: "RouteNameMacro")
+
+/// Marks an enum case as presented in a sheet, so `@Routable` generates `routingType` for it.
+///
+/// ```swift
+/// @Routable
+/// enum AppRoute {
+///   case home
+///   @Sheet
+///   case settings
+///   @Sheet(withStack: false)
+///   case filters
+/// }
+/// // AppRoute.settings.routingType -> .sheet(withStack: true)
+/// ```
+///
+/// `withStack` must be a literal `true` or `false`; it defaults to `true`. See `@Routable`
+/// for the full description of the generated `routingType`.
+@attached(peer)
+public macro Sheet(withStack: Bool = true) = #externalMacro(module: "SwiftRoutingMacrosPlugin", type: "SheetMacro")
+
+/// Marks an enum case as presented as a full-screen cover, so `@Routable` generates
+/// `routingType` for it.
+///
+/// ```swift
+/// @Routable
+/// enum AppRoute {
+///   case home
+///   @Cover
+///   case onboarding
+/// }
+/// // AppRoute.onboarding.routingType -> .cover
+/// ```
+///
+/// See `@Routable` for the full description of the generated `routingType`.
+@attached(peer)
+public macro Cover() = #externalMacro(module: "SwiftRoutingMacrosPlugin", type: "CoverMacro")
