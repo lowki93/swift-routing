@@ -6,7 +6,7 @@ This file defines the git process (pull, branch, commit, push, PR) and the branc
 
 1. **Pull `main`** — `git checkout main && git pull origin main`
 2. **Create a branch** from `main` — see Branch Naming below
-3. *(implementation happens here — see `ai-rules/planning.md` and `CLAUDE.md`)*
+3. *(planning, implementation and review happen here — see `ai-rules/linear_flow.md`)*
 4. **Commit** — see Commit Conventions below
 5. **Push + create PR** — see PR Conventions below
 
@@ -54,6 +54,9 @@ Clear summary of what this PR accomplishes
 
 **Breaking Changes**:
 Highlight any API, public interface, or dependency changes
+
+**Review notes**: (optional)
+Reviewer findings you chose not to fix, each with the reason
 ```
 
 Types: `feat`, `fix`, `update`, `impr`, `revert`

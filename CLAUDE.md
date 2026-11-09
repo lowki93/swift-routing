@@ -14,6 +14,8 @@ See `ai-rules/swift_conventions.md` for the full Swift code conventions.
 
 See `ai-rules/planning.md` for how to draft and get approval on an implementation plan before coding.
 
+The workflow uses three subagents (`.claude/agents/`): `planner` plans, `dev` implements, and `reviewer` does a context-free Swift code review before every PR. See `ai-rules/linear_flow.md`.
+
 ## Versioning
 
 See `ai-rules/versionning.md` for the full branch, commit, and PR conventions.
@@ -26,7 +28,7 @@ Summary:
 - Framework: Swift Testing (`import Testing`, `@Test`, `#expect`)
 - Structure: `struct` per domain, `enum` to group behaviors
 - Naming: `givenX_whenY_thenZ` or `stateDescription_return_result`
-- Command: `swift test`
+- Commands: see `ai-rules/testing.md` §6 (one `--filter` run per test target)
 
 ## Available Skills
 
