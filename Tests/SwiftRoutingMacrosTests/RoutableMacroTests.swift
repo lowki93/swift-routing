@@ -5,45 +5,6 @@ import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacrosGenericTestSupport
 @testable import SwiftRoutingMacrosPlugin
 
-private func assertExpansion(
-  _ originalSource: String,
-  expandedSource: String,
-  diagnostics: [DiagnosticSpec] = [],
-  conformances: [TypeSyntax] = ["Route"],
-  fileID: StaticString = #fileID,
-  filePath: StaticString = #filePath,
-  line: UInt = #line,
-  column: UInt = #column
-) {
-  assertMacroExpansion(
-    originalSource,
-    expandedSource: expandedSource,
-    diagnostics: diagnostics,
-    macroSpecs: [
-      "Routable": MacroSpec(type: RoutableMacro.self, conformances: conformances),
-      "RouteName": MacroSpec(type: RouteNameMacro.self),
-      "Sheet": MacroSpec(type: SheetMacro.self),
-      "Cover": MacroSpec(type: CoverMacro.self),
-    ],
-    indentationWidth: .spaces(2),
-    failureHandler: { spec in
-      Issue.record(
-        Comment(rawValue: spec.message),
-        sourceLocation: SourceLocation(
-          fileID: spec.location.fileID,
-          filePath: spec.location.filePath,
-          line: spec.location.line,
-          column: spec.location.column
-        )
-      )
-    },
-    fileID: fileID,
-    filePath: filePath,
-    line: line,
-    column: column
-  )
-}
-
 @Suite("RoutableMacro expansion")
 struct RoutableMacroExpansionTests {
 
@@ -604,6 +565,44 @@ struct RoutableMacroExpansionTests {
               switch self {
               case .home:
                 "home"
+              }
+            }
+          }
+
+          extension AppRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func qualifiedSheet_expands_toSheetWithStackTrue() {
+      // The test harness only strips attributes it expands by bare name, so the qualified
+      // attribute stays in the expanded source; the generated members are what matter here.
+      assertExpansion(
+        """
+        @Routable
+        enum AppRoute {
+          @SwiftRoutingMacros.Sheet
+          case settings
+        }
+        """,
+        expandedSource: """
+          enum AppRoute {
+            @SwiftRoutingMacros.Sheet
+            case settings
+
+            var name: String {
+              switch self {
+              case .settings:
+                "settings"
+              }
+            }
+
+            var routingType: SwiftRouting.RoutingType {
+              switch self {
+              case .settings:
+                .sheet(withStack: true)
               }
             }
           }

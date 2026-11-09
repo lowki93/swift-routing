@@ -26,6 +26,8 @@ enum HomeTab: TabRoute {
 }
 ```
 
+> Tip: With the opt-in `@TabRoutable` macro you don't write `name` or the `TabRoute` conformance by hand. See <doc:RoutableMacro>.
+
 ## Option 1: Using RoutingTabView
 
 ``RoutingTabView`` provides a `TabRouter` for programmatic tab control:
@@ -230,6 +232,8 @@ enum HomeTab: TabRoute {
     }
 }
 ```
+
+> Tip: With `@TabRoutable`, mark the tabs that hide the tab bar with `@HideTabBarOnPush` and the property is generated for you. See <doc:RoutableMacro>.
 
 ## Deep Linking with Tabs
 

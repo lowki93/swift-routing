@@ -18,10 +18,12 @@ struct RoutableDiagnostic: DiagnosticMessage {
     self.severity = severity
   }
 
-  static let notAnEnum = RoutableDiagnostic(
-    "notAnEnum",
-    "'@Routable' can only be applied to an enum"
-  )
+  static func notAnEnum(_ macroName: String) -> RoutableDiagnostic {
+    RoutableDiagnostic(
+      "notAnEnum",
+      "'@\(macroName)' can only be applied to an enum"
+    )
+  }
 
   static let invalidNameStyle = RoutableDiagnostic(
     "invalidNameStyle",
@@ -65,9 +67,9 @@ struct RoutableDiagnostic: DiagnosticMessage {
     )
   }
 
-  static func duplicateRoutingTypeMarker(_ name: String) -> RoutableDiagnostic {
+  static func duplicateMarker(_ name: String) -> RoutableDiagnostic {
     RoutableDiagnostic(
-      "duplicateRoutingTypeMarker",
+      "duplicateMarker",
       "'@\(name)' is applied more than once to this case"
     )
   }
@@ -77,10 +79,22 @@ struct RoutableDiagnostic: DiagnosticMessage {
     "'withStack' must be a literal `true` or `false`"
   )
 
-  static func routingTypeAlreadyDeclared(marker: String) -> RoutableDiagnostic {
+  static func markerWithHandWrittenProperty(marker: String, property: String) -> RoutableDiagnostic {
     RoutableDiagnostic(
-      "routingTypeAlreadyDeclared",
-      "'@\(marker)' cannot be combined with a hand-written 'routingType' -- remove the marker or the property"
+      "markerWithHandWrittenProperty",
+      "'@\(marker)' cannot be combined with a hand-written '\(property)' -- remove the marker or the property"
+    )
+  }
+
+  static let hideTabBarOnPushOutsideTabRoutable = RoutableDiagnostic(
+    "hideTabBarOnPushOutsideTabRoutable",
+    "'@HideTabBarOnPush' can only be applied to a case of a '@TabRoutable' enum"
+  )
+
+  static func routingTypeMarkerInTabRoutable(_ marker: String) -> RoutableDiagnostic {
+    RoutableDiagnostic(
+      "routingTypeMarkerInTabRoutable",
+      "'@\(marker)' cannot be used in a '@TabRoutable' enum -- a tab is selected, never presented"
     )
   }
 }

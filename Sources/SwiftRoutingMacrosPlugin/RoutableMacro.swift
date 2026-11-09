@@ -6,18 +6,14 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-/// Generates `var name: String` from an enum's cases, and `var routingType: RoutingType`
-/// when at least one case carries a `@Sheet` / `@Cover` marker. Also adds the `Route`
-/// conformance via extension when it isn't already declared explicitly.
+/// Generates `var name: String` from an enum's cases (via `RouteNameGenerator`), and
+/// `var routingType: RoutingType` when at least one case carries a `@Sheet` / `@Cover`
+/// marker. Also adds the `Route` conformance via extension when it isn't already declared
+/// explicitly.
 ///
 /// See `Sources/SwiftRoutingMacros/Routable.swift` for the public macro declaration and
 /// user-facing documentation.
 public enum RoutableMacro: MemberMacro {
-
-  private enum NameStyle {
-    case verbatim
-    case capitalized
-  }
 
   private enum RoutingTypeMarker {
     case sheet(withStack: Bool)
@@ -38,77 +34,31 @@ public enum RoutableMacro: MemberMacro {
     in context: some MacroExpansionContext
   ) throws -> [DeclSyntax] {
     guard let enumDecl = declaration.as(EnumDeclSyntax.self) else {
-      context.diagnose(.notAnEnum, at: node)
+      context.diagnose(.notAnEnum("Routable"), at: node)
       return []
     }
 
-    let style = nameStyle(from: node, context: context)
-    let access = accessModifier(of: enumDecl)
+    let nameVar = RouteNameGenerator.nameProperty(for: enumDecl, attribute: node, context: context)
+    let access = enumDecl.accessModifierPrefix
 
-    var lines: [String] = []
     var routingTypeLines: [String] = []
-    var markerAttributes: [(name: String, attribute: AttributeSyntax)] = []
+    var allMarkerAttributes: [(name: String, attribute: AttributeSyntax)] = []
 
-    for member in enumDecl.memberBlock.members {
-      guard let caseDecl = member.decl.as(EnumCaseDeclSyntax.self) else { continue }
-
-      let routeNameAttribute = caseDecl.attributes
-        .compactMap { $0.as(AttributeSyntax.self) }
-        .first { $0.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "RouteName" }
-
-      let hasMultipleElements = caseDecl.elements.count > 1
-      if routeNameAttribute != nil, hasMultipleElements {
-        context.diagnose(.multipleElements, at: caseDecl)
-      }
-
-      let caseMarkerAttributes = routingTypeAttributes(of: caseDecl)
+    for caseDecl in enumDecl.caseDecls {
+      let caseMarkerAttributes = caseDecl.markerAttributes(named: markerNames)
       let marker = routingTypeMarker(from: caseMarkerAttributes, context: context)
-      markerAttributes += caseMarkerAttributes
+      allMarkerAttributes += caseMarkerAttributes
 
       for element in caseDecl.elements {
-        let caseName = element.name.text
-        let params = Array(element.parameterClause?.parameters ?? [])
-        routingTypeLines.append(
-          "case \(wildcardPattern(caseName: caseName, paramCount: params.count)): \(marker?.expression ?? ".push")"
-        )
-        let bindings = bindingNames(for: params)
-
-        let line: String
-        if hasMultipleElements {
-          line = defaultLine(caseName: caseName, paramCount: params.count, style: style)
-        } else if let attribute = routeNameAttribute,
-                  let firstArg = attribute.arguments?.as(LabeledExprListSyntax.self)?.first {
-          line = resolvedLine(
-            for: firstArg.expression,
-            caseName: caseName,
-            params: params,
-            bindings: bindings,
-            style: style,
-            attribute: attribute,
-            context: context
-          )
-        } else {
-          line = defaultLine(caseName: caseName, paramCount: params.count, style: style)
-        }
-
-        lines.append(line)
+        routingTypeLines.append("case \(element.wildcardPattern): \(marker?.expression ?? ".push")")
       }
     }
 
-    let switchBody = lines.joined(separator: "\n")
-    let nameVar: DeclSyntax = """
-      \(raw: access)var name: String {
-        switch self {
-        \(raw: switchBody)
-        }
-      }
-      """
+    guard !allMarkerAttributes.isEmpty else { return [nameVar] }
 
-    guard !markerAttributes.isEmpty else { return [nameVar] }
-
-    if declaresRoutingType(enumDecl) {
-      for entry in markerAttributes {
-        context.diagnose(.routingTypeAlreadyDeclared(marker: entry.name), at: entry.attribute)
+    if enumDecl.declaresInstanceProperty(named: "routingType") {
+      for entry in allMarkerAttributes {
+        context.diagnose(.markerWithHandWrittenProperty(marker: entry.name, property: "routingType"), at: entry.attribute)
       }
       return [nameVar]
     }
@@ -128,15 +78,6 @@ public enum RoutableMacro: MemberMacro {
 
   private static let markerNames: Set<String> = ["Sheet", "Cover"]
 
-  private static func routingTypeAttributes(of caseDecl: EnumCaseDeclSyntax) -> [(name: String, attribute: AttributeSyntax)] {
-    caseDecl.attributes.compactMap { element in
-      guard let attribute = element.as(AttributeSyntax.self),
-            let name = attribute.attributeName.as(IdentifierTypeSyntax.self)?.name.text,
-            markerNames.contains(name) else { return nil }
-      return (name, attribute)
-    }
-  }
-
   private static func routingTypeMarker(
     from attributes: [(name: String, attribute: AttributeSyntax)],
     context: some MacroExpansionContext
@@ -145,7 +86,7 @@ public enum RoutableMacro: MemberMacro {
 
     for extra in attributes.dropFirst() {
       if extra.name == first.name {
-        context.diagnose(.duplicateRoutingTypeMarker(extra.name), at: extra.attribute)
+        context.diagnose(.duplicateMarker(extra.name), at: extra.attribute)
       } else {
         context.diagnose(.multipleRoutingTypeMarkers(extra: extra.name, first: first.name), at: extra.attribute)
       }
@@ -165,221 +106,6 @@ public enum RoutableMacro: MemberMacro {
     default:
       return nil
     }
-  }
-
-  private static func declaresRoutingType(_ enumDecl: EnumDeclSyntax) -> Bool {
-    enumDecl.memberBlock.members.contains { member in
-      guard let variable = member.decl.as(VariableDeclSyntax.self),
-            !variable.modifiers.contains(where: { $0.name.tokenKind == .keyword(.static) }) else { return false }
-      return variable.bindings.contains {
-        $0.pattern.as(IdentifierPatternSyntax.self)?.identifier.text == "routingType"
-      }
-    }
-  }
-
-  // MARK: - nameStyle
-
-  private static func nameStyle(from node: AttributeSyntax, context: some MacroExpansionContext) -> NameStyle {
-    guard let args = node.arguments?.as(LabeledExprListSyntax.self),
-          let arg = args.first(where: { $0.label?.text == "nameStyle" }) else { return .verbatim }
-
-    if let member = arg.expression.as(MemberAccessExprSyntax.self), member.base == nil {
-      switch member.declName.baseName.text {
-      case "verbatim": return .verbatim
-      case "capitalized": return .capitalized
-      default: break
-      }
-    }
-
-    context.diagnose(.invalidNameStyle, at: arg.expression)
-    return .verbatim
-  }
-
-  private static func formatted(_ caseName: String, style: NameStyle) -> String {
-    switch style {
-    case .verbatim:
-      return caseName
-    case .capitalized:
-      guard let first = caseName.first else { return caseName }
-      return first.uppercased() + caseName.dropFirst()
-    }
-  }
-
-  // MARK: - Access level
-
-  private static func accessModifier(of enumDecl: EnumDeclSyntax) -> String {
-    for modifier in enumDecl.modifiers {
-      switch modifier.name.tokenKind {
-      case .keyword(.public): return "public "
-      case .keyword(.package): return "package "
-      default: continue
-      }
-    }
-    return ""
-  }
-
-  // MARK: - Bindings
-
-  private static func bindingNames(for params: [EnumCaseParameterListSyntax.Element]) -> [String] {
-    params.enumerated().map { index, param in
-      if let label = param.firstName, label.text != "_" {
-        return label.text
-      }
-      return "arg\(index)"
-    }
-  }
-
-  private static func casePattern(caseName: String, params: [EnumCaseParameterListSyntax.Element], bindings: [String], referenced: Set<String>) -> String {
-    guard !params.isEmpty else { return ".\(caseName)" }
-    let parts = bindings.map { referenced.contains($0) ? "let \($0)" : "_" }
-    return ".\(caseName)(\(parts.joined(separator: ", ")))"
-  }
-
-  // MARK: - Line generation
-
-  private static func wildcardPattern(caseName: String, paramCount: Int) -> String {
-    paramCount == 0
-      ? ".\(caseName)"
-      : ".\(caseName)(\(Array(repeating: "_", count: paramCount).joined(separator: ", ")))"
-  }
-
-  private static func defaultLine(caseName: String, paramCount: Int, style: NameStyle) -> String {
-    let pattern = wildcardPattern(caseName: caseName, paramCount: paramCount)
-    let body = "\"" + formatted(caseName, style: style) + "\""
-    return "case \(pattern): \(body)"
-  }
-
-  private static func resolvedLine(
-    for expr: ExprSyntax,
-    caseName: String,
-    params: [EnumCaseParameterListSyntax.Element],
-    bindings: [String],
-    style: NameStyle,
-    attribute: AttributeSyntax,
-    context: some MacroExpansionContext
-  ) -> String {
-    if let stringLiteral = expr.as(StringLiteralExprSyntax.self) {
-      return templateLine(
-        stringLiteral: stringLiteral,
-        caseName: caseName,
-        params: params,
-        bindings: bindings,
-        style: style,
-        attribute: attribute,
-        context: context
-      )
-    }
-
-    if let memberAccess = expr.as(MemberAccessExprSyntax.self),
-       memberAccess.base == nil,
-       memberAccess.declName.baseName.text == "delegate" {
-      return delegateLine(
-        caseName: caseName,
-        params: params,
-        bindings: bindings,
-        style: style,
-        attribute: attribute,
-        context: context
-      )
-    }
-
-    context.diagnose(.argumentNotStringLiteral, at: expr)
-    return defaultLine(caseName: caseName, paramCount: params.count, style: style)
-  }
-
-  private static func templateLine(
-    stringLiteral: StringLiteralExprSyntax,
-    caseName: String,
-    params: [EnumCaseParameterListSyntax.Element],
-    bindings: [String],
-    style: NameStyle,
-    attribute: AttributeSyntax,
-    context: some MacroExpansionContext
-  ) -> String {
-    var rawText = ""
-    for segment in stringLiteral.segments {
-      guard let stringSegment = segment.as(StringSegmentSyntax.self) else {
-        // Not a raw string literal (real interpolation) -- unsupported, see RouteNameTemplate docs.
-        context.diagnose(.argumentNotStringLiteral, at: stringLiteral)
-        return defaultLine(caseName: caseName, paramCount: params.count, style: style)
-      }
-      rawText += stringSegment.content.text
-    }
-
-    let bindingSet = Set(bindings)
-    let referenced = referencedIdentifiers(in: rawText)
-    for identifier in referenced where !bindingSet.contains(identifier) {
-      context.diagnose(.unknownBinding(identifier, available: bindings), at: attribute)
-    }
-
-    let pattern = casePattern(caseName: caseName, params: params, bindings: bindings, referenced: Set(referenced))
-    let body = "\"" + rawText + "\""
-    return "case \(pattern): \(body)"
-  }
-
-  private static func delegateLine(
-    caseName: String,
-    params: [EnumCaseParameterListSyntax.Element],
-    bindings: [String],
-    style: NameStyle,
-    attribute: AttributeSyntax,
-    context: some MacroExpansionContext
-  ) -> String {
-    guard params.count == 1, let bindingName = bindings.first else {
-      context.diagnose(.delegateArityMismatch, at: attribute)
-      return defaultLine(caseName: caseName, paramCount: params.count, style: style)
-    }
-
-    let prefix = formatted(caseName, style: style)
-    let pattern = ".\(caseName)(let \(bindingName))"
-    let body = "\"" + prefix + ".\\(" + bindingName + ".name)\""
-    return "case \(pattern): \(body)"
-  }
-
-  // MARK: - Template identifier scan (heuristic)
-
-  /// Returns the leading identifier of every `\(...)` interpolation found in `text`
-  /// (e.g. `arg0` in `\(arg0.name)`). Does not parse or type-check the rest of each
-  /// interpolated expression -- see the `@RouteName` documentation for the limits this implies.
-  private static func referencedIdentifiers(in text: String) -> [String] {
-    var result: [String] = []
-    let chars = Array(text)
-    var i = 0
-    while i < chars.count {
-      if chars[i] == "\\", i + 1 < chars.count, chars[i + 1] == "(" {
-        var depth = 1
-        var j = i + 2
-        let innerStart = j
-        while j < chars.count, depth > 0 {
-          if chars[j] == "(" { depth += 1 }
-          else if chars[j] == ")" { depth -= 1 }
-          if depth > 0 { j += 1 }
-        }
-        let inner = String(chars[innerStart..<min(j, chars.count)])
-        if let identifier = leadingIdentifier(in: inner) {
-          result.append(identifier)
-        }
-        i = j + 1
-      } else {
-        i += 1
-      }
-    }
-    return result
-  }
-
-  private static func leadingIdentifier(in text: String) -> String? {
-    var slice = Substring(text)
-    while let first = slice.first, first == " " || first == "\t" {
-      slice = slice.dropFirst()
-    }
-    guard let first = slice.first, first.isLetter || first == "_" else { return nil }
-    var identifier = String(first)
-    slice = slice.dropFirst()
-    while let next = slice.first, next.isLetter || next.isNumber || next == "_" {
-      identifier.append(next)
-      slice = slice.dropFirst()
-    }
-    return identifier
   }
 }
 
