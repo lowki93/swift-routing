@@ -197,6 +197,12 @@ For test doubles (`RouterSpy`, `TabRouterSpy`), add `SwiftRoutingTestSupport` to
 .product(name: "SwiftRoutingTestSupport", package: "swift-routing")
 ```
 
+To generate route names, routing types and tab bar visibility with the opt-in `@Routable` / `@TabRoutable` macros, add `SwiftRoutingMacros` to your target (available from 1.1.0):
+
+```swift
+.product(name: "SwiftRoutingMacros", package: "swift-routing")
+```
+
 ## Documentation
 
 For comprehensive documentation, tutorials, and API reference, visit the **[full documentation](https://lowki93.github.io/swift-routing/)**.
@@ -206,6 +212,7 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 | [Getting Started](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/gettingstarted) | Installation and basic setup |
 | [Architecture](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/architecture) | Design principles — why routes are separate from views |
 | [Defining Routes](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/definingroutes) | Route customization and routing types |
+| [Route Macros](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/routablemacro) | Generate route names, routing types and tab bar visibility with the opt-in `@Routable` / `@TabRoutable` macros |
 | [Navigation Basics](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/navigationbasics) | Push, present, cover, and more |
 | [Tab Navigation](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
 | [Split Navigation](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/splitnavigation) | Sidebar/content/detail layouts with `RoutingSplitView` |

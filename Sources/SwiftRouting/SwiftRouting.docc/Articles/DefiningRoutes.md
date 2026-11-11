@@ -37,7 +37,25 @@ The `name` property provides a human-readable identifier used for:
 
 Include relevant associated values in the name to make logs more informative.
 
-> Tip: To generate `name` (and `routingType`) from the cases instead of writing the `switch` by hand, use the opt-in `@Routable` macro. See <doc:RoutableMacro>.
+### Generating the Name with @Routable
+
+The opt-in `SwiftRoutingMacros` product can write this `switch` for you. The same route becomes:
+
+```swift
+import SwiftRoutingMacros
+
+@Routable
+enum HomeRoute {
+    case home
+    @RouteName(#"profile(\(userId))"#)
+    case profile(userId: String)
+    case settings
+    @RouteName(#"detail(\(item.id))"#)
+    case detail(item: Item)
+}
+```
+
+Cases without `@RouteName` are named after themselves (the default `.verbatim` style fits lowercase names), and `@Routable` adds the `Route` conformance. See <doc:RoutableMacro> for installation, `nameStyle`, positional values (`arg0`, `arg1`, ...), composition, presentation markers and compile-time checks.
 
 ## Mapping Routes to Views
 
@@ -126,6 +144,8 @@ struct ProfileRouteDestination: View {
 > Note:
 > Only the route type used by `RoutingView(destination:root:)` (for example `AppRoute`) needs to conform to `RouteDestination`.
 > Child route enums (for example `ProfileRoute`) can remain plain `Route` types.
+
+> Tip: With `@Routable`, `@RouteName(.delegate)` on `case profile(ProfileRoute)` generates this `"profile.\(child.name)"` name. See <doc:RoutableMacro>.
 
 ## Customizing Routing Type
 

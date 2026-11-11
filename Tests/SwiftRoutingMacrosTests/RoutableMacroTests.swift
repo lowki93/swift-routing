@@ -116,6 +116,62 @@ struct RoutableMacroExpansionTests {
     }
 
     @Test
+    func mixedLabeledAndPositional_expands_withLabelAndPositionBindings() {
+      assertExpansion(
+        """
+        @Routable
+        enum OrderRoute {
+          @RouteName(#"Order(\\(id), \\(arg1))"#)
+          case detail(id: String, OrderTab)
+        }
+        """,
+        expandedSource: """
+          enum OrderRoute {
+            case detail(id: String, OrderTab)
+
+            var name: String {
+              switch self {
+              case .detail(let id, let arg1):
+                "Order(\\(id), \\(arg1))"
+              }
+            }
+          }
+
+          extension OrderRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
+    func underscoreLabel_expands_toPositionalBinding() {
+      assertExpansion(
+        """
+        @Routable
+        enum NotificationsRoute {
+          @RouteName(#"Notification(\\(arg0))"#)
+          case detail(_ id: Int)
+        }
+        """,
+        expandedSource: """
+          enum NotificationsRoute {
+            case detail(_ id: Int)
+
+            var name: String {
+              switch self {
+              case .detail(let arg0):
+                "Notification(\\(arg0))"
+              }
+            }
+          }
+
+          extension NotificationsRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
     func delegateCase_expands_toChildNameComposition() {
       assertExpansion(
         """
@@ -643,6 +699,68 @@ struct RoutableMacroExpansionTests {
           """,
         diagnostics: [
           DiagnosticSpec(message: "'idd' is not an associated value of this case. Available: id", line: 3, column: 3)
+        ]
+      )
+    }
+
+    @Test
+    func positionalNameOnLabeledValue_emits_diagnostic() {
+      assertExpansion(
+        """
+        @Routable
+        enum NotificationsRoute {
+          @RouteName(#"Notification(\\(arg0))"#)
+          case detail(id: Int)
+        }
+        """,
+        expandedSource: """
+          enum NotificationsRoute {
+            case detail(id: Int)
+
+            var name: String {
+              switch self {
+              case .detail(_):
+                "Notification(\\(arg0))"
+              }
+            }
+          }
+
+          extension NotificationsRoute: Route {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'arg0' is not an associated value of this case. Available: id", line: 3, column: 3)
+        ]
+      )
+    }
+
+    @Test
+    func underscoreLabelName_emits_diagnostic() {
+      assertExpansion(
+        """
+        @Routable
+        enum NotificationsRoute {
+          @RouteName(#"detail(\\(id))"#)
+          case detail(_ id: Int)
+        }
+        """,
+        expandedSource: """
+          enum NotificationsRoute {
+            case detail(_ id: Int)
+
+            var name: String {
+              switch self {
+              case .detail(_):
+                "detail(\\(id))"
+              }
+            }
+          }
+
+          extension NotificationsRoute: Route {
+          }
+          """,
+        diagnostics: [
+          DiagnosticSpec(message: "'id' is not an associated value of this case. Available: arg0", line: 3, column: 3)
         ]
       )
     }
