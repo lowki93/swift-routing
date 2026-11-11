@@ -4,7 +4,7 @@ Generate a route's `name` (and, optionally, its `routingType`) from its cases in
 
 ## Overview
 
-Every ``Route`` needs a `name`, used for logging, debugging and analytics. For most enums this is a mechanical `switch` over the cases. The `@Routable` macro writes that `switch` for you, and `@RouteName` overrides the cases that need a custom format. `@Sheet` and `@Cover` mark the cases that are presented modally so `@Routable` can generate `routingType` too.
+Every ``Route`` needs a `name`, used for logging, debugging and analytics. For most enums this is a mechanical `switch` over the cases. The `@Routable` macro writes that `switch` for you, and `@RouteName` overrides the cases that need a custom format. `@Sheet` and `@Cover` mark the cases that are presented modally so `@Routable` can generate `routingType` too. Tabs get the same treatment: `@TabRoutable` generates a ``TabRoute``'s `name`, and `@HideTabBarOnPush` marks the tabs that hide the tab bar when pushing, so it can generate `hideTabBarOnPush`.
 
 The macros ship in a separate, opt-in product so that apps which don't use them never compile swift-syntax.
 
@@ -138,6 +138,36 @@ enum AppRoute {
 - `withStack` must be a literal `true` or `false`.
 - The generated property uses the enum's access level, like `name`.
 
+## Tab Routes
+
+Attach `@TabRoutable` to a ``TabRoute`` enum instead of `@Routable`. The `name` is generated exactly as above: same `nameStyle`, same `@RouteName` overrides and `.delegate` composition, same compile-time checks. `@TabRoutable` also adds the ``TabRoute`` conformance, so `: TabRoute` is optional.
+
+Mark a case with `@HideTabBarOnPush` and `@TabRoutable` also generates `hideTabBarOnPush`:
+
+```swift
+@TabRoutable
+enum HomeTab {
+    @HideTabBarOnPush
+    case home
+    case notifications
+    case profile
+}
+// HomeTab.home.hideTabBarOnPush == true
+// HomeTab.notifications.hideTabBarOnPush == false
+// HomeTab.profile.hideTabBarOnPush == false
+```
+
+| Marked cases | Generated `hideTabBarOnPush` |
+|---|---|
+| none | nothing, the ``TabRoute`` default (`false`) applies |
+| some | a `switch` with `true` for marked cases and `false` for the others |
+| all | a constant `true` |
+
+- A marker on a case declaring several elements (`@HideTabBarOnPush case a, b`) applies to every element.
+- The generated property uses the enum's access level, like `name`.
+- `@TabRoutable` never generates `routingType`: tabs are selected, never presented. `@Sheet` and `@Cover` in a `@TabRoutable` enum are errors.
+- `@HideTabBarOnPush` is an error anywhere other than a case of a `@TabRoutable` enum, including a hand-written ``TabRoute`` or a `@Routable` enum. Without that check the tab bar would silently stay visible.
+
 ## Compile-Time Checks
 
 The macros report mistakes on the attribute itself:
@@ -152,14 +182,19 @@ The macros report mistakes on the attribute itself:
 - Several routing type markers on the same case (`@Sheet @Cover`, or the same marker twice). A case can carry only one.
 - `withStack` that isn't a literal `true` or `false`.
 - A marker combined with a hand-written `routingType` in the enum body.
+- `@TabRoutable` attached to something other than an enum.
+- `@HideTabBarOnPush` on something other than an enum case, or on a case outside a `@TabRoutable` enum.
+- `@HideTabBarOnPush` applied twice to the same case.
+- `@HideTabBarOnPush` combined with a hand-written `hideTabBarOnPush` in the enum body.
+- `@Sheet` or `@Cover` in a `@TabRoutable` enum.
 
 Only the first identifier of each `\(...)` is checked. Errors further in the expression, such as a missing property in `\(arg0.title)`, are reported by the compiler on the generated code.
 
 ## Limits
 
 - There is no marker for `.root`. An enum that needs it keeps a hand-written `routingType` (and then uses no markers), as described in <doc:DefiningRoutes>.
-- Module-qualified markers (`@SwiftRoutingMacros.Sheet`) aren't recognised, so the case falls back to `.push`, same as `@RouteName`.
-- A `routingType` declared in a separate extension isn't detected when combined with markers; the compiler reports a redeclaration instead.
+- Module-qualified `@SwiftRoutingMacros.RouteName` isn't recognised, so the case keeps its default name. The markers (`@Sheet`, `@Cover`, `@HideTabBarOnPush`) are recognised in both spellings.
+- A `routingType` declared in a separate extension isn't detected when combined with markers; the compiler reports a redeclaration instead. The same goes for `hideTabBarOnPush` and `@HideTabBarOnPush`.
 - The generated `name` uses the enum's access level (`public`, `package` or internal).
 - Raw strings using `\#(...)` interpolation aren't supported.
 
@@ -168,4 +203,6 @@ Only the first identifier of each `\(...)` is checked. Errors further in the exp
 ### Related
 
 - <doc:DefiningRoutes>
+- <doc:TabNavigation>
 - ``Route``
+- ``TabRoute``

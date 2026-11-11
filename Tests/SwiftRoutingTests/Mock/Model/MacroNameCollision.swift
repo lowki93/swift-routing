@@ -7,3 +7,8 @@ enum Sheet: Hashable, Sendable {
 enum Cover: Hashable, Sendable {
   case a
 }
+
+// Same for `@HideTabBarOnPush`: a module-scope type with that name must not break the marker.
+enum HideTabBarOnPush: Hashable, Sendable {
+  case a
+}

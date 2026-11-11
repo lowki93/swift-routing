@@ -13,5 +13,7 @@ struct RoutingMacrosPlugin: CompilerPlugin {
     RouteNameMacro.self,
     SheetMacro.self,
     CoverMacro.self,
+    TabRoutableMacro.self,
+    HideTabBarOnPushMacro.self,
   ]
 }
