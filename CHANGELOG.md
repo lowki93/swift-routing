@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Documentation
 
-- New "Macros" article in a "Code Generation" topic group, covering `@Routable` and `@TabRoutable`: names (including how associated values are named in a `@RouteName` template and when to choose `nameStyle: .capitalized`), routing types, `hideTabBarOnPush`, compile-time checks and limits (including what the macros don't generate: view mapping, deep links). Defining Routes, Tab Navigation and Getting Started link to it (#150, #152, #153, #154)
+- New "Macros" article in a "Code Generation" topic group, covering `@Routable` and `@TabRoutable`: names (including how associated values are named in a `@RouteName` template and when to choose `nameStyle: .capitalized`), routing types, `hideTabBarOnPush`, compile-time checks and limits (including what the macros don't generate: view mapping, deep links). Defining Routes, Tab Navigation and Getting Started link to it (#150, #152, #153, #154, #155)
 - The demo app's route enums now use `@Routable` / `@RouteName`, and its `HomeTab` uses `@TabRoutable` / `@HideTabBarOnPush` (#150, #153)
 - The macros' doc comments spell out how associated values are named in a `@RouteName` template (by label, or `argN` by zero-based position among all associated values; a `_` label counts as none; a labeled value has no `argN` name) (#154)
 - Defining Routes shows its route rewritten with `@Routable`, and the README links the article and documents installing `SwiftRoutingMacros` (#154)
