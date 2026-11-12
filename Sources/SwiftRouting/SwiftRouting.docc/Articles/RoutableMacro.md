@@ -51,11 +51,54 @@ enum AppRoute {
 
 `nameStyle` must be written as a literal (`.verbatim` or `.capitalized`), since the macro reads it from source.
 
+### Choosing a Style
+
+Pick the style that matches the names your routes already report, so logs and analytics stay unchanged when you adopt the macro. `nameStyle` also sets the prefix that `@RouteName(.delegate)` writes.
+
+For example, take a hand-written route whose names are capitalized:
+
+```swift
+// Before: hand-written.
+enum LegacyAppRoute: Route {
+    case profile
+    case search
+    case notifications(NotificationsRoute)
+
+    var name: String {
+        switch self {
+        case .profile: "Profile"
+        case .search: "Search"
+        case .notifications(let child): "Notifications.\(child.name)"
+        }
+    }
+}
+```
+
+`@Routable(nameStyle: .capitalized)` reports the same names, with only one override:
+
+```swift
+// After: same names.
+@Routable(nameStyle: .capitalized)
+enum AppRoute {
+    case profile
+    case search
+    @RouteName(.delegate)
+    case notifications(NotificationsRoute)
+}
+```
+
+With the default `.verbatim`, each case would need its own `@RouteName`, and `.delegate` would write `notifications.`, so `notifications` would need `@RouteName(#"Notifications.\(arg0.name)"#)`.
+
 `@Routable` also adds the `Route` conformance, so `: Route` is optional. Writing it explicitly still compiles.
 
 ## Overriding a Case
 
-Use `@RouteName` with a raw string literal. Associated values are available by their label, or as `arg0`, `arg1`, ... (by position) when they have no label:
+Use `@RouteName` with a raw string literal. Each associated value is available in the template under one name:
+
+- A labeled value is available by its label. It has no `argN` name.
+- An unlabeled value is available as `arg` followed by its zero-based position among all the associated values, labeled or not.
+- A `_` label counts as unlabeled: `case detail(_ id: Int)` is `arg0`, and `id` isn't usable.
+- `.delegate` uses the case's single associated value, whatever its name.
 
 ```swift
 @Routable
@@ -77,16 +120,19 @@ enum NotificationsRoute {
 }
 ```
 
-Positions count every associated value, labeled or not. In a case mixing both, the labeled value keeps its label and the unlabeled one uses its position:
+In a case mixing both, the labeled value keeps its label and the unlabeled one uses its position, which counts the labeled value too:
 
 ```swift
 @Routable
 enum OrderRoute {
+    // arg0 doesn't exist here: the first value is labeled, so it's id.
     @RouteName(#"Order(\(id), \(arg1))"#)
     case detail(id: String, OrderTab)
 }
 // OrderRoute.detail(id: "42", .shipping).name == "Order(42, shipping)"
 ```
+
+Using a name that isn't available is a compile-time error that lists the available names (for example `Available: id, arg1`).
 
 > Important: The template must be a raw string literal (`#"..."#`). A regular string with `\(id)` doesn't compile, because `id` isn't in scope where the attribute is written. In a raw string, `\(...)` is plain text that the macro copies into the generated `switch`, where the value is in scope.
 
@@ -176,7 +222,7 @@ The macros report mistakes on the attribute itself:
 - `nameStyle` that isn't a literal `.verbatim` or `.capitalized`.
 - `@RouteName` on a case declaring several elements (`case a, b`).
 - `@RouteName` argument that is neither a raw string nor `.delegate`.
-- A template referencing a name that isn't one of the case's associated values (for example `\(idd)` instead of `\(id)`).
+- A template referencing a name that isn't one of the case's associated values (for example `\(idd)` instead of `\(id)`). The error lists the case's available names.
 - `.delegate` on a case without exactly one associated value.
 - `@Sheet` or `@Cover` on something other than an enum case.
 - Several routing type markers on the same case (`@Sheet @Cover`, or the same marker twice). A case can carry only one.
@@ -192,6 +238,7 @@ Only the first identifier of each `\(...)` is checked. Errors further in the exp
 
 ## Limits
 
+- The macros only generate `name`, `routingType` and `hideTabBarOnPush`. Mapping routes to views (``RouteDestination``) and deep link handling (<doc:Deeplinks>, ``DeeplinkHandler``) stay hand-written, which keeps routes plain data (see <doc:Architecture>).
 - There is no marker for `.root`. An enum that needs it keeps a hand-written `routingType` (and then uses no markers), as described in <doc:DefiningRoutes>.
 - Module-qualified `@SwiftRoutingMacros.RouteName` isn't recognised, so the case keeps its default name. The markers (`@Sheet`, `@Cover`, `@HideTabBarOnPush`) are recognised in both spellings.
 - A `routingType` declared in a separate extension isn't detected when combined with markers; the compiler reports a redeclaration instead. The same goes for `hideTabBarOnPush` and `@HideTabBarOnPush`.
@@ -204,5 +251,7 @@ Only the first identifier of each `\(...)` is checked. Errors further in the exp
 
 - <doc:DefiningRoutes>
 - <doc:TabNavigation>
+- <doc:Architecture>
+- <doc:Deeplinks>
 - ``Route``
 - ``TabRoute``

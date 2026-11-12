@@ -8,9 +8,9 @@
 
 /// Generates `var name: String` (and, with `@HideTabBarOnPush` markers, `var hideTabBarOnPush`) for an enum conforming to ``TabRoute``, from its cases.
 ///
-/// The `name` is generated exactly like `@Routable` does: same `nameStyle`, same
+/// The `name` is generated exactly like ``Routable(nameStyle:)`` does: same `nameStyle`, same
 /// `@RouteName` overrides and `.delegate` composition, same compile-time checks. See
-/// `@Routable` for the full set of examples.
+/// ``Routable(nameStyle:)`` for the full set of examples.
 ///
 /// Also adds the ``TabRoute`` conformance via an extension -- `: TabRoute` becomes optional
 /// on the annotated enum (writing it explicitly still compiles, the macro simply adds
@@ -43,13 +43,16 @@
 /// ## No routing type
 ///
 /// `@TabRoutable` never generates `routingType`: tabs are selected, never presented.
-/// `@Sheet` / `@Cover` in a `@TabRoutable` enum are rejected at compile time.
+/// ``Sheet(withStack:)`` / ``Cover()`` in a `@TabRoutable` enum are rejected at compile time.
+///
+/// - Parameter nameStyle: The format of names for cases without ``RouteName(_:)``.
+///   Defaults to ``RouteNameStyle/verbatim``. Must be written as a literal.
 @attached(member, names: named(name), named(hideTabBarOnPush))
 @attached(extension, conformances: TabRoute)
 public macro TabRoutable(nameStyle: RouteNameStyle = .verbatim) = #externalMacro(module: "SwiftRoutingMacrosPlugin", type: "TabRoutableMacro")
 
 /// Marks an enum case of a `@TabRoutable` enum as hiding the tab bar when views are pushed
-/// onto its navigation stack, so `@TabRoutable` generates `hideTabBarOnPush` for it.
+/// onto its navigation stack, so ``TabRoutable(nameStyle:)`` generates `hideTabBarOnPush` for it.
 ///
 /// ```swift
 /// @TabRoutable
@@ -62,6 +65,6 @@ public macro TabRoutable(nameStyle: RouteNameStyle = .verbatim) = #externalMacro
 /// ```
 ///
 /// The enum must be annotated with `@TabRoutable`; using the marker anywhere else is a
-/// compile-time error. See `@TabRoutable` for the full description of the generated property.
+/// compile-time error. See ``TabRoutable(nameStyle:)`` for the full description of the generated property.
 @attached(peer)
 public macro HideTabBarOnPush() = #externalMacro(module: "SwiftRoutingMacrosPlugin", type: "HideTabBarOnPushMacro")
