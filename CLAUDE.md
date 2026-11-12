@@ -20,6 +20,10 @@ The workflow uses three subagents (`.claude/agents/`): `planner` plans, `dev` im
 
 See `ai-rules/versionning.md` for the full branch, commit, and PR conventions.
 
+## Documentation
+
+See `ai-rules/docc_articles.md` for how DocC articles are organized, placed and verified.
+
 ## Tests
 
 See `ai-rules/testing.md` for the full rules.
@@ -38,7 +42,7 @@ Auto-load:
 - Test task → `swift-testing-expert` + `ai-rules/testing.md`
 - Navigation/routing task → `swift-routing`
 - Concurrency task → `swift-concurrency`
-- DocC documentation task → `swift-docc`
+- DocC documentation task → `swift-docc` + `ai-rules/docc_articles.md`
 
 ## Linear Project
 
