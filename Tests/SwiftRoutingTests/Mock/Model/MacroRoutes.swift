@@ -57,7 +57,7 @@ enum MacroOrderTab: Hashable, Sendable {
   case shipping
 }
 
-/// Mirrors the mixed labeled/positional example in `RoutableMacro.md`.
+/// Mirrors the mixed labeled/positional example in `Macros.md`.
 @Routable
 enum MacroOrderRoute {
   @RouteName(#"Order(\(id), \(arg1))"#)

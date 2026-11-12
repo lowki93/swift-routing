@@ -172,6 +172,35 @@ struct RoutableMacroExpansionTests {
     }
 
     @Test
+    func labelNamedLikePosition_expands_withDuplicateBinding() {
+      // Documents the "argN label collision" limit in Macros.md: both values bind `arg1`.
+      assertExpansion(
+        """
+        @Routable
+        enum CollisionRoute {
+          @RouteName(#"a(\\(arg1))"#)
+          case a(arg1: Int, String)
+        }
+        """,
+        expandedSource: """
+          enum CollisionRoute {
+            case a(arg1: Int, String)
+
+            var name: String {
+              switch self {
+              case .a(let arg1, let arg1):
+                "a(\\(arg1))"
+              }
+            }
+          }
+
+          extension CollisionRoute: Route {
+          }
+          """
+      )
+    }
+
+    @Test
     func delegateCase_expands_toChildNameComposition() {
       assertExpansion(
         """
