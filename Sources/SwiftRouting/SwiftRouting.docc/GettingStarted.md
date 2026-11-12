@@ -143,10 +143,10 @@ For modal presentation, use `router.present(...)` or `router.cover(...)`.
 Now that you have the basics, explore these topics:
 
 - <doc:DefiningRoutes> - Learn about route customization and routing types
-- <doc:RoutableMacro> - Generate route and tab names, routing types and `hideTabBarOnPush` with the opt-in `@Routable` / `@TabRoutable` macros
 - <doc:NavigationBasics> - Explore all navigation methods in detail
 - <doc:TabNavigation> - Set up tab-based navigation
 - <doc:SplitNavigation> - Build sidebar/content/detail layouts with `RoutingSplitView`
+- <doc:Macros> - Generate route and tab names, routing types and `hideTabBarOnPush` with the opt-in macros
 - <doc:Deeplinks> - Handle deep links in your app
 - <doc:DeeplinkRouteGuide> - Define deep link routes with swift-url-routing
 - <doc:RouteContextGuide> - Pass data between routes

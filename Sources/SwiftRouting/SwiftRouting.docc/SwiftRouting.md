@@ -100,7 +100,6 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 ### Defining Routes
 
 - <doc:DefiningRoutes>
-- <doc:RoutableMacro>
 - ``RouteDestination``
 - ``RoutingType``
 - ``AnyRoute``
@@ -127,6 +126,10 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 - <doc:SplitNavigation>
 - ``RoutingSplitView``
 - ``SplitModel``
+
+### Code Generation
+
+- <doc:Macros>
 
 ### Deep Linking
 

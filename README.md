@@ -212,10 +212,10 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 | [Getting Started](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/gettingstarted) | Installation and basic setup |
 | [Architecture](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/architecture) | Design principles — why routes are separate from views |
 | [Defining Routes](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/definingroutes) | Route customization and routing types |
-| [Route Macros](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/routablemacro) | Generate route names, routing types and tab bar visibility with the opt-in `@Routable` / `@TabRoutable` macros |
 | [Navigation Basics](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/navigationbasics) | Push, present, cover, and more |
 | [Tab Navigation](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/tabnavigation) | Tab-based navigation with `TabRouter` |
 | [Split Navigation](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/splitnavigation) | Sidebar/content/detail layouts with `RoutingSplitView` |
+| [Macros](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/macros) | Generate route and tab names, routing types and tab bar visibility with the opt-in `@Routable` / `@TabRoutable` macros |
 | [Deep Linking](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/deeplinks) | Handle deep links in your app |
 | [Route Context](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/routecontextguide) | Pass data between routes |
 | [Migration](https://lowki93.github.io/swift-routing/1.0.0/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
