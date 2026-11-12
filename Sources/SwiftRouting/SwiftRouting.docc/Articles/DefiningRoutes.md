@@ -55,7 +55,7 @@ enum HomeRoute {
 }
 ```
 
-Cases without `@RouteName` are named after themselves (the default `.verbatim` style fits lowercase names), and `@Routable` adds the `Route` conformance. See <doc:RoutableMacro> for installation, `nameStyle`, positional values (`arg0`, `arg1`, ...), composition, presentation markers and compile-time checks.
+Cases without `@RouteName` are named after themselves (the default `.verbatim` style fits lowercase names), and `@Routable` adds the `Route` conformance. See <doc:Macros> for installation, `nameStyle`, positional values (`arg0`, `arg1`, ...), composition, presentation markers and compile-time checks.
 
 ## Mapping Routes to Views
 
@@ -145,7 +145,7 @@ struct ProfileRouteDestination: View {
 > Only the route type used by `RoutingView(destination:root:)` (for example `AppRoute`) needs to conform to `RouteDestination`.
 > Child route enums (for example `ProfileRoute`) can remain plain `Route` types.
 
-> Tip: With `@Routable`, `@RouteName(.delegate)` on `case profile(ProfileRoute)` generates this `"profile.\(child.name)"` name. See <doc:RoutableMacro>.
+> Tip: With `@Routable`, `@RouteName(.delegate)` on `case profile(ProfileRoute)` generates this `"profile.\(child.name)"` name. See <doc:Macros>.
 
 ## Customizing Routing Type
 
@@ -182,7 +182,7 @@ enum HomeRoute: Route {
 | `.cover` | Full-screen cover presentation |
 | `.root` | Replace the current root |
 
-> Tip: With the opt-in `@Routable` macro, mark cases with `@Sheet` / `@Cover` to generate `routingType` instead of writing the `switch` by hand. See <doc:RoutableMacro>.
+> Tip: With the opt-in `@Routable` macro, mark cases with `@Sheet` / `@Cover` to generate `routingType` instead of writing the `switch` by hand. See <doc:Macros>.
 
 ## Using Environment in Route Views
 

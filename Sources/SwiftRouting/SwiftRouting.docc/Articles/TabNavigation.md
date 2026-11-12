@@ -26,7 +26,20 @@ enum HomeTab: TabRoute {
 }
 ```
 
-> Tip: With the opt-in `@TabRoutable` macro you don't write `name` or the `TabRoute` conformance by hand. See <doc:RoutableMacro>.
+### Generating Tabs with @TabRoutable
+
+With the opt-in `@TabRoutable` macro you don't write the `switch` by hand. This enum generates the same `name` as `HomeTab` above and adds the ``TabRoute`` conformance:
+
+```swift
+@TabRoutable(nameStyle: .capitalized)
+enum HomeTab {
+    case home
+    case search
+    case profile
+}
+```
+
+See <doc:Macros#Tab-Routes> for the rules, compile-time errors and limits.
 
 ## Option 1: Using RoutingTabView
 
@@ -233,7 +246,7 @@ enum HomeTab: TabRoute {
 }
 ```
 
-> Tip: With `@TabRoutable`, mark the tabs that hide the tab bar with `@HideTabBarOnPush` and the property is generated for you. See <doc:RoutableMacro>.
+> Tip: With `@TabRoutable`, mark the tabs that hide the tab bar with `@HideTabBarOnPush` and `hideTabBarOnPush` is generated for you. See <doc:Macros#Tab-Routes>.
 
 ## Deep Linking with Tabs
 
