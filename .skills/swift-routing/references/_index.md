@@ -16,4 +16,5 @@ Then by topic:
 - `route-context.md`: Pass data from child flows to parent flows.
 - `navigation-link.md`: Use `NavigationLink` with route-driven navigation.
 - `configuration.md`: Configure logging and route-not-found behavior.
+- `macros.md`: Generate `name`, `routingType` and `hideTabBarOnPush` with the opt-in `@Routable` / `@TabRoutable` macros.
 - `troubleshooting.md`: Diagnose lifecycle, routing, and state edge cases.
