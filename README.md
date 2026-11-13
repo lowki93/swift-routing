@@ -238,7 +238,7 @@ This project includes AI skills for assisted development, discoverable and insta
 
 | Skill | Description |
 |-------|-------------|
-| `swift-routing` | Guidance for routes, routers, tabs, deeplinks, and troubleshooting |
+| `swift-routing` | Guidance for routes (including the opt-in macros), routers, tabs, deeplinks, and troubleshooting |
 | `swift-routing-migration` | Step-by-step migration from native NavigationStack to SwiftRouting |
 
 ```bash

@@ -46,6 +46,24 @@ extension HomeTab {
 }
 ```
 
+### Generating Tabs With @TabRoutable (Opt-in)
+
+If the target depends on `SwiftRoutingMacros`, prefer this for new tab enums (see `macros.md`, Tabs section):
+
+```swift
+@TabRoutable
+enum HomeTab {
+  case home
+  case search
+  @HideTabBarOnPush
+  case profile
+}
+```
+
+This reports the same names and the same `hideTabBarOnPush` as the hand-written enum and extension above.
+
+If you adopt `@HideTabBarOnPush`, delete the extension's `hideTabBarOnPush` (keeping both is a redeclaration error).
+
 ## Build a Tab Container
 
 Use `RoutingTabView` to create a `TabRouter` scope and one `RoutingView` per tab:

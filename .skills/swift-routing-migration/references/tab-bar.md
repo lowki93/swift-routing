@@ -50,6 +50,8 @@ struct ContentView: View {
 }
 ```
 
+If the target depends on `SwiftRoutingMacros`, `@TabRoutable` can generate the tab `name`; see `references/macros.md` in the `swift-routing` skill.
+
 ### Option 2 — Native TabView with .tabToRoot
 
 For simpler cases without cross-tab programmatic control:

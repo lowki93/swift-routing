@@ -29,6 +29,22 @@ enum HomeRoute: Route {
 }
 ```
 
+### Generating name With @Routable (Opt-in)
+
+If the target depends on `SwiftRoutingMacros`, prefer this for new enums (see `macros.md`):
+
+```swift
+@Routable
+enum HomeRoute {
+  case home
+  @RouteName(#"detail(\(id))"#)
+  case detail(id: Int)
+  case settings
+}
+```
+
+This reports the same names as the hand-written `switch` above.
+
 ## Map Routes To Views
 
 Conform the same type to `RouteDestination`:
@@ -111,6 +127,8 @@ router.present(HomeRoute.settings, withStack: false)
 var routingType: RoutingType { .sheet(withStack: false) }
 ```
 
+With `@Routable`, mark the case `@Sheet(withStack: false)` instead (see `macros.md`).
+
 ## Nested Routes
 
 For larger features, you can model subflows with nested route enums and expose them through a parent route.
@@ -175,6 +193,8 @@ Note:
 - Only the top-level route used by `RoutingView` (for example `AppRoute`) needs to conform to `RouteDestination`.
 - Child route enums (for example `ProfileRoute`) can stay plain `Route` types and be rendered by dedicated destination views.
 
+Tip: with `@Routable`, `@RouteName(.delegate)` on `case profile(ProfileRoute)` generates `"profile.\(child.name)"` (see `macros.md`).
+
 Nested routes are useful to keep route definitions modular while preserving type safety.
 
 ## Naming Guidance
@@ -189,6 +209,8 @@ Avoid generic names that hide runtime context:
 - `detail`
 - `profile`
 
+The `@Routable` default name drops associated values: add `@RouteName` for cases with values (see `macros.md`).
+
 ## Routing Type (Optional)
 
 If needed, customize route presentation behavior via `routingType`:
@@ -198,6 +220,8 @@ If needed, customize route presentation behavior via `routingType`:
 - `.root`
 
 Use this only when a route has a clear default presentation policy.
+
+Tip: with `@Routable`, `@Sheet` / `@Cover` markers generate `routingType`. `.root` has no marker, so keep it hand-written. Only `router.route(_:)` reads `routingType`. See `macros.md`.
 
 If a sheet route needs direct presentation modifiers (`presentationDetents`, `presentationDragIndicator`), prefer:
 

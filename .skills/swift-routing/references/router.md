@@ -57,7 +57,7 @@ prefer presenting without an internal stack:
 router.present(HomeRoute.settings, withStack: false)
 ```
 
-or set it at route level:
+or set it at route level (or `@Sheet(withStack: false)` on a `@Routable` case, see `macros.md`):
 
 ```swift
 var routingType: RoutingType { .sheet(withStack: false) }

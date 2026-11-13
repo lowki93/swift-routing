@@ -20,6 +20,8 @@ enum HomeRoute: Route {
 }
 ```
 
+If the target depends on `SwiftRoutingMacros`, `@Routable` can generate `name`; see `references/macros.md` in the `swift-routing` skill.
+
 One enum per feature or flow. The `name` property is used for logging and diagnostics.
 
 ## Map Routes to Views

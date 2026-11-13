@@ -13,7 +13,7 @@ Load a skill only when needed:
 Auto-load guidance:
 - For Swift tests (`Swift Testing`, `#expect`, `#require`, flaky tests, XCTest migration), load `swift-testing-expert`.
 - For Swift concurrency topics (`async/await`, actors, `@MainActor`, `Sendable`, Swift 6 migration), load `swift-concurrency`.
-- For app navigation architecture using SwiftRouting, load `swift-routing`.
+- For app navigation architecture using SwiftRouting, load `swift-routing` (including the opt-in `@Routable` / `@TabRoutable` macros).
 - For migration from native NavigationStack to SwiftRouting, load `swift-routing` **and** `swift-routing-migration`.
 
 Local rules:
@@ -25,7 +25,7 @@ Local rules:
 
 <skill>
 <name>swift-routing</name>
-<description>SwiftRouting guidance for routes, routers, tabs, deeplinks, and troubleshooting.</description>
+<description>SwiftRouting guidance for routes (including the opt-in @Routable / @TabRoutable macros), routers, tabs, deeplinks, and troubleshooting.</description>
 <location>project</location>
 </skill>
 

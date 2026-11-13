@@ -108,7 +108,20 @@ Use this guide to quickly diagnose common SwiftRouting issues.
 
 **What to do**
 - Use `router.present(route, withStack: false)` when direct sheet modifiers are required.
-- Or set `routingType` to `.sheet(withStack: false)` for that route.
+- Or set `routingType` to `.sheet(withStack: false)` for that route, or mark the case `@Sheet(withStack: false)` in a `@Routable` enum (see `macros.md`).
+
+## `route(_:)` Ignores `@Sheet` / `@Cover`, or `@RouteName` Has No Effect
+
+**Symptom**
+- A case marked `@Sheet` / `@Cover` is pushed, or a `@RouteName` template is not reflected in `name`.
+
+**Why it happens**
+- The enum lacks `@Routable` (or `@TabRoutable` for `@RouteName`), so the attributes are silently ignored.
+- `@SwiftRoutingMacros.RouteName` (module-qualified) is not recognised.
+- The call uses `push` / `present` / `cover`, which ignore `routingType`; only `route(_:)` reads it.
+
+**What to do**
+- Add `@Routable` to the enum, write `@RouteName` unqualified, and navigate with `router.route(_:)`. See `macros.md`.
 
 ## Route Not Found (Error UI or Crash)
 
