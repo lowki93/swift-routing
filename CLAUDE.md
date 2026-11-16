@@ -24,6 +24,10 @@ See `ai-rules/versionning.md` for the full branch, commit, and PR conventions.
 
 See `ai-rules/docc_articles.md` for how DocC articles are organized, placed and verified.
 
+## Medium Articles
+
+See `ai-rules/medium_articles.md` for how to draft the Medium articles in `medium-articles/` (Linear label `Article`).
+
 ## Tests
 
 See `ai-rules/testing.md` for the full rules.
@@ -43,6 +47,7 @@ Auto-load:
 - Navigation/routing task → `swift-routing`
 - Concurrency task → `swift-concurrency`
 - DocC documentation task → `swift-docc` + `ai-rules/docc_articles.md`
+- Medium article task (`medium-articles/`, Linear label `Article`) → `ai-rules/medium_articles.md`
 
 ## Linear Project
 
