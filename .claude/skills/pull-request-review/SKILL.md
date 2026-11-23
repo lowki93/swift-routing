@@ -42,6 +42,19 @@ Judge the code on its own merits. Check:
 - docs and examples: do code samples in doc comments and articles compile against the actual API;
 - non-Swift changes (docs, workflow, config): consistency, stale references, contradictions.
 
+### Look beyond the diff (required)
+
+Most real bugs live in code the PR doesn't touch. Before writing findings:
+
+1. **Read every touched file in full**, not just the hunks.
+2. **Check every parallel implementation.** For each new or changed behavior, find where the same thing happens elsewhere and check the PR covers it too:
+   - containers: `RoutingView`, `RoutingTabView`, `RoutingSplitView`. Sheets and covers are attached in `RoutingView` and `RoutingSplitView` (each tab of a `RoutingTabView` is a `RoutingView`), so a change to presentation in one usually needs the other;
+   - routers: `BaseRouter`, `Router`, `TabRouter`, and the protocols `BaseRouterModel` / `RouterModel` (made of `ContextModel`, `PresentationModel`, `SplitModel`) / `TabRouterModel` (and the spies in `Sources/SwiftRoutingTestSupport`).
+   Use `Grep` on the symbols involved (for example `onDismiss`, `.sheet(`, `.cover(`, the new method names).
+3. **Hold the PR to its own claims.** For each promise in the PR description, doc comments or CHANGELOG ("fires once a sheet or cover…", "ignores stale routers…"), find a case where it could be false and check the code handles it.
+4. **Look for order and identity assumptions.** Iterating a `Dictionary` or `Set` (for example `children.values`) and taking `first` / `last` has no defined order. Weak references can still be alive during a dismiss animation, so "the last live child" may be a stale one.
+5. **Check doc examples against the real types**: the parameter types of closures, and whether the called members exist on those types (for example a property vs a method with the same name).
+
 **Verify before you write.** Confirm every finding by reading the relevant code: callers, the other containers or variants of the same feature, existing tests. Drop anything you can't confirm. Don't pad the list: no findings is a valid result.
 
 ## 4. Post the review
