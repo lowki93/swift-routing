@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `@TabRoutable(nameStyle:)` macro for `TabRoute` enums: generates `name` exactly like `@Routable` (same `nameStyle`, `@RouteName`, `.delegate` and diagnostics) and adds the `TabRoute` conformance, so `: TabRoute` becomes optional. `@HideTabBarOnPush` marks the cases that hide the tab bar on push and generates `hideTabBarOnPush`: nothing without markers (the protocol default applies), a constant `true` when every case is marked, otherwise a `switch` with one line per case. A marker on a multi-element case applies to every element (#153)
 - Misuse is reported on the attribute: `@HideTabBarOnPush` outside a `@TabRoutable` enum, on a non-case, twice on a case or next to a hand-written `hideTabBarOnPush`; `@Sheet` / `@Cover` in a `@TabRoutable` enum (a tab is selected, never presented) (#153)
 
+- `View.routerDidDismiss(perform:)`: a public signal sent once a sheet or full-screen cover has finished dismissing (SwiftUI's post-animation `onDismiss`), with the router that presented it. Mirrors `routerPresent(perform:)`. Lets an app present something only after a modal has fully closed, without a timer
+- `BaseRouter.deepestPresentedRouter()`: the router actually on screen. It follows the selected tab, then a child only while its parent shows a sheet or cover, so routers left over from dismissed modals are ignored (unlike `deepestRouter()`, which reads the last value of a dictionary)
+
 ### Documentation
 
 - New "Macros" article in a "Code Generation" topic group, covering `@Routable` and `@TabRoutable`: names (including how associated values are named in a `@RouteName` template and when to choose `nameStyle: .capitalized`), routing types, `hideTabBarOnPush`, compile-time checks and limits (including what the macros don't generate: view mapping, deep links). Defining Routes, Tab Navigation and Getting Started link to it (#150, #152, #153, #154, #155)

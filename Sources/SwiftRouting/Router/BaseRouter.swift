@@ -33,6 +33,13 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// Publisher to know if a router is present or not
   let present: PassthroughSubject<(Bool, BaseRouter), Never>
 
+  /// Emits the router whose sheet or cover has just finished dismissing.
+  ///
+  /// Fires once SwiftUI reports the dismiss animation is over, unlike ``present`` which
+  /// emits as soon as the presentation state changes. Observe it from any view using
+  /// ``SwiftUICore/View/routerDidDismiss(perform:)``.
+  let dismissed: PassthroughSubject<BaseRouter, Never>
+
   /// Emits whenever the user taps the already-selected tab.
   ///
   /// Observe this publisher from any view using ``onTabReselected(_:perform:)``.
@@ -77,6 +84,7 @@ public class BaseRouter: ObservableObject, Identifiable {
     self.configuration = configuration
     self.root = root
     self.present = parent?.present ?? PassthroughSubject()
+    self.dismissed = parent?.dismissed ?? PassthroughSubject()
     self.parent = parent
     log(.create(from: parent, first ? configuration : nil))
   }
@@ -225,6 +233,26 @@ extension BaseRouter: @preconcurrency BaseRouterModel {
   @MainActor public func deepestRouter() -> Router? {
     let liveChildren = children.values.compactMap { $0.value as? Router }
     return liveChildren.last?.deepestRouter() ?? self as? Router
+  }
+
+  /// Returns the `Router` that is actually on screen, following only presented modals.
+  ///
+  /// Unlike ``deepestRouter()``, this does not pick an arbitrary live child: it descends into a
+  /// child only when the receiver currently shows a sheet or cover and the child is presented,
+  /// or when the receiver is a `TabRouter` (the selected tab), or when it has a single
+  /// non-presented child (a `RoutingView` container). A router left over from an already
+  /// dismissed modal is ignored.
+  ///
+  /// - Returns: The deepest presented `Router`, or `nil` if the receiver has no `Router` in its hierarchy.
+  @MainActor public func deepestPresentedRouter() -> Router? {
+    let live = children.values.compactMap(\.value)
+    let hasModal = (self as? Router).map { $0.sheet != nil || $0.cover != nil } ?? false
+    let presented = hasModal ? live.compactMap { $0 as? Router }.last(where: \.isPresented) : nil
+    let others = live.filter { ($0 as? Router)?.isPresented != true }
+    let next = presented
+      ?? (self as? TabRouter).flatMap { $0.find(tab: $0.tab.wrapped) }
+      ?? (others.count == 1 ? others.first : nil)
+    return next?.deepestPresentedRouter() ?? self as? Router
   }
 }
 
