@@ -20,9 +20,15 @@ The workflow uses three subagents (`.claude/agents/`): `planner` plans, `dev` im
 
 See `ai-rules/versionning.md` for the full branch, commit, and PR conventions.
 
+External contributor PRs: a maintainer comments `@claude_review` on the PR to run the Claude review on GitHub (`.github/workflows/claude-pr-review.yml`, skill `.claude/skills/pull-request-review`).
+
 ## Documentation
 
 See `ai-rules/docc_articles.md` for how DocC articles are organized, placed and verified.
+
+## Medium Articles
+
+See `ai-rules/medium_articles.md` for how to draft the Medium articles in `medium-articles/` (Linear label `Article`).
 
 ## Tests
 
@@ -43,6 +49,7 @@ Auto-load:
 - Navigation/routing task → `swift-routing`
 - Concurrency task → `swift-concurrency`
 - DocC documentation task → `swift-docc` + `ai-rules/docc_articles.md`
+- Medium article task (`medium-articles/`, Linear label `Article`) → `ai-rules/medium_articles.md`
 
 ## Linear Project
 
