@@ -68,4 +68,4 @@ Example title: `feat(tests): [SWI-5] add NavigationLink extension tests`
 PRs from forks don't get repository secrets on `pull_request`, so they are not reviewed automatically. A maintainer reads the PR first, then comments `@claude_review` on it. This runs `.github/workflows/claude-pr-review.yml`, which reviews the PR with the `pull-request-review` skill (`.claude/skills/pull-request-review/`) and posts inline comments plus a summary. It needs the `CLAUDE_CODE_OAUTH_TOKEN` repository secret and the Claude GitHub App.
 
 - The comment must start with `@claude_review`, and only owners, members and collaborators can trigger it.
-- The review covers the PR head at the time of the comment: if the contributor pushes after you read the PR, read it again before commenting.
+- The review covers the PR head when the job starts. That is usually right after the comment, but later if another review is already running on the same PR. If the contributor pushes after you read the PR, read it again before commenting.

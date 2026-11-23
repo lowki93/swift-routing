@@ -16,13 +16,14 @@ This file defines the workflow to follow when working on a Linear ticket.
 
 ## Subagents
 
-Defined in `.claude/agents/`. This table and each agent's frontmatter are the only places that state model and effort.
+Defined in `.claude/agents/`. This table, each agent's frontmatter and the `claude_args` of `.github/workflows/claude-pr-review.yml` are the only places that state model and effort.
 
 | Step | Subagent | Model | Effort |
 |---|---|---|---|
 | Plan | `planner` | `claude-opus-5-5` | high |
 | Implement | `dev` | `claude-sonnet-5-5` | not set — inherits the session's effort |
 | Review | `reviewer` | `claude-opus-5-5` | medium |
+| CI review (`@claude_review`) | skill `pull-request-review` | `claude-opus-5-5` | high |
 
 > Ticket states are updated automatically via the Linear ↔ GitHub integration.
 

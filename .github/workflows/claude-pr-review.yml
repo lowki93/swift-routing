@@ -66,5 +66,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: "/pull-request-review ${{ github.event.issue.number }}"
           claude_args: >-
+            --model claude-opus-5-5
+            --effort high
             --permission-mode default
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"
