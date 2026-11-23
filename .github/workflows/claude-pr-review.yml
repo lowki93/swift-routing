@@ -1,0 +1,68 @@
+name: Claude PR Review
+
+# A maintainer comments `@claude_review` on a pull request (including PRs from forks, whose
+# `pull_request` runs get no secrets) to run the `pull-request-review` skill.
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: claude-pr-review-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Claude PR Review
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '@claude_review') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    steps:
+      # Trusted base (rules, skill) at the workspace root.
+      - name: Checkout base
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Resolve PR head
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+            --jq '"repo=\(.head.repo.full_name)\nsha=\(.head.sha)"' >> "$GITHUB_OUTPUT"
+
+      # Untrusted PR code, read only, in the `pr-head/` subdirectory.
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ steps.pr.outputs.repo }}
+          ref: ${{ steps.pr.outputs.sha }}
+          path: pr-head
+          persist-credentials: false
+
+      # Claude Code loads CLAUDE.md files from subdirectories it reads. Remove the PR's agent
+      # instruction files so its content can't act as instructions; changes to them still show
+      # up in `gh pr diff` and get reviewed.
+      - name: Strip agent instruction files from PR head
+        run: |
+          find pr-head \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name AGENTS.md \) -type f -delete
+          rm -rf pr-head/.claude
+
+      - name: Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: "/pull-request-review ${{ github.event.issue.number }}"
+          claude_args: >-
+            --permission-mode default
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"

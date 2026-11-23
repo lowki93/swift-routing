@@ -12,3 +12,4 @@ DerivedData/
 /.cursor
 /.claude/*
 !/.claude/agents
+!/.claude/skills
