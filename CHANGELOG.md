@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-16
+
 ### Added
 
 - `@Routable` / `@RouteName` macros generate a `Route` enum's `name` from its cases. `@Routable(nameStyle: .verbatim | .capitalized)` sets the default format; `@RouteName(#"..."#)` overrides a single case with a raw-string template (associated values by label, or `arg0`, `arg1`, ... when unlabeled); `@RouteName(.delegate)` composes with a child `Route` (`"Notifications.\(child.name)"`). `@Routable` also adds the `Route` conformance, so `: Route` becomes optional. Invalid uses (template referencing an unknown value, `.delegate` without exactly one associated value, non-literal `nameStyle`, ...) are reported on the attribute itself (#150)
@@ -27,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The demo app's route enums now use `@Routable` / `@RouteName`, and its `HomeTab` uses `@TabRoutable` / `@HideTabBarOnPush` (#150, #153)
 - The macros' doc comments spell out how associated values are named in a `@RouteName` template (by label, or `argN` by zero-based position among all associated values; a `_` label counts as none; a labeled value has no `argN` name) (#154)
 - Defining Routes shows its route rewritten with `@Routable`, and the README links the article and documents installing `SwiftRoutingMacros` (#154)
+- Follow-up to #154 (merged before these commits were pushed): reorganizes the macro documentation and adds rules for DocC articles. (#155)
+
 
 ## [1.0.0] - 2026-11-08
 
@@ -407,7 +411,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project foundation (#1, #2, #3, #4)
 
-[Unreleased]: https://github.com/lowki93/swift-routing/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/lowki93/swift-routing/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/lowki93/swift-routing/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/lowki93/swift-routing/compare/0.7.0...1.0.0
 [0.7.0]: https://github.com/lowki93/swift-routing/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/lowki93/swift-routing/compare/0.5.0...0.6.0
