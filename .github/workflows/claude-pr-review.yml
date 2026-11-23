@@ -6,10 +6,6 @@ on:
   issue_comment:
     types: [created]
 
-concurrency:
-  group: claude-pr-review-${{ github.event.issue.number }}
-  cancel-in-progress: true
-
 jobs:
   review:
     name: Claude PR Review
@@ -18,6 +14,12 @@ jobs:
       startsWith(github.event.comment.body, '@claude_review') &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
+    # Job-level, so runs skipped by the `if` above (e.g. the bot's own review comment) never
+    # join the group. One review per PR at a time; a new request waits instead of cancelling
+    # the running review (only the latest pending request is kept).
+    concurrency:
+      group: claude-pr-review-${{ github.event.issue.number }}
+      cancel-in-progress: false
     permissions:
       contents: read
       pull-requests: write
@@ -64,5 +66,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: "/pull-request-review ${{ github.event.issue.number }}"
           claude_args: >-
+            --model claude-opus-5-5
+            --effort high
             --permission-mode default
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"
