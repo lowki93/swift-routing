@@ -153,6 +153,7 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 - ``SwiftUICore/View/onTabReselected(_:perform:)``
 - ``SwiftUICore/View/routerContext(_:perform:)``
 - ``SwiftUICore/View/routerPresent(perform:)``
+- ``SwiftUICore/View/routerDidDismiss(perform:)``
 - ``SwiftUICore/View/printRouter(trigger:)``
 - ``SwiftUICore/View/printRouterOnChange()``
 

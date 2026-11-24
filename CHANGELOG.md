@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `View.routerDidDismiss(perform:)`: a public signal sent once a sheet or full-screen cover has finished dismissing (SwiftUI's post-animation `onDismiss`), with the `Router` that presented it. Sent for modals presented from a `RoutingView` or a `RoutingSplitView`. Mirrors `routerPresent(perform:)`. Lets an app present something only after a modal has fully closed, without a timer (#160)
+- `BaseRouter.deepestPresentedRouter()`: the router actually on screen. It follows the selected tab, then the presented child that matches the parent's current sheet or cover, so routers left over from dismissed modals are ignored (unlike `deepestRouter()`, which reads the last value of a dictionary) (#160)
+
 ## [1.1.0] - 2026-11-16
 
 ### Added

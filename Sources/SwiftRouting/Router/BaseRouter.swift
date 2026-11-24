@@ -33,6 +33,13 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// Publisher to know if a router is present or not
   let present: PassthroughSubject<(Bool, BaseRouter), Never>
 
+  /// Emits the router whose sheet or cover has just finished dismissing.
+  ///
+  /// Fires once SwiftUI reports the dismiss animation is over, unlike ``present`` which
+  /// emits as soon as the presentation state changes. Observe it from any view using
+  /// ``SwiftUICore/View/routerDidDismiss(perform:)``.
+  let dismissed: PassthroughSubject<Router, Never>
+
   /// Emits whenever the user taps the already-selected tab.
   ///
   /// Observe this publisher from any view using ``onTabReselected(_:perform:)``.
@@ -77,6 +84,7 @@ public class BaseRouter: ObservableObject, Identifiable {
     self.configuration = configuration
     self.root = root
     self.present = parent?.present ?? PassthroughSubject()
+    self.dismissed = parent?.dismissed ?? PassthroughSubject()
     self.parent = parent
     log(.create(from: parent, first ? configuration : nil))
   }
@@ -225,6 +233,43 @@ extension BaseRouter: @preconcurrency BaseRouterModel {
   @MainActor public func deepestRouter() -> Router? {
     let liveChildren = children.values.compactMap { $0.value as? Router }
     return liveChildren.last?.deepestRouter() ?? self as? Router
+  }
+
+  /// Returns the `Router` that is actually on screen, following only presented modals.
+  ///
+  /// Unlike ``deepestRouter()``, this does not pick an arbitrary live child: it descends into a
+  /// presented child only when the receiver currently shows a sheet or cover, and only one that
+  /// belongs to it: the child whose `root` matches that sheet or cover, else the child created for
+  /// that route (its `type` stays `.presented(route.name)` after `update(root:)`). `children` has no
+  /// defined order, so a router left over from a dismissed modal is never picked, even while the
+  /// new modal's router does not exist yet: the receiver is returned instead. It also follows the
+  /// selected tab of a `TabRouter`, or a single non-presented child (a `RoutingView` container).
+  ///
+  /// ## Example
+  ///
+  /// ```swift
+  /// // At the `@main` App level, where no `@Environment(\.router)` is available
+  /// .onOpenURL { url in
+  ///   Task { @MainActor in
+  ///     rootRouter.deepestPresentedRouter()?.terminate(MyContext())
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// - Returns: The deepest presented `Router`, or `nil` if the receiver has no `Router` in its hierarchy.
+  @MainActor public func deepestPresentedRouter() -> Router? {
+    let live = children.values.compactMap(\.value)
+    let routers = live.compactMap { $0 as? Router }.filter(\.isPresented)
+    let current = (self as? Router).map { [$0.sheet, $0.cover].compactMap { $0 } } ?? []
+    // The type fallback covers a presented router that changed its own root with `update(root:)`
+    let presented = current.isEmpty ? nil
+      : routers.first { current.contains($0.root) }
+        ?? routers.first { router in current.contains { router.type == .presented($0.name) } }
+    let others = live.filter { ($0 as? Router)?.isPresented != true }
+    let next = presented
+      ?? (self as? TabRouter).flatMap { $0.find(tab: $0.tab.wrapped) }
+      ?? (others.count == 1 ? others.first : nil)
+    return next?.deepestPresentedRouter() ?? self as? Router
   }
 }
 

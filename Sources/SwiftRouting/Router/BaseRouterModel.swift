@@ -45,8 +45,9 @@ public protocol BaseRouterModel: ObservableObject {
   /// Traverses the router tree depth-first, following the last live child at each level,
   /// until reaching a leaf with no active children.
   ///
-  /// Call this at dispatch time — not at setup time — so you always target the router that
-  /// is actually on screen.
+  /// The last live child is not necessarily on screen: a router left over from a dismissed modal
+  /// can still be alive and win. To target the router that is on screen, use
+  /// ``BaseRouter/deepestPresentedRouter()`` instead. Call either at dispatch time, not at setup time.
   ///
   /// ```swift
   /// @main
@@ -59,7 +60,7 @@ public protocol BaseRouterModel: ObservableObject {
   ///         .environment(rootRouter)
   ///         .onOpenURL { url in
   ///           Task { @MainActor in
-  ///             rootRouter.deepestRouter()?.terminate(MyContext())
+  ///             rootRouter.deepestPresentedRouter()?.terminate(MyContext())
   ///           }
   ///         }
   ///     }

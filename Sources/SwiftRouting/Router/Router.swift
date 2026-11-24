@@ -271,6 +271,12 @@ extension Router: @preconcurrency PresentationModel {
     cover = nil
   }
 
+  /// Sent by `RoutingView` and `RoutingSplitView` from their sheet and cover `onDismiss`,
+  /// so both containers emit ``BaseRouter/dismissed`` the same way.
+  func notifyModalDismissed() {
+    dismissed.send(self)
+  }
+
   /// Catches dismissals that bypass `close()` entirely -- a native swipe-down, tapping outside
   /// the sheet, or a `@Environment(\.dismiss)` call from inside the presented content all clear
   /// `sheet`/`cover` directly through the live `.sheet(item:)`/`.cover(item:)` binding.
