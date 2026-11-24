@@ -13,7 +13,7 @@ import SwiftUI
 struct RouterDidDismissModifier: ViewModifier {
 
   @Environment(\.router) private var router: Router
-  let perform: (BaseRouter) -> Void
+  let perform: (Router) -> Void
 
   func body(content: Content) -> some View {
     content.onReceive(router.dismissed, perform: perform)
@@ -36,9 +36,9 @@ public extension View {
   /// }
   /// ```
   ///
-  /// - Parameter perform: A closure called with the router whose modal was dismissed.
+  /// - Parameter perform: A closure called with the `Router` whose modal was dismissed.
   /// - Returns: A view that observes modal dismissals.
-  func routerDidDismiss(perform: @escaping (BaseRouter) -> Void) -> some View {
+  func routerDidDismiss(perform: @escaping (Router) -> Void) -> some View {
     self.modifier(RouterDidDismissModifier(perform: perform))
   }
 }

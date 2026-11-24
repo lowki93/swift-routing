@@ -410,16 +410,16 @@ struct BaseRouterTests {
   @MainActor
   struct Dismissed {
     @Test
-    func childRouter_dismissed_return_sharedWithRoot() {
+    func childRouter_notifyModalDismissed_return_sharedWithRoot() {
       var cancellables = Set<AnyCancellable>()
-      var receivedRouter: BaseRouter?
+      var receivedRouter: Router?
       let root = Router(configuration: Configuration())
       let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: root)
       root.dismissed
         .sink { receivedRouter = $0 }
         .store(in: &cancellables)
 
-      child.dismissed.send(child)
+      child.notifyModalDismissed()
 
       #expect(receivedRouter?.id == child.id)
     }
@@ -455,6 +455,42 @@ struct BaseRouterTests {
 
       #expect(stale.isPresented)
       #expect(root.deepestPresentedRouter()?.id == root.id)
+    }
+
+    @Test
+    func twoLivePresentedRouters_deepestPresentedRouter_return_routerMatchingSheet() {
+      // `children` is a Dictionary: repeat with fresh routers so a lucky ordering can't hide a regression.
+      for _ in 0..<20 {
+        let parent = Router(configuration: Configuration())
+        let stale = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("home"), parent: parent)
+        let current = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("settings"), parent: parent)
+        parent.present(TestRoute.settings)
+
+        #expect(parent.deepestPresentedRouter()?.id == current.id)
+        #expect(parent.deepestPresentedRouter()?.id != stale.id)
+      }
+    }
+
+    @Test
+    func twoLivePresentedRouters_coverMatch_deepestPresentedRouter_return_routerMatchingCover() {
+      for _ in 0..<20 {
+        let parent = Router(configuration: Configuration())
+        let stale = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("home"), parent: parent)
+        let current = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("settings"), parent: parent)
+        parent.cover(TestRoute.settings)
+
+        #expect(parent.deepestPresentedRouter()?.id == current.id)
+        #expect(parent.deepestPresentedRouter()?.id != stale.id)
+      }
+    }
+
+    @Test
+    func presentedRouterWithUpdatedRoot_deepestPresentedRouter_return_presentedRouter() {
+      let presented = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("settings"), parent: root)
+      root.present(TestRoute.settings)
+      presented.root = AnyRoute(wrapped: TestRoute.home)
+
+      #expect(root.deepestPresentedRouter()?.id == presented.id)
     }
 
     @Test

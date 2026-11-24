@@ -148,7 +148,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
     private func dismiss() {
       router.log(.onAppear(router.currentRoute.wrapped))
-      router.dismissed.send(router)
+      router.notifyModalDismissed()
     }
   }
 }

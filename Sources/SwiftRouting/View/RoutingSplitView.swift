@@ -143,8 +143,8 @@ public struct RoutingSplitView<
 
     var body: some View {
       splitView
-        .sheet($router.sheet, for: destination, onDismiss: {})
-        .cover($router.cover, for: destination, onDismiss: {})
+        .sheet($router.sheet, for: destination, onDismiss: router.notifyModalDismissed)
+        .cover($router.cover, for: destination, onDismiss: router.notifyModalDismissed)
         .environment(\.router, router)
         .onChange(of: sizeClass) { [weak router] in
           router?.isCompact = sizeClass == .compact

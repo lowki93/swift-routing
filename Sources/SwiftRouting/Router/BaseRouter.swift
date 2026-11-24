@@ -38,7 +38,7 @@ public class BaseRouter: ObservableObject, Identifiable {
   /// Fires once SwiftUI reports the dismiss animation is over, unlike ``present`` which
   /// emits as soon as the presentation state changes. Observe it from any view using
   /// ``SwiftUICore/View/routerDidDismiss(perform:)``.
-  let dismissed: PassthroughSubject<BaseRouter, Never>
+  let dismissed: PassthroughSubject<Router, Never>
 
   /// Emits whenever the user taps the already-selected tab.
   ///
@@ -238,16 +238,29 @@ extension BaseRouter: @preconcurrency BaseRouterModel {
   /// Returns the `Router` that is actually on screen, following only presented modals.
   ///
   /// Unlike ``deepestRouter()``, this does not pick an arbitrary live child: it descends into a
-  /// child only when the receiver currently shows a sheet or cover and the child is presented,
-  /// or when the receiver is a `TabRouter` (the selected tab), or when it has a single
-  /// non-presented child (a `RoutingView` container). A router left over from an already
-  /// dismissed modal is ignored.
+  /// presented child only when the receiver currently shows a sheet or cover, preferring the child
+  /// whose `root` matches that sheet or cover (`children` has no defined order, so a router left
+  /// over from a dismissed modal could otherwise win). It also follows the selected tab of a
+  /// `TabRouter`, or a single non-presented child (a `RoutingView` container).
+  ///
+  /// ## Example
+  ///
+  /// ```swift
+  /// // At the `@main` App level, where no `@Environment(\.router)` is available
+  /// .onOpenURL { url in
+  ///   Task { @MainActor in
+  ///     rootRouter.deepestPresentedRouter()?.terminate(MyContext())
+  ///   }
+  /// }
+  /// ```
   ///
   /// - Returns: The deepest presented `Router`, or `nil` if the receiver has no `Router` in its hierarchy.
   @MainActor public func deepestPresentedRouter() -> Router? {
     let live = children.values.compactMap(\.value)
-    let hasModal = (self as? Router).map { $0.sheet != nil || $0.cover != nil } ?? false
-    let presented = hasModal ? live.compactMap { $0 as? Router }.last(where: \.isPresented) : nil
+    let routers = live.compactMap { $0 as? Router }.filter(\.isPresented)
+    let current = (self as? Router).map { [$0.sheet, $0.cover].compactMap { $0 } } ?? []
+    // `?? routers.last` covers a presented router that changed its own root with `update(root:)`
+    let presented = current.isEmpty ? nil : routers.first { current.contains($0.root) } ?? routers.last
     let others = live.filter { ($0 as? Router)?.isPresented != true }
     let next = presented
       ?? (self as? TabRouter).flatMap { $0.find(tab: $0.tab.wrapped) }

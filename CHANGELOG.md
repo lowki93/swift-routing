@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `View.routerDidDismiss(perform:)`: a public signal sent once a sheet or full-screen cover has finished dismissing (SwiftUI's post-animation `onDismiss`), with the `Router` that presented it. Sent for modals presented from a `RoutingView` or a `RoutingSplitView`. Mirrors `routerPresent(perform:)`. Lets an app present something only after a modal has fully closed, without a timer (#160)
+- `BaseRouter.deepestPresentedRouter()`: the router actually on screen. It follows the selected tab, then the presented child that matches the parent's current sheet or cover, so routers left over from dismissed modals are ignored (unlike `deepestRouter()`, which reads the last value of a dictionary) (#160)
+
 ## [1.1.0] - 2026-11-16
 
 ### Added
@@ -21,9 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `@Sheet(withStack: Bool = true)` / `@Cover` markers for `@Routable` cases. When at least one case has a marker, `@Routable` also generates `routingType` (`.sheet(withStack:)` / `.cover`, unmarked cases `.push`); without markers nothing is generated, so existing enums and hand-written `routingType` are unaffected. Markers compose with `@RouteName(.delegate)`. Misuse (several markers on a case, non-literal `withStack`, marker next to a hand-written `routingType`, marker on a non-case) is reported on the attribute (#152)
 - `@TabRoutable(nameStyle:)` macro for `TabRoute` enums: generates `name` exactly like `@Routable` (same `nameStyle`, `@RouteName`, `.delegate` and diagnostics) and adds the `TabRoute` conformance, so `: TabRoute` becomes optional. `@HideTabBarOnPush` marks the cases that hide the tab bar on push and generates `hideTabBarOnPush`: nothing without markers (the protocol default applies), a constant `true` when every case is marked, otherwise a `switch` with one line per case. A marker on a multi-element case applies to every element (#153)
 - Misuse is reported on the attribute: `@HideTabBarOnPush` outside a `@TabRoutable` enum, on a non-case, twice on a case or next to a hand-written `hideTabBarOnPush`; `@Sheet` / `@Cover` in a `@TabRoutable` enum (a tab is selected, never presented) (#153)
-
-- `View.routerDidDismiss(perform:)`: a public signal sent once a sheet or full-screen cover has finished dismissing (SwiftUI's post-animation `onDismiss`), with the router that presented it. Mirrors `routerPresent(perform:)`. Lets an app present something only after a modal has fully closed, without a timer
-- `BaseRouter.deepestPresentedRouter()`: the router actually on screen. It follows the selected tab, then a child only while its parent shows a sheet or cover, so routers left over from dismissed modals are ignored (unlike `deepestRouter()`, which reads the last value of a dictionary)
 
 ### Documentation
 

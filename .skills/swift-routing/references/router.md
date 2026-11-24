@@ -151,7 +151,7 @@ Recommendation:
 ## Targeting the Frontmost Router (App Level)
 
 At the `@main` App level there is no `@Environment(\.router)`. Hold a reference to the root
-router and call `deepestRouter()` at dispatch time to reach the router that is actually on screen:
+router and call `deepestPresentedRouter()` at dispatch time to reach the router that is actually on screen:
 
 ```swift
 @main
@@ -164,7 +164,7 @@ struct MyApp: App {
         .environment(rootRouter)
         .onOpenURL { url in
           Task { @MainActor in
-            rootRouter.deepestRouter()?.terminate(MyContext())
+            rootRouter.deepestPresentedRouter()?.terminate(MyContext())
           }
         }
     }
@@ -172,8 +172,9 @@ struct MyApp: App {
 }
 ```
 
-- Traverses depth-first, following the last live child at each level.
-- Returns the receiver itself if no child is active.
+- Follows the selected tab, then the presented child matching the parent's current sheet or cover; routers left over from dismissed modals are ignored.
+- Returns the receiver itself if no modal is on screen.
+- `deepestRouter()` follows the last live child of an unordered dictionary, so it can return a stale router; prefer `deepestPresentedRouter()` for the router on screen.
 - Always call it at dispatch time, not at setup time.
 
 ## Important Notes
