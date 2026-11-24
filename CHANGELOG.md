@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-24
+
 ### Added
 
 - `View.routerDidDismiss(perform:)`: a public signal sent once a sheet or full-screen cover has finished dismissing (SwiftUI's post-animation `onDismiss`), with the `Router` that presented it. Sent for modals presented from a `RoutingView` or a `RoutingSplitView`. Mirrors `routerPresent(perform:)`. Lets an app present something only after a modal has fully closed, without a timer (#160)
@@ -416,7 +418,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project foundation (#1, #2, #3, #4)
 
-[Unreleased]: https://github.com/lowki93/swift-routing/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/lowki93/swift-routing/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/lowki93/swift-routing/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/lowki93/swift-routing/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/lowki93/swift-routing/compare/0.7.0...1.0.0
 [0.7.0]: https://github.com/lowki93/swift-routing/compare/0.6.0...0.7.0
