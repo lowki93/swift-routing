@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # Keeps GitHub Actions up to date, including anthropics/claude-code-action, which is pinned
+  # to a commit SHA in claude-pr-review.yml: each new release arrives as a PR to read and merge.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: update
+      include: scope

@@ -28,7 +28,15 @@ Always read `CLAUDE.md`. Ignore its Linear ticket and subagent workflow sections
 
 The navigation API guide in `.skills/swift-routing/` can help you understand intended usage.
 
-## 3. Review
+## 3. Follow up on previous reviews
+
+`.pr-review/previous-threads.json` lists the threads from earlier Claude reviews that are still open (`id`, `path`, `line`, `outdated`, `body`). It's an empty array on a first review. For each thread:
+
+- Check in `pr-head/` whether the problem it describes is fixed. `outdated: true` only means the lines moved, not that it's fixed.
+- **Fixed:** add it to the resolved marker (step 5). The workflow then replies in the thread and resolves it. Never resolve or reply to a thread yourself.
+- **Not fixed:** leave it open and don't post the same finding again. Count it in the summary as still open.
+
+## 4. Review
 
 Judge the code on its own merits. Check:
 
@@ -57,18 +65,28 @@ Most real bugs live in code the PR doesn't touch. Before writing findings:
 
 **Verify before you write.** Confirm every finding by reading the relevant code: callers, the other containers or variants of the same feature, existing tests. Drop anything you can't confirm. Don't pad the list: no findings is a valid result.
 
-## 4. Post the review
+## 5. Post the review
 
 - One **inline comment** per finding, on the relevant line of the diff, with `mcp__github_inline_comment__create_inline_comment`. Start with the severity in bold (**blocking**, **should fix** or **nit**), then the problem and a concrete suggested fix.
 - Then exactly **one summary comment** with `gh pr comment $ARGUMENTS --body "..."`:
   - a one-line verdict (ready to merge / needs changes);
-  - the number of findings per severity;
+  - the number of new findings per severity;
+  - on a follow-up review: how many previous threads are resolved and how many are still open;
   - one or two lines on what is good in the PR;
-  - findings that couldn't be placed inline, if any.
+  - findings that couldn't be placed inline, if any;
+  - as the **last line**, the resolved marker, even when the list is empty:
+
+    ```
+    <!-- claude-review-resolved: [{"id": "PRRT_...", "reason": "Short reason the fix works"}] -->
+    ```
+
+    Only ids from `.pr-review/previous-threads.json`. Keep it on one line, with valid JSON. Each `reason` is one short sentence without line breaks or `-->`.
+- The body contains double quotes (the marker) and backticks: pass it to `gh pr comment` inside **single quotes** (`--body '...'`), and write any apostrophe in the text as `'\''`.
 - Write comments in English, in a friendly and direct tone: the authors are often external contributors.
 
 ## Never
 
 - Edit, commit or push anything.
 - Approve, request changes on, merge, close or label the PR.
+- Comment on any pull request other than #$ARGUMENTS.
 - Build, test or run any code from the PR.

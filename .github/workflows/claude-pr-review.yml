@@ -60,13 +60,95 @@ jobs:
           find pr-head \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name AGENTS.md \) -type f -delete
           rm -rf pr-head/.claude
 
+      # Open threads from previous Claude reviews, so the skill can check them instead of
+      # posting duplicates. Written in the trusted root, outside `pr-head/`. Reads the first
+      # 100 threads of the PR, which is plenty for a review-on-demand flow.
+      - name: Collect previous Claude review threads
+        id: previous
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          mkdir -p .pr-review
+          echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          gh api graphql \
+            -F owner="${GITHUB_REPOSITORY%/*}" -F repo="${GITHUB_REPOSITORY#*/}" -F number="$PR_NUMBER" \
+            -f query='query($owner: String!, $repo: String!, $number: Int!) {
+              repository(owner: $owner, name: $repo) { pullRequest(number: $number) {
+                reviewThreads(first: 100) { nodes { id isResolved isOutdated
+                  comments(first: 1) { nodes { author { __typename login } path line originalLine body } } } } } } }' \
+            --jq '[.data.repository.pullRequest.reviewThreads.nodes[]
+                   | select(.isResolved | not)
+                   | .comments.nodes[0] as $c
+                   | select($c.author.__typename == "Bot" and $c.author.login == "claude")
+                   | {id, outdated: .isOutdated, path: $c.path, line: ($c.line // $c.originalLine), body: $c.body}]' \
+            > .pr-review/previous-threads.json
+          echo "Open Claude threads: $(jq length .pr-review/previous-threads.json)"
+
+      # Pinned to a commit SHA because this third-party action receives the Claude token;
+      # Dependabot proposes upgrades (.github/dependabot.yml). `actions/checkout` stays on a
+      # major tag on purpose: it's first-party and never sees that secret.
       - name: Review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@eb56b6666facdbd501035f4a0269d8caee2e7a8b # v1.0.289
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Since v1.0.288 the action skips fork PRs unless this is set, and external
+          # contributions come from forks. Safe here: the fork's code is only read from
+          # `pr-head/` (base at the root, no persisted credentials, agent instruction files
+          # stripped), `restrict_untrusted_prs` is pinned on below, and the tool allowlist has no
+          # file write or push; its only shell access is `gh pr diff/view/comment`, so it can
+          # read the repo and post PR comments.
+          allow_fork_prs: "true"
+          restrict_untrusted_prs: "true"
           prompt: "/pull-request-review ${{ github.event.issue.number }}"
           claude_args: >-
             --model claude-opus-5-5
             --effort high
             --permission-mode default
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"
+
+      # Claude can't resolve threads itself (that would need `gh api graphql`, which allows any
+      # mutation). It lists the fixed ones in a hidden marker at the end of its summary comment;
+      # this step resolves only threads collected above (open, Claude's, on this PR).
+      - name: Resolve fixed Claude review threads
+        # Also after a failed Review step: Claude may have posted its summary before failing.
+        if: ${{ !cancelled() && steps.previous.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          STARTED_AT: ${{ steps.previous.outputs.started_at }}
+          HEAD_SHA: ${{ steps.pr.outputs.sha }}
+        run: |
+          summary=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            | jq -rs --arg since "$STARTED_AT" \
+              '[add[] | select(.user.login == "claude[bot]" and .created_at >= $since)] | last | .body // ""')
+          if [ -z "$summary" ]; then
+            echo "::warning::No claude[bot] summary comment found for this run; nothing to resolve."
+            exit 0
+          fi
+          marker=$(printf '%s\n' "$summary" | grep -o '<!-- claude-review-resolved: .* -->' | tail -n 1 \
+            | sed -e 's/^<!-- claude-review-resolved: //' -e 's/ -->$//')
+          if [ -z "$marker" ] || ! jq -e 'type == "array"' <<<"$marker" > /dev/null; then
+            echo "No resolved-threads marker in this run's summary."
+            exit 0
+          fi
+          jq -c '.[] | select(type == "object" and (.id | type) == "string")' <<<"$marker" | while read -r item; do
+            id=$(jq -r '.id' <<<"$item")
+            reason=$(jq -r '.reason // "addressed"' <<<"$item" | head -c 300)
+            if ! jq -e --arg id "$id" 'any(.[]; .id == $id)' .pr-review/previous-threads.json > /dev/null; then
+              echo "Skipping $id: not an open Claude thread on this PR."
+              continue
+            fi
+            # Resolve first: a reply on a thread that then fails to resolve would be posted
+            # again on the next run. One failing thread doesn't stop the others.
+            if ! gh api graphql -f id="$id" \
+              -f query='mutation($id: ID!) { resolveReviewThread(input: { threadId: $id }) { thread { isResolved } } }' > /dev/null; then
+              echo "::warning::Could not resolve $id"
+              continue
+            fi
+            gh api graphql -f id="$id" -f body="Fixed in ${HEAD_SHA:0:7}: ${reason}" \
+              -f query='mutation($id: ID!, $body: String!) {
+                addPullRequestReviewThreadReply(input: { pullRequestReviewThreadId: $id, body: $body }) { clientMutationId } }' > /dev/null \
+              || echo "::warning::Resolved $id but could not reply"
+            echo "Resolved $id"
+          done
