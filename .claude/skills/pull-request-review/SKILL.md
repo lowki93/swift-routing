@@ -74,6 +74,7 @@ Most real bugs live in code the PR doesn't touch. Before writing findings:
   - on a follow-up review: how many previous threads are resolved and how many are still open;
   - one or two lines on what is good in the PR;
   - findings that couldn't be placed inline, if any;
+  - a line inviting maintainers to rate findings: `_Maintainers: react 👍 / 👎 on each inline finding to rate it._`;
   - as the **last line**, the resolved marker, even when the list is empty:
 
     ```
