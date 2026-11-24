@@ -60,16 +60,19 @@ jobs:
           find pr-head \( -name CLAUDE.md -o -name CLAUDE.local.md -o -name AGENTS.md \) -type f -delete
           rm -rf pr-head/.claude
 
+      # Pinned to a commit SHA because this third-party action receives the Claude token;
+      # Dependabot proposes upgrades (.github/dependabot.yml). `actions/checkout` stays on a
+      # major tag on purpose: it's first-party and never sees that secret.
       - name: Review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@eb56b6666facdbd501035f4a0269d8caee2e7a8b # v1.0.289
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Since v1.0.288 the action skips fork PRs unless this is set, and external
           # contributions come from forks. Safe here: the fork's code is only read from
           # `pr-head/` (base at the root, no persisted credentials, agent instruction files
           # stripped), `restrict_untrusted_prs` is pinned on below, and the tool allowlist has no
-          # file write, push or shell access: it can only read the repo and post PR comments
-          # (`gh pr comment`, inline comments).
+          # file write or push; its only shell access is `gh pr diff/view/comment`, so it can
+          # read the repo and post PR comments.
           allow_fork_prs: "true"
           restrict_untrusted_prs: "true"
           prompt: "/pull-request-review ${{ github.event.issue.number }}"

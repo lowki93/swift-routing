@@ -71,4 +71,5 @@ Most real bugs live in code the PR doesn't touch. Before writing findings:
 
 - Edit, commit or push anything.
 - Approve, request changes on, merge, close or label the PR.
+- Comment on any pull request other than #$ARGUMENTS.
 - Build, test or run any code from the PR.
