@@ -238,10 +238,12 @@ extension BaseRouter: @preconcurrency BaseRouterModel {
   /// Returns the `Router` that is actually on screen, following only presented modals.
   ///
   /// Unlike ``deepestRouter()``, this does not pick an arbitrary live child: it descends into a
-  /// presented child only when the receiver currently shows a sheet or cover, preferring the child
-  /// whose `root` matches that sheet or cover (`children` has no defined order, so a router left
-  /// over from a dismissed modal could otherwise win). It also follows the selected tab of a
-  /// `TabRouter`, or a single non-presented child (a `RoutingView` container).
+  /// presented child only when the receiver currently shows a sheet or cover, and only one that
+  /// belongs to it: the child whose `root` matches that sheet or cover, else the child created for
+  /// that route (its `type` stays `.presented(route.name)` after `update(root:)`). `children` has no
+  /// defined order, so a router left over from a dismissed modal is never picked, even while the
+  /// new modal's router does not exist yet: the receiver is returned instead. It also follows the
+  /// selected tab of a `TabRouter`, or a single non-presented child (a `RoutingView` container).
   ///
   /// ## Example
   ///
@@ -259,8 +261,10 @@ extension BaseRouter: @preconcurrency BaseRouterModel {
     let live = children.values.compactMap(\.value)
     let routers = live.compactMap { $0 as? Router }.filter(\.isPresented)
     let current = (self as? Router).map { [$0.sheet, $0.cover].compactMap { $0 } } ?? []
-    // `?? routers.last` covers a presented router that changed its own root with `update(root:)`
-    let presented = current.isEmpty ? nil : routers.first { current.contains($0.root) } ?? routers.last
+    // The type fallback covers a presented router that changed its own root with `update(root:)`
+    let presented = current.isEmpty ? nil
+      : routers.first { current.contains($0.root) }
+        ?? routers.first { router in current.contains { router.type == .presented($0.name) } }
     let others = live.filter { ($0 as? Router)?.isPresented != true }
     let next = presented
       ?? (self as? TabRouter).flatMap { $0.find(tab: $0.tab.wrapped) }

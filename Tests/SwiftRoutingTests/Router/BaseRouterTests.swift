@@ -414,14 +414,14 @@ struct BaseRouterTests {
       var cancellables = Set<AnyCancellable>()
       var receivedRouter: Router?
       let root = Router(configuration: Configuration())
-      let child = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: root)
+      let expectedChild = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("sheet"), parent: root)
       root.dismissed
         .sink { receivedRouter = $0 }
         .store(in: &cancellables)
 
-      child.notifyModalDismissed()
+      expectedChild.notifyModalDismissed()
 
-      #expect(receivedRouter?.id == child.id)
+      #expect(receivedRouter?.id == expectedChild.id)
     }
   }
 
@@ -443,9 +443,9 @@ struct BaseRouterTests {
     @Test
     func nestedPresentedRouters_deepestPresentedRouter_return_deepest() {
       let first = makePresented(in: root)
-      let second = makePresented(in: first)
+      let expectedSecond = makePresented(in: first)
 
-      #expect(root.deepestPresentedRouter()?.id == second.id)
+      #expect(root.deepestPresentedRouter()?.id == expectedSecond.id)
     }
 
     @Test
@@ -458,16 +458,34 @@ struct BaseRouterTests {
     }
 
     @Test
+    func sheetChangedToNewRouteWithoutRouterYet_deepestPresentedRouter_return_parent() {
+      for _ in 0..<20 {
+        let parent = Router(configuration: Configuration())
+        let stale = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("home"), parent: parent)
+        parent.present(TestRoute.settings)
+
+        withExtendedLifetime(stale) {
+          #expect(parent.deepestPresentedRouter()?.id == parent.id)
+        }
+      }
+    }
+
+    @Test
     func twoLivePresentedRouters_deepestPresentedRouter_return_routerMatchingSheet() {
       // `children` is a Dictionary: repeat with fresh routers so a lucky ordering can't hide a regression.
       for _ in 0..<20 {
         let parent = Router(configuration: Configuration())
         let stale = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("home"), parent: parent)
-        let current = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("settings"), parent: parent)
+        let expectedCurrent = Router(
+          root: AnyRoute(wrapped: TestRoute.settings),
+          type: .presented("settings"),
+          parent: parent
+        )
         parent.present(TestRoute.settings)
 
-        #expect(parent.deepestPresentedRouter()?.id == current.id)
-        #expect(parent.deepestPresentedRouter()?.id != stale.id)
+        withExtendedLifetime(stale) {
+          #expect(parent.deepestPresentedRouter()?.id == expectedCurrent.id)
+        }
       }
     }
 
@@ -476,21 +494,30 @@ struct BaseRouterTests {
       for _ in 0..<20 {
         let parent = Router(configuration: Configuration())
         let stale = Router(root: AnyRoute(wrapped: TestRoute.home), type: .presented("home"), parent: parent)
-        let current = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("settings"), parent: parent)
+        let expectedCurrent = Router(
+          root: AnyRoute(wrapped: TestRoute.settings),
+          type: .presented("settings"),
+          parent: parent
+        )
         parent.cover(TestRoute.settings)
 
-        #expect(parent.deepestPresentedRouter()?.id == current.id)
-        #expect(parent.deepestPresentedRouter()?.id != stale.id)
+        withExtendedLifetime(stale) {
+          #expect(parent.deepestPresentedRouter()?.id == expectedCurrent.id)
+        }
       }
     }
 
     @Test
     func presentedRouterWithUpdatedRoot_deepestPresentedRouter_return_presentedRouter() {
-      let presented = Router(root: AnyRoute(wrapped: TestRoute.settings), type: .presented("settings"), parent: root)
+      let expectedPresented = Router(
+        root: AnyRoute(wrapped: TestRoute.settings),
+        type: .presented("settings"),
+        parent: root
+      )
       root.present(TestRoute.settings)
-      presented.root = AnyRoute(wrapped: TestRoute.home)
+      expectedPresented.root = AnyRoute(wrapped: TestRoute.home)
 
-      #expect(root.deepestPresentedRouter()?.id == presented.id)
+      #expect(root.deepestPresentedRouter()?.id == expectedPresented.id)
     }
 
     @Test
@@ -514,11 +541,11 @@ struct BaseRouterTests {
         type: TestTabRoute.settings.type,
         parent: tabRouter
       )
-      let presented = makePresented(in: homeRouter)
+      let expectedPresented = makePresented(in: homeRouter)
       let otherPresented = makePresented(in: settingsRouter)
       tabRouter.change(tab: TestTabRoute.home)
 
-      #expect(root.deepestPresentedRouter()?.id == presented.id)
+      #expect(root.deepestPresentedRouter()?.id == expectedPresented.id)
       #expect(root.deepestPresentedRouter()?.id != otherPresented.id)
     }
   }
