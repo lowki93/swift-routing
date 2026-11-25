@@ -40,6 +40,9 @@ public struct Configuration {
   /// Closure used for logging routing actions.
   let logger: ((LoggerConfiguration) -> Void)?
 
+  /// Crashes when a route cannot be resolved to a destination. It also crashes when
+  /// ``SwiftUICore/View/navigationRestoration(_:)`` is on and a container's route types are not
+  /// `Codable`. A failure to decode saved state never crashes.
   let shouldCrashOnRouteNotFound: Bool
 
   /// Fires when a router sharing this configuration logs a message that's worth re-checking

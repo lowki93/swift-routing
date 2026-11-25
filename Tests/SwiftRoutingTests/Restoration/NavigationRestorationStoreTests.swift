@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import Testing
 @testable import SwiftRouting
@@ -124,6 +125,244 @@ struct NavigationRestorationStoreTests {
       #expect(try NavigationRestorationStore.encode(store.snapshot) == data)
     }
   }
+
+  @MainActor
+  struct Attachment {
+    private let schema = RestorationSchema(route: CodableTestRoute.self)
+
+    @Test
+    func givenStoreAttachedToRoot_whenDescendantAsks_thenStoreIsReachable() {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+      let nested = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("nested"), parent: stack, schema: schema)
+
+      #expect(root.restorationStore === store)
+      #expect(stack.restorationStore === store)
+      #expect(nested.restorationStore === store)
+    }
+
+    @Test
+    func givenRootWithoutStore_whenDescendantAsks_thenNoStore() {
+      let root = Router(configuration: Configuration())
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+
+      #expect(root.restorationStore == nil)
+      #expect(stack.restorationStore == nil)
+    }
+  }
+
+  @MainActor
+  struct Saving {
+    private let schema = RestorationSchema(route: CodableTestRoute.self)
+
+    private func makeTree(path: [CodableTestRoute]) -> (root: Router, store: NavigationRestorationStore, stack: Router) {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+      stack.path = path.map { AnyRoute(wrapped: $0) }
+      return (root, store, stack)
+    }
+
+    @Test
+    func givenRouteRemovedAfterFirstSave_whenSavedAgain_thenOnlyWhatExistsIsStored() throws {
+      let (root, store, stack) = makeTree(path: [.settings, .details(id: "1")])
+      _ = try store.save(from: root)
+      stack.path.removeLast()
+
+      let data = try store.save(from: root)
+
+      let restoredRoot = Router(configuration: Configuration())
+      restoredRoot.attachRestorationStore(NavigationRestorationStore(data: data))
+      let restored = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: restoredRoot, schema: schema)
+      #expect(restored.path.map { $0.wrapped as? CodableTestRoute } == [.settings])
+    }
+  }
+
+  @MainActor
+  struct Clearing {
+    private let schema = RestorationSchema(route: CodableTestRoute.self)
+
+    @Test
+    func givenSavedState_whenCleared_thenSnapshotEmptyAndSignalFiredOnce() throws {
+      let data = try NavigationRestorationStoreTests().data(forStack: "home", path: [.settings])
+      let store = NavigationRestorationStore(data: data)
+      var signals = 0
+      let subscription = store.cleared.sink { signals += 1 }
+
+      store.clear()
+
+      #expect(store.snapshot == .empty)
+      #expect(signals == 1)
+      subscription.cancel()
+    }
+
+    @Test
+    func givenStoreAttached_whenRouterClears_thenRouterBuiltAfterwardsStartsOnDefault() throws {
+      let data = try NavigationRestorationStoreTests().data(forStack: "home", path: [.settings])
+      let root = Router(configuration: Configuration())
+      root.attachRestorationStore(NavigationRestorationStore(data: data))
+
+      root.clearNavigationRestoration()
+
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+      #expect(stack.path.isEmpty)
+    }
+
+    @Test
+    func givenStoreAttached_whenClearedThroughRouterModel_thenRouterBuiltAfterwardsStartsOnDefault() throws {
+      let data = try NavigationRestorationStoreTests().data(forStack: "home", path: [.settings])
+      let root = Router(configuration: Configuration())
+      root.attachRestorationStore(NavigationRestorationStore(data: data))
+      let model: any RouterModel = root
+
+      model.clearNavigationRestoration()
+
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+      #expect(stack.path.isEmpty)
+    }
+
+    @Test
+    func givenNoStore_whenRouterClears_thenNothingHappens() {
+      let spy = LoggerSpy(storesConfiguration: false)
+      let root = Router(configuration: Configuration(loggerSpy: spy))
+      let before = spy.receivedMessages.count
+
+      root.clearNavigationRestoration()
+
+      #expect(spy.receivedMessages.count == before)
+    }
+
+    @Test
+    func givenCleared_whenSavedAfterwards_thenSaveIsNotBlocked() throws {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+      root.clearNavigationRestoration()
+      stack.path = [AnyRoute(wrapped: CodableTestRoute.settings)]
+
+      let data = try store.save(from: root)
+
+      #expect(NavigationRestorationStore(data: data).snapshot != .empty)
+    }
+  }
+
+  @MainActor
+  struct Keys {
+    private let schema = RestorationSchema(route: CodableTestRoute.self)
+
+    @Test
+    func givenDifferentKeys_whenStorageKeyBuilt_thenSlotsDiffer() {
+      #expect(NavigationRestorationModifier.storageKey(for: "a") != NavigationRestorationModifier.storageKey(for: "b"))
+      #expect(NavigationRestorationModifier.storageKey(for: "default") == "SwiftRouting.navigationRestoration.default")
+    }
+
+    @Test
+    func givenEmptySlot_whenRoutersBuilt_thenStartOnDefault() {
+      let root = Router(configuration: Configuration())
+      root.attachRestorationStore(NavigationRestorationStore(data: nil))
+
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+
+      #expect(stack.path.isEmpty)
+    }
+  }
+
+  @MainActor
+  struct PresentedContainers {
+    @Test
+    func presentedType_schemaInit_returnNil() {
+      #expect(RestorationSchema(type: .presented("details"), route: CodableTestRoute.self) == nil)
+    }
+
+    @Test
+    func stackType_schemaInit_returnSchema() {
+      #expect(RestorationSchema(type: .stack("home"), route: CodableTestRoute.self) != nil)
+    }
+
+    @Test
+    func givenStoredPresentedNode_whenPresentedRouterBuilt_thenItStartsOnItsOwnRootAndPath() throws {
+      let stored = try RestorationCodec.encode(AnyRoute(wrapped: CodableTestRoute.details(id: "1")))
+      var snapshot = NavigationSnapshot(version: NavigationSnapshot.currentVersion, root: RestorationNode())
+      snapshot.root.children["presented(details)"] = RestorationNode(state: RouterState(root: stored, path: [stored]))
+      let root = Router(configuration: Configuration())
+      root.attachRestorationStore(NavigationRestorationStore(data: try NavigationRestorationStore.encode(snapshot)))
+
+      let presented = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "2")),
+        type: .presented("details"),
+        parent: root,
+        schema: RestorationSchema(type: .presented("details"), route: CodableTestRoute.self)
+      )
+
+      #expect(presented.root.wrapped as? CodableTestRoute == .details(id: "2"))
+      #expect(presented.path.isEmpty)
+    }
+
+    @Test
+    func givenPresentedRouterThatIsTheCurrentSheet_whenSnapshotTaken_thenItIsNotSaved() {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let presented = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "1")),
+        type: .presented("details"),
+        parent: root,
+        schema: RestorationSchema(type: .presented("details"), route: CodableTestRoute.self)
+      )
+      presented.path = [AnyRoute(wrapped: CodableTestRoute.settings)]
+      root.sheet = AnyRoute(wrapped: CodableTestRoute.details(id: "1"))
+
+      let snapshot = store.snapshot(from: root)
+
+      #expect(snapshot.root.children.isEmpty)
+      withExtendedLifetime(presented) {}
+    }
+
+    @Test
+    func givenStackNestedInCurrentSheet_whenSnapshotTaken_thenItIsNotSavedAndNotSeeded() throws {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let presented = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "1")),
+        type: .presented("details"),
+        parent: root,
+        schema: RestorationSchema(type: .presented("details"), route: CodableTestRoute.self)
+      )
+      let nested = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "1")),
+        type: .stack("home"),
+        parent: presented,
+        schema: RestorationSchema(type: .stack("home"), route: CodableTestRoute.self)
+      )
+      nested.path = [AnyRoute(wrapped: CodableTestRoute.settings)]
+      root.sheet = AnyRoute(wrapped: CodableTestRoute.details(id: "1"))
+
+      let data = try store.save(from: root)
+
+      let freshRoot = Router(configuration: Configuration())
+      freshRoot.attachRestorationStore(NavigationRestorationStore(data: data))
+      let freshPresented = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "2")),
+        type: .presented("details"),
+        parent: freshRoot,
+        schema: RestorationSchema(type: .presented("details"), route: CodableTestRoute.self)
+      )
+      let freshNested = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "2")),
+        type: .stack("home"),
+        parent: freshPresented,
+        schema: RestorationSchema(type: .stack("home"), route: CodableTestRoute.self)
+      )
+
+      #expect(store.snapshot(from: root).root.children.isEmpty)
+      #expect(freshNested.path.isEmpty)
+      withExtendedLifetime((presented, nested, freshPresented)) {}
+    }  }
 
   @MainActor
   struct Codec {

@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `View.navigationRestoration(_:)`: opt-in modifier that saves the navigation of a scene when it leaves the foreground and restores `RoutingView` stacks after the system killed the app, without a flash of the default state. Nothing is checked, logged or written without it (SWI-38)
+- `RouterModel.clearNavigationRestoration()`: erases the saved navigation state, for logout. It has a default implementation, so existing conformers keep compiling; `Router` implements it and `RouterSpy` records it through `clearNavigationRestorationCallCount` (SWI-38)
 - `RouterError.restoration(_:)` with a public `RouterError.RestorationReason` (`notCodable`, `decodingFailed`, `encodingFailed`, `duplicateKey`): the error logged when navigation restoration cannot save or restore a container (SWI-35). Source-breaking: the new `RouterError` case makes any exhaustive `switch` over `RouterError` fail to compile until it handles `.restoration`
 - Claude Code plugin: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` ship the `swift-routing` and `swift-routing-migration` AI skills as a plugin, installed with `/plugin marketplace add lowki93/swift-routing` then `/plugin install swift-routing@swift-routing`. The manifest points at the existing `.skills/` directory, so `npx skills add` and the repo layout are unchanged (#166)
 

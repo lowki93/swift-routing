@@ -67,9 +67,25 @@ public protocol RouterModel: BaseRouterModel, ContextModel, PresentationModel, S
   /// End navigation flows that depend on a specific context, ensuring all related actions are completed before popping or closing.
   /// - Parameter value: `RouteContext` to execute before the pop or close operation.
   func terminate(_ value: some RouteContext)
+
+  /// Erases the saved navigation state of this scene, written by `navigationRestoration(_:)`.
+  ///
+  /// Call it at logout so the next launch starts on the default state. It does nothing when
+  /// restoration is not enabled. The default implementation does nothing; `Router` overrides it.
+  ///
+  /// ```swift
+  /// func logout() {
+  ///   router.update(root: AppRoute.login)
+  ///   router.clearNavigationRestoration()
+  /// }
+  /// ```
+  func clearNavigationRestoration()
 }
 
 extension RouterModel {
+  /// Does nothing: only a router attached to a restoration store has state to clear.
+  public func clearNavigationRestoration() {}
+
   /// Removes the last element from the navigation path, navigating back one step.
   @available(*, deprecated, renamed: "pop()")
   public func back() {

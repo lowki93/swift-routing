@@ -99,7 +99,12 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
   public var body: some View {
     WrappedView(
-      router: Router(root: AnyRoute(wrapped: root, inStack: inStack), type: type, parent: parent),
+      router: Router(
+        root: AnyRoute(wrapped: root, inStack: inStack),
+        type: type,
+        parent: parent,
+        schema: RestorationSchema(type: type, route: Destination.R.self)
+      ),
       inStack: inStack,
       destination: destination,
       content: content
