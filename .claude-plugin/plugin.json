@@ -1,0 +1,10 @@
+{
+  "name": "swift-routing",
+  "description": "Guidance for SwiftRouting: routes, routers, tabs, deeplinks, the opt-in macros, and migrating from NavigationStack.",
+  "author": { "name": "Kevin Budain", "url": "https://github.com/lowki93" },
+  "homepage": "https://github.com/lowki93/swift-routing",
+  "repository": "https://github.com/lowki93/swift-routing",
+  "license": "MIT",
+  "keywords": ["swift", "swiftui", "routing", "navigation", "deeplink"],
+  "skills": ["./.skills/"]
+}
