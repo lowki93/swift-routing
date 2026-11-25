@@ -5,15 +5,16 @@
 
 import Foundation
 
-typealias RestorationReason = RouterError.RestorationReason
-
 /// Holds the saved navigation of one scene, hands it out to the routers built from it, and snapshots the live tree.
 ///
 /// Routers can be built off the main actor (see `ConcurrencyTests`), so every access to the mutable
 /// state goes through `lock`.
 final class NavigationRestorationStore: @unchecked Sendable {
 
-  /// Called with the reason when a container cannot be restored and `shouldCrashOnRouteNotFound` is on.
+  typealias RestorationReason = RouterError.RestorationReason
+
+  /// Called with the reason when a container's route types are not `Codable` and `shouldCrashOnRouteNotFound` is on.
+  /// A decoding failure never calls it.
   /// Injectable so the crash is testable.
   typealias FailureHook = @Sendable (String) -> Void
 
@@ -23,7 +24,7 @@ final class NavigationRestorationStore: @unchecked Sendable {
     var reasons: [RestorationReason] = []
     var crash: (() -> Void)?
 
-    static var none: Restoration { Restoration() }
+    static var unrestored: Restoration { Restoration() }
   }
 
   struct RestoredState {
@@ -107,9 +108,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
         let hook = failureHook
         return Restoration(state: nil, reasons: reasons, crash: crashOnNotCodable ? { hook(reason.description) } : nil)
       }
-      guard !isFailed(path), used.insert(path).inserted,
+      guard path.first == _snapshot.rootSegment, !isFailed(path), used.insert(path).inserted,
         let state = _snapshot.root.node(at: path.dropFirst())?.state
-      else { return .none }
+      else { return .unrestored }
       do {
         let root = try state.root.map { try schema.decodeRoute($0) }
         let routes = try state.path.map { try schema.decodeRoute($0) }
@@ -128,21 +129,23 @@ final class NavigationRestorationStore: @unchecked Sendable {
   ///
   /// Skips routers that left the screen, presented routers that are not their parent's current sheet
   /// or cover, and non-restorable routers. Siblings sharing a segment are not saved.
+  @MainActor
   func snapshot(from root: BaseRouter) -> NavigationSnapshot {
     let node = node(of: root, at: [root.restorationSegment]) ?? RestorationNode()
-    return NavigationSnapshot(version: NavigationSnapshot.currentVersion, root: node)
+    return NavigationSnapshot(version: NavigationSnapshot.currentVersion, rootSegment: root.restorationSegment, root: node)
   }
 
+  @MainActor
   private func node(of router: BaseRouter, at path: [String]) -> RestorationNode? {
     var node = RestorationNode()
     if let router = router as? Router, let schema = router.restorationSchema, schema.firstNonCodable == nil {
       do {
         node.state = try state(of: router)
       } catch {
+        // Only this container's own state is lost: its children are still saved.
         if lock.withLock({ shouldLog(path, "encodingFailed") }) {
           router.log(.error(.restoration(.encodingFailed(container: Self.name(of: path), error: String(describing: error)))))
         }
-        return nil
       }
     }
 
@@ -167,6 +170,7 @@ final class NavigationRestorationStore: @unchecked Sendable {
     )
   }
 
+  @MainActor
   private func isSaved(_ child: BaseRouter, in parent: BaseRouter) -> Bool {
     guard let router = child as? Router else { return true }
     guard !router.hasLeftScreen else { return false }

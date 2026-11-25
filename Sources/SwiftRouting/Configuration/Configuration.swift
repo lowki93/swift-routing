@@ -61,7 +61,7 @@ public struct Configuration {
   ///
   /// - Parameters:
   ///   - logger: A closure that receives `LoggerConfiguration` for logging purposes.
-  ///   - shouldCrashOnRouteNotFound: If `true`, the app will crash when a route cannot be found. Useful for catching routing errors during development.
+  ///   - shouldCrashOnRouteNotFound: If `true`, the app will crash when a route cannot be found. Useful for catching routing errors during development. When navigation restoration is on, it also crashes on a container whose route types are not `Codable`.
   public init(logger: ((LoggerConfiguration) -> Void)?, shouldCrashOnRouteNotFound: Bool) {
     self.logger = logger
     self.shouldCrashOnRouteNotFound = shouldCrashOnRouteNotFound

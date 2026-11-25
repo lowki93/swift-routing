@@ -24,3 +24,24 @@ enum RenamedCodableTestRoute: Route, Codable {
     "landing"
   }
 }
+
+/// A route whose encoding always fails, to exercise the save failure path.
+enum ThrowingEncodeRoute: Route, Codable {
+  case broken
+
+  var name: String {
+    "broken"
+  }
+
+  func encode(to encoder: any Encoder) throws {
+    throw EncodingError.invalidValue(self, .init(codingPath: [], debugDescription: "cannot encode"))
+  }
+
+  init(from decoder: any Decoder) throws {
+    self = .broken
+  }
+
+  init() {
+    self = .broken
+  }
+}

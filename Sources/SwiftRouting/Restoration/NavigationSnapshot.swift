@@ -18,6 +18,7 @@ struct StoredRoute: Codable, Equatable, Sendable {
 struct RouterState: Codable, Equatable, Sendable {
   var root: StoredRoute?
   var path: [StoredRoute] = []
+  // `sheet`, `cover`, `tab`, `contentSelection` and `detailSelection` are reserved for T3-T5: not written yet.
   var sheet: StoredRoute?
   var cover: StoredRoute?
   var tab: StoredRoute?
@@ -47,6 +48,8 @@ struct NavigationSnapshot: Codable, Equatable, Sendable {
   static let empty = NavigationSnapshot(version: currentVersion, root: RestorationNode())
 
   var version: Int
+  /// The segment of the router the snapshot was taken from, so a snapshot of another root is ignored.
+  var rootSegment = "app"
   var root: RestorationNode
 }
 

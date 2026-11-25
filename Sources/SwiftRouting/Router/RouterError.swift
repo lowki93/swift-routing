@@ -59,7 +59,7 @@ public enum RouterError: Error, CustomStringConvertible {
     /// The saved state of the container could not be decoded (for example a renamed route case).
     /// The container and its subtree start on their default state.
     case decodingFailed(container: String, error: String)
-    /// The state of the container could not be encoded, so it is not saved.
+    /// The state of the container could not be encoded, so its own state is not saved. Its children are still saved.
     case encodingFailed(container: String, error: String)
     /// Several sibling containers share the same identity, so none of them is saved.
     case duplicateKey(container: String)

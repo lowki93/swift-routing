@@ -17,7 +17,7 @@ final class FailureRecorder: @unchecked Sendable {
 
 /// Errors received by `spy`, in order.
 @MainActor
-private func restorationReasons(_ spy: LoggerSpy) -> [RestorationReason] {
+private func restorationReasons(_ spy: LoggerSpy) -> [RouterError.RestorationReason] {
   spy.receivedMessages.compactMap {
     if case let .error(.restoration(reason)) = $0 { reason } else { nil }
   }
@@ -362,6 +362,141 @@ struct RouterRestorationTests {
       let snapshot = store.snapshot(from: root)
 
       #expect(snapshot.root.children.isEmpty)
+    }
+
+    private func presentedRouter(
+      in root: Router,
+      route: CodableTestRoute,
+      slot: ModalSlot = .sheet
+    ) -> Router {
+      let presented = Router(
+        root: AnyRoute(wrapped: route),
+        type: .presented(route.name),
+        parent: root,
+        modalSlot: slot,
+        schema: RestorationSchema(route: CodableTestRoute.self)
+      )
+      presented.path = [AnyRoute(wrapped: CodableTestRoute.home)]
+      return presented
+    }
+
+    @Test
+    func givenPresentedRouterThatIsTheCurrentSheet_whenSnapshotTaken_thenItIsSaved() {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let presented = presentedRouter(in: root, route: .settings)
+      root.sheet = AnyRoute(wrapped: CodableTestRoute.settings)
+
+      let snapshot = store.snapshot(from: root)
+
+      #expect(snapshot.root.children.keys.sorted() == ["presented(settings)#sheet"])
+      withExtendedLifetime(presented) {}
+    }
+
+    @Test
+    func givenPresentedRouterThatLeftScreen_whenSnapshotTaken_thenItIsSkipped() {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let presented = presentedRouter(in: root, route: .settings)
+      root.sheet = AnyRoute(wrapped: CodableTestRoute.settings)
+      root.sheet = nil
+
+      let snapshot = store.snapshot(from: root)
+
+      #expect(presented.hasLeftScreen)
+      #expect(snapshot.root.children.isEmpty)
+    }
+
+    @Test
+    func givenPresentedRouterThatIsNotTheCurrentSheet_whenSnapshotTaken_thenItIsSkipped() {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let presented = presentedRouter(in: root, route: .settings)
+      root.sheet = AnyRoute(wrapped: CodableTestRoute.details(id: "other"))
+
+      let snapshot = store.snapshot(from: root)
+
+      #expect(snapshot.root.children.isEmpty)
+      withExtendedLifetime(presented) {}
+    }
+
+    @Test
+    func givenPresentedRouterWhoseRootWasUpdated_whenSnapshotTaken_thenItIsSavedThroughItsPresentingRoute() {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let presented = presentedRouter(in: root, route: .settings)
+      root.sheet = AnyRoute(wrapped: CodableTestRoute.settings)
+      presented.update(root: CodableTestRoute.details(id: "new"))
+
+      let snapshot = store.snapshot(from: root)
+
+      #expect(snapshot.root.children.keys.sorted() == ["presented(settings)#sheet"])
+    }
+
+    @Test
+    func givenRouteThatFailsToEncode_whenSnapshotTaken_thenOnlyItsStateIsSkippedAndItsChildrenAreSaved() {
+      let spy = LoggerSpy(storesConfiguration: false)
+      let root = Router(configuration: Configuration(loggerSpy: spy))
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let broken = Router(
+        root: AnyRoute(wrapped: ThrowingEncodeRoute.broken),
+        type: .stack("home"),
+        parent: root,
+        schema: RestorationSchema(route: ThrowingEncodeRoute.self)
+      )
+      let child = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.home),
+        type: .stack("child"),
+        parent: broken,
+        schema: RestorationSchema(route: CodableTestRoute.self)
+      )
+
+      _ = store.snapshot(from: root)
+      let snapshot = store.snapshot(from: root)
+
+      let node = snapshot.root.children["stack(home)"]
+      #expect(node?.state == nil)
+      #expect(node?.children["stack(child)"]?.state != nil)
+      let reasons = restorationReasons(spy)
+      #expect(reasons.count == 1)
+      guard case let .encodingFailed(container, _) = reasons.first else {
+        Issue.record("expected encodingFailed, got \(reasons)")
+        return
+      }
+      #expect(container == "app/stack(home)")
+      withExtendedLifetime(child) {}
+    }
+
+    @Test
+    func givenSnapshotSavedFromAnotherRoot_whenRootRouterBuilt_thenNoStateIsRestored() throws {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let schema = RestorationSchema(route: CodableTestRoute.self)
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+      stack.path = [AnyRoute(wrapped: CodableTestRoute.settings)]
+      var foreign = store.snapshot(from: root)
+      foreign.rootSegment = "tabRouter(Other)"
+
+      let newRoot = Router(configuration: Configuration())
+      newRoot.attachRestorationStore(NavigationRestorationStore(snapshot: foreign))
+      let newStack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: newRoot, schema: schema)
+
+      #expect(newStack.path.isEmpty)
+    }
+
+    @Test
+    func tabRouter_restorationSegment_isNamedAfterTheTabRouteType() {
+      let root = Router(configuration: Configuration())
+
+      let tabRouter = TabRouter(tab: TestTabRoute.home, parent: root)
+
+      #expect(tabRouter.restorationSegment == "tabRouter(TestTabRoute)")
     }
 
     @Test

@@ -55,6 +55,10 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
     AnyRoute(wrapped: tab.wrapped)
   }
 
+  override var restorationSegment: String {
+    "tabRouter(\(String(describing: type(of: tab.wrapped))))"
+  }
+
   /// Initializes a `TabRouter` for a given tab.
   ///
   /// - Parameters:

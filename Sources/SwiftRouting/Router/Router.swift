@@ -293,7 +293,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
     modalSlot: ModalSlot?,
     schema: RestorationSchema?
   ) -> NavigationRestorationStore.Restoration {
-    guard let schema, let store = parent.restorationStore else { return .none }
+    guard let schema, let store = parent.restorationStore else { return .unrestored }
     return store.restore(
       at: parent.restorationPath + [restorationSegment(type: type, modalSlot: modalSlot)],
       schema: schema,
