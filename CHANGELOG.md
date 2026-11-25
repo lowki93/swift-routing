@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-25
+
 ### Added
 
 - Claude Code plugin: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` ship the `swift-routing` and `swift-routing-migration` AI skills as a plugin, installed with `/plugin marketplace add lowki93/swift-routing` then `/plugin install swift-routing@swift-routing`. The manifest points at the existing `.skills/` directory, so `npx skills add` and the repo layout are unchanged (#166)
@@ -430,7 +432,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project foundation (#1, #2, #3, #4)
 
-[Unreleased]: https://github.com/lowki93/swift-routing/compare/1.2.0...HEAD
+[Unreleased]: https://github.com/lowki93/swift-routing/compare/1.2.1...HEAD
+[1.2.1]: https://github.com/lowki93/swift-routing/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/lowki93/swift-routing/compare/1.1.0...1.2.0
 [1.1.0]: https://github.com/lowki93/swift-routing/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/lowki93/swift-routing/compare/0.7.0...1.0.0
