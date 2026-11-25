@@ -73,6 +73,8 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var sheet: AnyRoute? {
     didSet {
       guard oldValue != sheet else { return }
+      // Before `present.send`: an observer reacting to `false` may request the next modal right away.
+      modalSlotChanged(from: oldValue, to: sheet)
       present.send((sheet != nil, self))
       logCloseIfNeeded(from: oldValue, to: sheet)
     }
@@ -82,10 +84,25 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var cover: AnyRoute? {
     didSet {
       guard oldValue != cover else { return }
+      modalSlotChanged(from: oldValue, to: cover)
       present.send((cover != nil, self))
       logCloseIfNeeded(from: oldValue, to: cover)
     }
   }
+
+  /// The presented child animating out: UIKit drops a modal presented before it is gone.
+  private weak var dismissingChild: Router?
+
+  /// The latest sheet or cover requested while `dismissingChild` was set.
+  private var pendingModal: PendingModal?
+
+  private enum PendingModal {
+    case sheet(AnyRoute)
+    case cover(AnyRoute)
+  }
+
+  /// Set once the parent stops showing this router, so a leftover router never counts as on screen.
+  private(set) var hasLeftScreen = false
 
   /// Triggers dismissal of the current modal when set to `true`.
   @Published internal var triggerClose: Bool = false
@@ -236,6 +253,15 @@ public final class Router: BaseRouter, @unchecked Sendable {
     self.isCompact = isCompact
     parent.addChild(self)
   }
+
+  /// A dismissing child released without reporting its dismissal ends it, as `dismissingChild` is
+  /// weak: the held modal is presented on the main actor, outside the `deinit`.
+  override func removeChild(_ child: BaseRouter) {
+    super.removeChild(child)
+    // `onDisappear` is not enough: a router whose content was built but never shown is released
+    // with neither `onDismiss` nor `onDisappear`.
+    Task { @MainActor [weak self] in self?.presentPendingModal() }
+  }
 }
 
 // MARK: - Presentation
@@ -243,23 +269,24 @@ public final class Router: BaseRouter, @unchecked Sendable {
 extension Router: @preconcurrency PresentationModel {
 
   @MainActor public func present(_ destination: some Route, withStack: Bool) {
-    log(.navigation(from: currentRoute.wrapped, to: destination, type: .sheet(withStack: withStack)))
-    sheet = AnyRoute(wrapped: destination, inStack: withStack)
+    requestModal(.sheet(AnyRoute(wrapped: destination, inStack: withStack)))
   }
 
   @MainActor public func cover(_ destination: some Route) {
-    log(.navigation(from: currentRoute.wrapped, to: destination, type: .cover))
-    cover = AnyRoute(wrapped: destination)
+    requestModal(.cover(AnyRoute(wrapped: destination)))
   }
 
   @MainActor public func close() {
     guard isPresented else { return }
+    pendingModal = nil
     isCloseLoggedExplicitly = true
     triggerClose = true
     log(.action(.close))
   }
 
   @MainActor public func closeChildren() {
+    // A dismissal already in flight stays tracked: a deeplink target requested next must wait for it.
+    pendingModal = nil
     let presentedChildren = children.values.compactMap({ $0.value as? Router }).filter(\.isPresented)
 
     guard !presentedChildren.isEmpty else { return }
@@ -273,8 +300,66 @@ extension Router: @preconcurrency PresentationModel {
 
   /// Sent by `RoutingView` and `RoutingSplitView` from their sheet and cover `onDismiss`,
   /// so both containers emit ``BaseRouter/dismissed`` the same way.
-  func notifyModalDismissed() {
+  ///
+  /// Ends the dismissal in flight, then presents the modal requested meanwhile.
+  @MainActor func notifyModalDismissed() {
+    dismissingChild = nil
+    // Observers run with nothing dismissing, so a modal they present is shown right away
+    // and, being newer, replaces the held one.
     dismissed.send(self)
+    presentPendingModal()
+  }
+
+  /// Sent by `RoutingView` when the content of this router leaves the screen. Ends the dismissal of
+  /// this router on its parent even if SwiftUI never reports `onDismiss` for it. Observed after
+  /// `onDismiss` on iOS, so it changes nothing when `onDismiss` comes.
+  @MainActor func notifyContentDisappeared() {
+    guard let parent = parent as? Router, parent.dismissingChild === self else { return }
+    parent.dismissingChild = nil
+    parent.presentPendingModal()
+  }
+
+  /// Presents `modal` now, or holds it in place of the held one while a dismissal is in flight.
+  @MainActor private func requestModal(_ modal: PendingModal) {
+    guard dismissingChild == nil else {
+      pendingModal = modal
+      return
+    }
+    pendingModal = nil
+    show(modal)
+  }
+
+  @MainActor private func presentPendingModal() {
+    guard dismissingChild == nil, let modal = pendingModal else { return }
+    pendingModal = nil
+    show(modal)
+  }
+
+  @MainActor private func show(_ modal: PendingModal) {
+    switch modal {
+    case let .sheet(route):
+      log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .sheet(withStack: route.inStack)))
+      sheet = route
+    case let .cover(route):
+      log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .cover))
+      cover = route
+    }
+  }
+
+  /// Marks the child of a modal leaving its slot as gone, and tracks its dismissal if the slot clears.
+  private func modalSlotChanged(from oldValue: AnyRoute?, to newValue: AnyRoute?) {
+    guard let oldValue else { return }
+    let child = children.values
+      .compactMap { $0.value as? Router }
+      .filter { $0.isPresented && !$0.hasLeftScreen }
+      .presenting([oldValue])
+    // No child: SwiftUI never showed this modal, so no `onDismiss` will come, or it showed an
+    // error view for a route without destination, a dismissal that cannot be tracked.
+    guard let child else { return }
+    child.hasLeftScreen = true
+    if newValue == nil {
+      dismissingChild = child
+    }
   }
 
   /// Catches dismissals that bypass `close()` entirely -- a native swipe-down, tapping outside
@@ -481,11 +566,9 @@ private extension Router {
       // Logged by `path`'s `didSet` instead -- see its comment for why.
       path.append(AnyRoute(wrapped: destination))
     case let .sheet(withStack):
-      log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
-      sheet = AnyRoute(wrapped: destination, inStack: withStack)
+      requestModal(.sheet(AnyRoute(wrapped: destination, inStack: withStack)))
     case .cover:
-      log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
-      cover = AnyRoute(wrapped: destination)
+      requestModal(.cover(AnyRoute(wrapped: destination)))
     case .root:
       log(.navigation(from: currentRoute.wrapped, to: destination, type: type))
       root = AnyRoute(wrapped: destination)

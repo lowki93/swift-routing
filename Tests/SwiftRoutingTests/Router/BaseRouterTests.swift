@@ -508,6 +508,25 @@ struct BaseRouterTests {
     }
 
     @Test
+    func leftoverRouterOfSameRoute_samePresentedAgain_return_notPicked() {
+      // `children` is a Dictionary: repeat with fresh routers so a lucky ordering can't hide a regression.
+      for _ in 0..<20 {
+        let parent = Router(configuration: Configuration())
+        let leftover = makePresented(in: parent)
+        parent.sheet = nil
+        parent.notifyModalDismissed()
+        parent.present(TestRoute.settings)
+
+        #expect(parent.deepestPresentedRouter()?.id == parent.id)
+
+        let expectedCurrent = makePresented(in: parent, sheet: false)
+        withExtendedLifetime(leftover) {
+          #expect(parent.deepestPresentedRouter()?.id == expectedCurrent.id)
+        }
+      }
+    }
+
+    @Test
     func presentedRouterWithUpdatedRoot_deepestPresentedRouter_return_presentedRouter() {
       let expectedPresented = Router(
         root: AnyRoute(wrapped: TestRoute.settings),

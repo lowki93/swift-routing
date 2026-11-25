@@ -59,6 +59,20 @@ This is a SwiftUI rendering-order quirk, not a SwiftRouting bug -- there's no fi
 
 Don't rely on `onAppear`/`onDisappear` ordering after a cross-tab push/present/deeplink into a tab that hasn't been shown yet. If you need reliable ordering (for logging, analytics, etc.), key off `Configuration.logger`/`Configuration.events` instead (see <doc:ConfigurationGuide>) -- `.action(.changeTab(_:))` and `.navigation(...)` are logged synchronously, in the correct causal order, at the moment the router methods are called, regardless of when SwiftUI actually renders each view.
 
+## Sheet or Cover Shows Up Late After a Dismissal
+
+### Symptom
+
+A sheet or cover requested right after another modal of the same router was dismissed appears only once the dismiss animation is over, or not at all.
+
+### Cause
+
+SwiftUI drops a modal set while the previous one is still animating out, so the router holds the request until SwiftUI reports the dismissal, and logs its `.navigation` only then. A newer request replaces the held one, and `close()` or `closeChildren()` drops it. See <doc:NavigationBasics#Presenting-While-a-Modal-Dismisses>.
+
+### Solution
+
+The delay is the earliest moment the new modal can be shown. If it never appears, look for a later request on the same router that replaced it, or a `close()` / `closeChildren()` call that dropped it.
+
 ## Context Not Received
 
 If a context is sent but no observer is triggered, check:

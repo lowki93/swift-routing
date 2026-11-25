@@ -29,6 +29,10 @@ struct HomeView: View {
 - `close()`: dismiss current presented router
 - `closeChildren()`: dismiss presented child routers
 
+A `present`, `cover` or modal `route(_:)` made while a sheet or cover of the same router is still
+dismissing is held and presented once the dismissal ends (SwiftUI would drop it). Only the latest
+held request is kept; `close()` and `closeChildren()` drop it.
+
 ## Typical Usage
 
 ```swift

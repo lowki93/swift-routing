@@ -240,9 +240,9 @@ extension BaseRouter: @preconcurrency BaseRouterModel {
   /// Unlike ``deepestRouter()``, this does not pick an arbitrary live child: it descends into a
   /// presented child only when the receiver currently shows a sheet or cover, and only one that
   /// belongs to it: the child whose `root` matches that sheet or cover, else the child created for
-  /// that route (its `type` stays `.presented(route.name)` after `update(root:)`). `children` has no
-  /// defined order, so a router left over from a dismissed modal is never picked, even while the
-  /// new modal's router does not exist yet: the receiver is returned instead. It also follows the
+  /// that route (its `type` stays `.presented(route.name)` after `update(root:)`). A router left over
+  /// from a dismissed modal is never picked, even one for the same route, and even while the new
+  /// modal's router does not exist yet: the receiver is returned instead. It also follows the
   /// selected tab of a `TabRouter`, or a single non-presented child (a `RoutingView` container).
   ///
   /// ## Example
@@ -259,17 +259,24 @@ extension BaseRouter: @preconcurrency BaseRouterModel {
   /// - Returns: The deepest presented `Router`, or `nil` if the receiver has no `Router` in its hierarchy.
   @MainActor public func deepestPresentedRouter() -> Router? {
     let live = children.values.compactMap(\.value)
-    let routers = live.compactMap { $0 as? Router }.filter(\.isPresented)
+    let routers = live.compactMap { $0 as? Router }.filter { $0.isPresented && !$0.hasLeftScreen }
     let current = (self as? Router).map { [$0.sheet, $0.cover].compactMap { $0 } } ?? []
-    // The type fallback covers a presented router that changed its own root with `update(root:)`
-    let presented = current.isEmpty ? nil
-      : routers.first { current.contains($0.root) }
-        ?? routers.first { router in current.contains { router.type == .presented($0.name) } }
+    let presented = routers.presenting(current)
     let others = live.filter { ($0 as? Router)?.isPresented != true }
     let next = presented
       ?? (self as? TabRouter).flatMap { $0.find(tab: $0.tab.wrapped) }
       ?? (others.count == 1 ? others.first : nil)
     return next?.deepestPresentedRouter() ?? self as? Router
+  }
+}
+
+extension Sequence where Element == Router {
+
+  /// The router showing one of `routes`: the one whose `root` matches, else the one created for
+  /// that route, whose `type` stays `.presented(route.name)` after `update(root:)`.
+  func presenting(_ routes: [AnyRoute]) -> Router? {
+    first { routes.contains($0.root) }
+      ?? first { router in routes.contains { router.type == .presented($0.name) } }
   }
 }
 

@@ -110,6 +110,19 @@ Use this guide to quickly diagnose common SwiftRouting issues.
 - Use `router.present(route, withStack: false)` when direct sheet modifiers are required.
 - Or set `routingType` to `.sheet(withStack: false)` for that route, or mark the case `@Sheet(withStack: false)` in a `@Routable` enum (see `macros.md`).
 
+## Sheet or Cover Shows Up Late After a Dismissal
+
+**Symptom**
+- A modal requested right after another one was dismissed appears only once the dismiss animation is over, or not at all.
+
+**Why it happens**
+- SwiftUI drops a modal set while the previous one of the same router is still animating out, so the router holds the request until SwiftUI reports the dismissal. The `.navigation` log is written when the modal is really presented.
+- A newer request replaces the held one, and `close()` or `closeChildren()` drops it.
+
+**What to do**
+- Nothing for the delay: it is the earliest moment UIKit accepts the new modal.
+- If it never appears, look for a later request on the same router that replaced it, or a `close()` / `closeChildren()` call that dropped it.
+
 ## `route(_:)` Ignores `@Sheet` / `@Cover`, or `@RouteName` Has No Effect
 
 **Symptom**

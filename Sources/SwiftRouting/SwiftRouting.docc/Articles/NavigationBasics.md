@@ -77,6 +77,19 @@ Present a route as a full-screen cover:
 router.cover(HomeRoute.onboarding)
 ```
 
+### Presenting While a Modal Dismisses
+
+SwiftUI drops a sheet or cover set while the previous modal of the same router is still animating
+out. The router holds such a request instead, and presents it once SwiftUI reports the dismissal:
+
+```swift
+router.closeChildren()
+router.cover(HomeRoute.onboarding) // presented once the closed modal is gone
+```
+
+Only the latest held request is kept: a newer one replaces it. `close()` and `closeChildren()` drop
+it. A request made while nothing is dismissing is presented right away.
+
 ## Navigating Back
 
 ### Back One Step
@@ -231,7 +244,8 @@ When handling deep links or resetting navigation, close all presented modals:
 router.closeChildren()
 ```
 
-This dismisses any sheets or covers presented from this router.
+This dismisses any sheets or covers presented from this router. A sheet or cover requested right
+after is presented once the dismissal ends, see <doc:NavigationBasics#Presenting-While-a-Modal-Dismisses>.
 
 ## Targeting the Frontmost Router
 
