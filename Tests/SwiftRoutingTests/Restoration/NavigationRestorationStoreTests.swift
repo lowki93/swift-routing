@@ -274,12 +274,12 @@ struct NavigationRestorationStoreTests {
   @MainActor
   struct PresentedContainers {
     @Test
-    func presentedType_schema_returnNil() {
+    func presentedType_schemaInit_returnNil() {
       #expect(RestorationSchema(type: .presented("details"), route: CodableTestRoute.self) == nil)
     }
 
     @Test
-    func stackType_schema_returnSchema() {
+    func stackType_schemaInit_returnSchema() {
       #expect(RestorationSchema(type: .stack("home"), route: CodableTestRoute.self) != nil)
     }
 
@@ -321,7 +321,48 @@ struct NavigationRestorationStoreTests {
       #expect(snapshot.root.children.isEmpty)
       withExtendedLifetime(presented) {}
     }
-  }
+
+    @Test
+    func givenStackNestedInCurrentSheet_whenSnapshotTaken_thenItIsNotSavedAndNotSeeded() throws {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let presented = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "1")),
+        type: .presented("details"),
+        parent: root,
+        schema: RestorationSchema(type: .presented("details"), route: CodableTestRoute.self)
+      )
+      let nested = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "1")),
+        type: .stack("home"),
+        parent: presented,
+        schema: RestorationSchema(type: .stack("home"), route: CodableTestRoute.self)
+      )
+      nested.path = [AnyRoute(wrapped: CodableTestRoute.settings)]
+      root.sheet = AnyRoute(wrapped: CodableTestRoute.details(id: "1"))
+
+      let data = try store.save(from: root)
+
+      let freshRoot = Router(configuration: Configuration())
+      freshRoot.attachRestorationStore(NavigationRestorationStore(data: data))
+      let freshPresented = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "2")),
+        type: .presented("details"),
+        parent: freshRoot,
+        schema: RestorationSchema(type: .presented("details"), route: CodableTestRoute.self)
+      )
+      let freshNested = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "2")),
+        type: .stack("home"),
+        parent: freshPresented,
+        schema: RestorationSchema(type: .stack("home"), route: CodableTestRoute.self)
+      )
+
+      #expect(store.snapshot(from: root).root.children.isEmpty)
+      #expect(freshNested.path.isEmpty)
+      withExtendedLifetime((presented, nested, freshPresented)) {}
+    }  }
 
   @MainActor
   struct Codec {

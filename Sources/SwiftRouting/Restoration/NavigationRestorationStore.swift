@@ -195,6 +195,7 @@ final class NavigationRestorationStore: @unchecked Sendable {
     guard let router = child as? Router else { return true }
     guard !router.hasLeftScreen else { return false }
     guard router.isPresented else { return true }
+    guard router.restorationSchema != nil else { return false }
     guard let parent = parent as? Router else { return false }
     return [router].presenting([parent.sheet, parent.cover].compactMap { $0 }) != nil
   }
