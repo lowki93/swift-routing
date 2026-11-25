@@ -67,10 +67,9 @@ struct NavigationRestorationStoreTests {
         schema: RestorationSchema(route: CodableTestRoute.self)
       )
 
-      let reasons = spy.receivedMessages.compactMap {
-        if case let .error(.restoration(reason)) = $0 { reason } else { nil }
-      }
-      #expect(reasons.count == 1)
+      let errorCount = spy.receivedMessages.filter { if case .error(.restoration) = $0 { true } else { false } }.count
+      #expect(errorCount == 1)
+      assertLogMessagesContain(spy, expected: .error(.restoration(.decodingFailed(container: "snapshot", error: ""))))
       #expect(stack.path.isEmpty)
     }
   }

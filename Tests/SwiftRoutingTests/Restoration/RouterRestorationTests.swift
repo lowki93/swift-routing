@@ -15,12 +15,12 @@ final class FailureRecorder: @unchecked Sendable {
   }
 }
 
-/// Errors received by `spy`, in order.
+/// Number of restoration errors received by `spy`.
 @MainActor
-private func restorationReasons(_ spy: LoggerSpy) -> [RouterError.RestorationReason] {
-  spy.receivedMessages.compactMap {
-    if case let .error(.restoration(reason)) = $0 { reason } else { nil }
-  }
+private func restorationErrorCount(_ spy: LoggerSpy) -> Int {
+  spy.receivedMessages.filter {
+    if case .error(.restoration) = $0 { true } else { false }
+  }.count
 }
 
 /// Builds `app -> stack(home)` with a root and a 2-route path (the second one without stack),
@@ -178,15 +178,9 @@ struct RouterRestorationTests {
       let first = Router(root: AnyRoute(wrapped: TestRoute.home), type: .stack("home"), parent: root, schema: schema)
       _ = Router(root: AnyRoute(wrapped: TestRoute.home), type: .stack("home"), parent: root, schema: schema)
 
-      let reasons = restorationReasons(spy)
       #expect(first.path.isEmpty)
-      #expect(reasons.count == 1)
-      guard case let .notCodable(container, type) = reasons.first else {
-        Issue.record("expected notCodable, got \(reasons)")
-        return
-      }
-      #expect(container == "app/stack(home)")
-      #expect(type.contains("TestRoute"))
+      #expect(restorationErrorCount(spy) == 1)
+      assertLogMessagesContain(spy, expected: .error(.restoration(.notCodable(container: "app/stack(home)", type: "TestRoute"))))
     }
 
     @Test
@@ -241,15 +235,10 @@ struct RouterRestorationTests {
       let stack = Router(root: AnyRoute(wrapped: RenamedCodableTestRoute.landing), type: .stack("home"), parent: root, schema: schema)
       _ = Router(root: AnyRoute(wrapped: RenamedCodableTestRoute.landing), type: .stack("home"), parent: root, schema: schema)
 
-      let reasons = restorationReasons(spy)
       #expect((stack.root.wrapped as? RenamedCodableTestRoute) == .landing)
       #expect(stack.path.isEmpty)
-      #expect(reasons.count == 1)
-      guard case let .decodingFailed(container, _) = reasons.first else {
-        Issue.record("expected decodingFailed, got \(reasons)")
-        return
-      }
-      #expect(container == "app/stack(home)")
+      #expect(restorationErrorCount(spy) == 1)
+      assertLogMessagesContain(spy, expected: .error(.restoration(.decodingFailed(container: "app/stack(home)", error: ""))))
     }
 
     @Test
@@ -341,9 +330,9 @@ struct RouterRestorationTests {
       _ = store.snapshot(from: root)
       let snapshot = store.snapshot(from: root)
 
-      let reasons = restorationReasons(spy)
       #expect(snapshot.root.children.isEmpty)
-      #expect(reasons == [.duplicateKey(container: "app/stack(home)")])
+      #expect(restorationErrorCount(spy) == 1)
+      assertLogMessagesContain(spy, expected: .error(.restoration(.duplicateKey(container: "app/stack(home)"))))
     }
 
     @Test
@@ -462,13 +451,8 @@ struct RouterRestorationTests {
       let node = snapshot.root.children["stack(home)"]
       #expect(node?.state == nil)
       #expect(node?.children["stack(child)"]?.state != nil)
-      let reasons = restorationReasons(spy)
-      #expect(reasons.count == 1)
-      guard case let .encodingFailed(container, _) = reasons.first else {
-        Issue.record("expected encodingFailed, got \(reasons)")
-        return
-      }
-      #expect(container == "app/stack(home)")
+      #expect(restorationErrorCount(spy) == 1)
+      assertLogMessagesContain(spy, expected: .error(.restoration(.encodingFailed(container: "app/stack(home)", error: ""))))
       withExtendedLifetime(child) {}
     }
 
@@ -514,23 +498,11 @@ struct RouterRestorationTests {
       stack.present(CodableTestRoute.settings)
       stack.present(CodableTestRoute.details(id: "later"))
 
-      let data = try NavigationRestorationStore.encode(store.snapshot(from: root))
+      let snapshot = store.snapshot(from: root)
 
-      let keys = allKeys(in: try JSONSerialization.jsonObject(with: data))
-      #expect(!keys.contains { $0.localizedCaseInsensitiveContains("context") })
-      #expect(!keys.contains { $0.localizedCaseInsensitiveContains("pending") })
-      #expect(!keys.contains { $0.localizedCaseInsensitiveContains("dismissing") })
-      #expect(!keys.contains { $0.localizedCaseInsensitiveContains("compact") })
+      // No sheet, cover or other field is written while a modal is pending and a context is registered.
+      let expected = RouterState(root: try RestorationCodec.encode(AnyRoute(wrapped: CodableTestRoute.home)), path: [])
+      #expect(snapshot.root.children["stack(home)"]?.state == expected)
     }
   }
-}
-
-private func allKeys(in object: Any) -> Set<String> {
-  if let dictionary = object as? [String: Any] {
-    return dictionary.reduce(into: Set(dictionary.keys)) { $0.formUnion(allKeys(in: $1.value)) }
-  }
-  if let array = object as? [Any] {
-    return array.reduce(into: []) { $0.formUnion(allKeys(in: $1)) }
-  }
-  return []
 }
