@@ -57,6 +57,9 @@ Highlight any API, public interface, or dependency changes
 
 **Review notes**: (optional)
 Reviewer findings you chose not to fix, each with the reason
+
+**Agent metrics**:
+(Linear ticket flow PRs only, omit otherwise) — see `ai-rules/agent_metrics.md`
 ```
 
 Types: `feat`, `fix`, `update`, `impr`, `revert`
@@ -70,4 +73,5 @@ PRs from forks don't get repository secrets on `pull_request`, so they are not r
 - The comment must start with `@claude_review`, and only owners, members and collaborators can trigger it.
 - `anthropics/claude-code-action` is pinned to a commit SHA. Dependabot (`.github/dependabot.yml`) opens an `update(deps)` PR for each new release: read the release notes before merging, since a release can change behavior (v1.0.288 started skipping fork PRs by default). Dependabot PRs keep their own titles and branches: they're exempt from the branch naming and PR title/body conventions above.
 - On a follow-up `@claude_review`, Claude checks its previous open threads. The workflow replies "Fixed in <sha>" and resolves the ones it reports as fixed (only Claude's own threads on that PR), and Claude doesn't repost findings that are still open. Threads from people are never touched.
+- React 👍 / 👎 on each inline Claude finding to rate it (feeds `scripts/agent-metrics.py`, see `ai-rules/agent_metrics.md`). Votes from the PR author are ignored.
 - The review covers the PR head when the job starts. That is usually right after the comment, but later if another review is already running on the same PR. If the contributor pushes after you read the PR, read it again before commenting.

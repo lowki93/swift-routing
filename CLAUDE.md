@@ -22,6 +22,10 @@ See `ai-rules/versionning.md` for the full branch, commit, and PR conventions.
 
 External contributor PRs: a maintainer comments `@claude_review` on the PR to run the Claude review on GitHub (`.github/workflows/claude-pr-review.yml`, skill `.claude/skills/pull-request-review`).
 
+## Agent Metrics
+
+See `ai-rules/agent_metrics.md` for how agent quality is recorded and measured (`scripts/agent-metrics.py`).
+
 ## Documentation
 
 See `ai-rules/docc_articles.md` for how DocC articles are organized, placed and verified.

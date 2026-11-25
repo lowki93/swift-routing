@@ -12,7 +12,7 @@ This file defines the workflow to follow when working on a Linear ticket.
 6. **Review** — before any PR, run the `reviewer` subagent. Give it **no context**: only ask it to review the changes against `main`. It reviews uncommitted changes too (`git diff $(git merge-base main HEAD)` + untracked files), so it can run before the commit. It does a pure Swift code review (correctness, idioms, clean code, conventions).
    - Fix the relevant findings through `dev`, re-run the tests, and run `reviewer` again if the fixes were significant.
    - Findings you choose not to fix go in the PR body's **Review notes** section, with the reason (see `ai-rules/versionning.md`).
-7. **Commit, push, and create PR** — see `ai-rules/versionning.md` for commit and PR conventions
+7. **Commit, push, and create PR** — see `ai-rules/versionning.md` for commit and PR conventions, and fill the **Agent metrics** section of the PR body (`ai-rules/agent_metrics.md`)
 
 ## Subagents
 
