@@ -20,7 +20,7 @@ extension BaseRouter {
   ///   router.clearNavigationRestoration()
   /// }
   /// ```
-  public func clearNavigationRestoration() {
+  @MainActor public func clearNavigationRestoration() {
     restorationStore?.clear()
   }
 }

@@ -74,8 +74,9 @@ public extension View {
   /// warning logged. Closing the app from the app switcher discards the saved state, and each
   /// window restores its own.
   ///
-  /// Use one root router per window, and not `Router.defaultRouter`. Saved routes are written to
-  /// disk in clear: never put a token or sensitive data in a route.
+  /// Inject one root router per window with `.environment(\.router, ...)` placed after this modifier.
+  /// Without it the environment falls back to a router shared by every window. Saved routes are
+  /// written to disk in clear: never put a token or sensitive data in a route.
   ///
   /// ## Example
   ///

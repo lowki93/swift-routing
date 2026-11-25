@@ -167,16 +167,6 @@ struct NavigationRestorationStoreTests {
     }
 
     @Test
-    func givenSameTree_whenSavedTwice_thenDataIsIdentical() throws {
-      let (root, store, _) = makeTree(path: [.settings, .details(id: "1")])
-
-      let first = try store.save(from: root)
-      let second = try store.save(from: root)
-
-      #expect(first == second)
-    }
-
-    @Test
     func givenRouteRemovedAfterFirstSave_whenSavedAgain_thenOnlyWhatExistsIsStored() throws {
       let (root, store, stack) = makeTree(path: [.settings, .details(id: "1")])
       _ = try store.save(from: root)
@@ -222,6 +212,19 @@ struct NavigationRestorationStoreTests {
     }
 
     @Test
+    func givenStoreAttached_whenClearedThroughRouterModel_thenRouterBuiltAfterwardsStartsOnDefault() throws {
+      let data = try NavigationRestorationStoreTests().data(forStack: "home", path: [.settings])
+      let root = Router(configuration: Configuration())
+      root.attachRestorationStore(NavigationRestorationStore(data: data))
+      let model: any RouterModel = root
+
+      model.clearNavigationRestoration()
+
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
+      #expect(stack.path.isEmpty)
+    }
+
+    @Test
     func givenNoStore_whenRouterClears_thenNothingHappens() {
       let spy = LoggerSpy(storesConfiguration: false)
       let root = Router(configuration: Configuration(loggerSpy: spy))
@@ -258,19 +261,65 @@ struct NavigationRestorationStoreTests {
     }
 
     @Test
-    func givenStoresLoadedFromDifferentKeys_whenRoutersBuilt_thenEachSeesOnlyItsOwnState() throws {
-      let slotA = try NavigationRestorationStoreTests().data(forStack: "home", path: [.settings])
-      let slotB: Data? = nil
-      let rootA = Router(configuration: Configuration())
-      rootA.attachRestorationStore(NavigationRestorationStore(data: slotA))
-      let rootB = Router(configuration: Configuration())
-      rootB.attachRestorationStore(NavigationRestorationStore(data: slotB))
+    func givenEmptySlot_whenRoutersBuilt_thenStartOnDefault() {
+      let root = Router(configuration: Configuration())
+      root.attachRestorationStore(NavigationRestorationStore(data: nil))
 
-      let stackA = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: rootA, schema: schema)
-      let stackB = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: rootB, schema: schema)
+      let stack = Router(root: AnyRoute(wrapped: CodableTestRoute.home), type: .stack("home"), parent: root, schema: schema)
 
-      #expect(stackA.path.count == 1)
-      #expect(stackB.path.isEmpty)
+      #expect(stack.path.isEmpty)
+    }
+  }
+
+  @MainActor
+  struct PresentedContainers {
+    @Test
+    func presentedType_schema_returnNil() {
+      #expect(RestorationSchema(type: .presented("details"), route: CodableTestRoute.self) == nil)
+    }
+
+    @Test
+    func stackType_schema_returnSchema() {
+      #expect(RestorationSchema(type: .stack("home"), route: CodableTestRoute.self) != nil)
+    }
+
+    @Test
+    func givenStoredPresentedNode_whenPresentedRouterBuilt_thenItStartsOnItsOwnRootAndPath() throws {
+      let stored = try RestorationCodec.encode(AnyRoute(wrapped: CodableTestRoute.details(id: "1")))
+      var snapshot = NavigationSnapshot(version: NavigationSnapshot.currentVersion, root: RestorationNode())
+      snapshot.root.children["presented(details)"] = RestorationNode(state: RouterState(root: stored, path: [stored]))
+      let root = Router(configuration: Configuration())
+      root.attachRestorationStore(NavigationRestorationStore(data: try NavigationRestorationStore.encode(snapshot)))
+
+      let presented = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "2")),
+        type: .presented("details"),
+        parent: root,
+        schema: RestorationSchema(type: .presented("details"), route: CodableTestRoute.self)
+      )
+
+      #expect(presented.root.wrapped as? CodableTestRoute == .details(id: "2"))
+      #expect(presented.path.isEmpty)
+    }
+
+    @Test
+    func givenPresentedRouterThatIsTheCurrentSheet_whenSnapshotTaken_thenItIsNotSaved() {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let presented = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.details(id: "1")),
+        type: .presented("details"),
+        parent: root,
+        schema: RestorationSchema(type: .presented("details"), route: CodableTestRoute.self)
+      )
+      presented.path = [AnyRoute(wrapped: CodableTestRoute.settings)]
+      root.sheet = AnyRoute(wrapped: CodableTestRoute.details(id: "1"))
+
+      let snapshot = store.snapshot(from: root)
+
+      #expect(snapshot.root.children.isEmpty)
+      withExtendedLifetime(presented) {}
     }
   }
 

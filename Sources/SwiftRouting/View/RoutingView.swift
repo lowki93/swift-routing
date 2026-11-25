@@ -103,7 +103,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
         root: AnyRoute(wrapped: root, inStack: inStack),
         type: type,
         parent: parent,
-        schema: RestorationSchema(route: Destination.R.self)
+        schema: RestorationSchema(type: type, route: Destination.R.self)
       ),
       inStack: inStack,
       destination: destination,
