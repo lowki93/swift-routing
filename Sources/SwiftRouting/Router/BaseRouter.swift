@@ -75,6 +75,35 @@ public class BaseRouter: ObservableObject, Identifiable {
   }
 
 
+  // MARK: Navigation restoration
+
+  /// Guards `attachedRestorationStore`, read from `init`, which is not `@MainActor`-isolated.
+  private let restorationLock = NSLock()
+  private var attachedRestorationStore: NavigationRestorationStore?
+
+  /// The store this router saves to and restores from, set on the root router only and reached
+  /// by every descendant through the parent chain. `nil` when restoration is not enabled.
+  var restorationStore: NavigationRestorationStore? {
+    restorationLock.withLock { attachedRestorationStore } ?? parent?.restorationStore
+  }
+
+  /// This router's identity among its siblings in a snapshot. Subclasses override it.
+  var restorationSegment: String { "baseRouter" }
+
+  /// The identities from the root router down to this one.
+  var restorationPath: [String] {
+    (parent?.restorationPath ?? []) + [restorationSegment]
+  }
+
+  /// Makes `store` reachable from this router and every descendant, and reports why it
+  /// discarded the data it was loaded with, if it did.
+  func attachRestorationStore(_ store: NavigationRestorationStore) {
+    restorationLock.withLock { attachedRestorationStore = store }
+    if let failure = store.takeLoadFailure() {
+      log(.error(.restoration(failure)))
+    }
+  }
+
   /// Initializes a `BaseRouter` with a given configuration and an optional parent.
   ///
   /// - Parameters:

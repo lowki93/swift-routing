@@ -28,6 +28,8 @@ func assertLogMessageKind(_ loggerSpy: LoggerSpy, is expected: LogMessageKind) {
       && assertRoutingType(expectedType, type)
   case (.create, .create):
     matches = true
+  case let (.error(expectedError), .error(error)):
+    matches = assertError(expectedError, error)
   default:
     matches = false
   }
@@ -61,8 +63,21 @@ private func matchesLogMessage(expected: LogMessageKind, actual: LoggerMessage) 
       && assertRoutingType(expectedType, type)
   case (.create, .create):
     return true
+  case let (.error(expectedError), .error(error)):
+    return assertError(expectedError, error)
   default:
     return false
+  }
+}
+
+private func assertError(_ expected: RouterError, _ actual: RouterError) -> Bool {
+  switch (expected, actual) {
+  case let (.restoration(expectedReason), .restoration(reason)):
+    expectedReason == reason
+  case let (.routeNotFound(expectedRoute, expectedDestination), .routeNotFound(route, destination)):
+    expectedRoute.hashValue == route.hashValue && expectedDestination == destination
+  default:
+    false
   }
 }
 

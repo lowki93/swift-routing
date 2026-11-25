@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `RouterError.restoration(_:)` with a public `RouterError.RestorationReason` (`notCodable`, `decodingFailed`, `encodingFailed`, `duplicateKey`): the error logged when navigation restoration cannot save or restore a container. First building block of navigation state restoration (SWI-30): internal snapshot model, runtime `Codable` detection, and a lock-based store that seeds a stack router's root and path (with `inStack`) before its first render, without observers, navigation logs or events (SWI-35). Adding a case to `RouterError` affects exhaustive `switch` statements over it
 - Claude Code plugin: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` ship the `swift-routing` and `swift-routing-migration` AI skills as a plugin, installed with `/plugin marketplace add lowki93/swift-routing` then `/plugin install swift-routing@swift-routing`. The manifest points at the existing `.skills/` directory, so `npx skills add` and the repo layout are unchanged (#166)
 
 ### Changed

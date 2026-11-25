@@ -185,6 +185,22 @@ public final class Router: BaseRouter, @unchecked Sendable {
   // MARK: Configuration
   let type: RouterType
 
+  // MARK: Restoration
+
+  /// The slot of the parent this router is presented in, `nil` for a router that is not presented.
+  let modalSlot: ModalSlot?
+
+  /// What this router's container knows about its types, `nil` when it takes no part in restoration.
+  let restorationSchema: RestorationSchema?
+
+  override var restorationSegment: String {
+    Self.restorationSegment(type: type, modalSlot: modalSlot)
+  }
+
+  private static func restorationSegment(type: RouterType, modalSlot: ModalSlot?) -> String {
+    modalSlot.map { "\(type)#\($0.rawValue)" } ?? "\(type)"
+  }
+
   // MARK: Initialization
   /// Initializes a `Router` with a custom configuration.
   ///
@@ -194,6 +210,8 @@ public final class Router: BaseRouter, @unchecked Sendable {
   /// - Parameter configuration: The configuration used to customize the router's behavior.
   public init(configuration: Configuration) {
     self.type = .app
+    self.modalSlot = nil
+    self.restorationSchema = nil
     super.init(configuration: configuration, root: AnyRoute(wrapped: DefaultRoute.main), first: true)
   }
 
@@ -244,14 +262,43 @@ public final class Router: BaseRouter, @unchecked Sendable {
     parent: BaseRouter,
     isCompact: Bool = false,
     detailRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil,
-    contentRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil
+    contentRouteFactory: ((AnyHashable) -> AnyRoute?)? = nil,
+    modalSlot: ModalSlot? = nil,
+    schema: RestorationSchema? = nil
   ) {
     self.type = type
+    self.modalSlot = modalSlot
+    self.restorationSchema = schema
     self.detailRouteFactory = detailRouteFactory
     self.contentRouteFactory = contentRouteFactory
-    super.init(configuration: parent.configuration, root: root, parent: parent)
+
+    // Seed through the backing storage and the superclass initializer: the `path` observers, the
+    // `.navigation` log, `present` and `events` stay silent, only `.create` is logged.
+    let restoration = Self.restoration(parent: parent, type: type, modalSlot: modalSlot, schema: schema)
+    if let restored = restoration.state {
+      _path = Published(initialValue: restored.path)
+    }
+    super.init(configuration: parent.configuration, root: restoration.state?.root ?? root, parent: parent)
     self.isCompact = isCompact
     parent.addChild(self)
+
+    restoration.reasons.forEach { log(.error(.restoration($0))) }
+    restoration.crash?()
+  }
+
+  /// The saved state for the container this router is about to be, with what to report about it.
+  private static func restoration(
+    parent: BaseRouter,
+    type: RouterType,
+    modalSlot: ModalSlot?,
+    schema: RestorationSchema?
+  ) -> NavigationRestorationStore.Restoration {
+    guard let schema, let store = parent.restorationStore else { return .none }
+    return store.restore(
+      at: parent.restorationPath + [restorationSegment(type: type, modalSlot: modalSlot)],
+      schema: schema,
+      crashOnNotCodable: parent.configuration.shouldCrashOnRouteNotFound
+    )
   }
 
   /// A dismissing child released without reporting its dismissal ends it, as `dismissingChild` is
