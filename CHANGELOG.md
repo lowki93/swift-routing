@@ -16,6 +16,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Claude Code plugin: `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` ship the `swift-routing` and `swift-routing-migration` AI skills as a plugin, installed with `/plugin marketplace add lowki93/swift-routing` then `/plugin install swift-routing@swift-routing`. The manifest points at the existing `.skills/` directory, so `npx skills add` and the repo layout are unchanged (#166)
 
+### Changed
+
+- `closeChildren()` followed by presenting the same route in the same turn now shows that modal again, with a new router, once the dismissal ends. Before, SwiftUI saw no change and kept the old modal and its state on screen (#167)
+
+### Fixed
+
+- A sheet or cover requested while another modal of the same router is still dismissing is no longer lost: SwiftUI dropped it while the router kept the route. The router now holds the latest such request and presents it once the dismissal ends; `close()` and `closeChildren()` drop it (#167)
+
 ## [1.2.0] - 2026-11-24
 
 ### Added
