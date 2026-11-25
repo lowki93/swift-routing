@@ -55,6 +55,13 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
     AnyRoute(wrapped: tab.wrapped)
   }
 
+  /// The tab type name, captured once so the restoration segment never reads the mutable `tab`.
+  private let tabTypeName: String
+
+  override var restorationSegment: String {
+    "tabRouter(\(tabTypeName))"
+  }
+
   /// Initializes a `TabRouter` for a given tab.
   ///
   /// - Parameters:
@@ -62,6 +69,7 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
   ///   - parent: The parent `Router` managing this tab.
   init(tab: some TabRoute, parent: BaseRouter) {
     self.tab = AnyTabRoute(wrapped: tab)
+    self.tabTypeName = String(describing: type(of: tab))
     super.init(configuration: parent.configuration, root: AnyRoute(wrapped: tab), parent: parent)
     /// To avoid having more thant instance of the TabRoute, we remove the previous from the parent
     if let tabRouter = parent.tabRouter(for: tab) {
