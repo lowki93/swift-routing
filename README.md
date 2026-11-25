@@ -246,6 +246,17 @@ npx skills add lowki93/swift-routing --skill swift-routing
 npx skills add lowki93/swift-routing --skill swift-routing-migration
 ```
 
+### Claude Code plugin
+
+Claude Code users can install both skills as a plugin instead:
+
+```
+/plugin marketplace add lowki93/swift-routing
+/plugin install swift-routing@swift-routing
+```
+
+The skills are then available as `/swift-routing:swift-routing` and `/swift-routing:swift-routing-migration`. The plugin reads the same `.skills/` directory as `npx skills`, so both install paths stay in sync.
+
 ### Contributor Setup
 
 Cloning or forking this repo gets you the two skills above for free — they're committed under `.skills/`. `AGENTS.md` also references three global (machine-level, not repo-level) skills used for tests, concurrency, and DocC work. Install them once per machine:

@@ -1,0 +1,12 @@
+{
+  "name": "swift-routing",
+  "description": "AI skills for the SwiftRouting library",
+  "owner": { "name": "Kevin Budain", "url": "https://github.com/lowki93" },
+  "plugins": [
+    {
+      "name": "swift-routing",
+      "source": "./",
+      "description": "Guidance for SwiftRouting: routes, routers, tabs, deeplinks, the opt-in macros, and migrating from NavigationStack."
+    }
+  ]
+}
