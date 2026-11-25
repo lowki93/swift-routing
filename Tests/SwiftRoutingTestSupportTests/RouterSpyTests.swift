@@ -18,6 +18,18 @@ struct RouterSpyTests {
     }
   }
 
+  struct ClearNavigationRestoration {
+    @Test
+    func clearNavigationRestoration_return_callCounted() {
+      let spy = RouterSpy(root: FixtureRoute.home)
+
+      spy.clearNavigationRestoration()
+      spy.clearNavigationRestoration()
+
+      #expect(spy.clearNavigationRestorationCallCount == 2)
+    }
+  }
+
   struct Present {
     @Test
     func present_return_recordedRouteAndWithStack() {

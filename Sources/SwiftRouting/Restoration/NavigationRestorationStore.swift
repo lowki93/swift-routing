@@ -3,6 +3,7 @@
 //  swift-routing
 //
 
+import Combine
 import Foundation
 
 /// Holds the saved navigation of one scene, hands it out to the routers built from it, and snapshots the live tree.
@@ -46,6 +47,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
   private var logged: Set<LogKey> = []
   private var loadFailure: RestorationReason?
   private let failureHook: FailureHook
+
+  /// Fires after ``clear()``, so the owner of the persisted copy can erase it.
+  let cleared = PassthroughSubject<Void, Never>()
 
   init(snapshot: NavigationSnapshot = .empty, failureHook: @escaping FailureHook = { fatalError($0) }) {
     self._snapshot = snapshot
@@ -94,6 +98,16 @@ final class NavigationRestorationStore: @unchecked Sendable {
     path.isEmpty ? "snapshot" : path.joined(separator: "/")
   }
 
+  // MARK: - Clearing
+
+  /// Empties the in-memory snapshot and signals ``cleared``.
+  ///
+  /// Routers built afterwards start on their default state. It does not block later saves.
+  func clear() {
+    lock.withLock { _snapshot = .empty }
+    cleared.send()
+  }
+
   // MARK: - Seeding
 
   /// Looks up the saved state for the container at `path` and consumes it.
@@ -133,6 +147,12 @@ final class NavigationRestorationStore: @unchecked Sendable {
   func snapshot(from root: BaseRouter) -> NavigationSnapshot {
     let node = node(of: root, at: [root.restorationSegment]) ?? RestorationNode()
     return NavigationSnapshot(version: NavigationSnapshot.currentVersion, rootSegment: root.restorationSegment, root: node)
+  }
+
+  /// The data to persist for the live tree under `root`: what exists right now, encoded deterministically.
+  @MainActor
+  func save(from root: BaseRouter) throws -> Data {
+    try Self.encode(snapshot(from: root))
   }
 
   @MainActor

@@ -52,6 +52,7 @@ public final class RouterSpy: ObservableObject, RouterModel, @unchecked Sendable
   public private(set) var closeCallCount = 0
   public private(set) var closeChildrenCallCount = 0
   public private(set) var popCallCount = 0
+  public private(set) var clearNavigationRestorationCallCount = 0
   public private(set) var terminatedContexts: [Any] = []
   public private(set) var dispatchedContexts: [Any] = []
   public private(set) var addedContextTypes: [Any.Type] = []
@@ -100,6 +101,10 @@ public final class RouterSpy: ObservableObject, RouterModel, @unchecked Sendable
 
   public func terminate(_ value: some RouteContext) {
     terminatedContexts.append(value)
+  }
+
+  public func clearNavigationRestoration() {
+    clearNavigationRestorationCallCount += 1
   }
 
   // MARK: - PresentationModel
