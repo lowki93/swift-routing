@@ -29,7 +29,7 @@ A container is restored only when its types are `Codable`: routes (with associat
 
 ## Failures
 
-Logged once per container as `.error(.restoration(reason))`; the container starts on its default state (on `decodingFailed` its subtree too), others are restored. Reasons: `notCodable`, `decodingFailed`, `encodingFailed`, `duplicateKey`.
+Logged once per container as `.error(.restoration(reason))`; the container starts on its default state (on `decodingFailed` its subtree too, except a saved tab that no longer decodes, which only loses the selection while its tab stacks are restored), others are restored. Reasons: `notCodable`, `decodingFailed`, `encodingFailed`, `duplicateKey`.
 - `shouldCrashOnRouteNotFound` crashes only on `notCodable` (when restoration is on), never on decoding failures.
 - `RouterError.restoration` is a new case: exhaustive `switch` over `RouterError` must handle it.
 
