@@ -45,6 +45,7 @@ final class NavigationRestorationStore: @unchecked Sendable {
     let used: Set<[String]>
     let failed: Set<[String]>
     let screensGone: Set<[String]>
+    let restoredHosts: Set<[String]>
 
     func isFailed(_ path: [String]) -> Bool {
       failed.contains { path.starts(with: $0) }
@@ -66,6 +67,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
   /// Paths of stacks seeded from the snapshot that later left their restored screens (a pop, a root change,
   /// a deeplink): the nested containers saved under them are never seeded nor kept.
   private var screensGone: Set<[String]> = []
+  /// Paths of containers seeded from the snapshot this session. A stack, split or presented router outside
+  /// this set has no restored screens to compare against, so the containers saved under it are stale.
+  private var restoredHosts: Set<[String]> = []
   private var logged: Set<LogKey> = []
   private var loadFailure: RestorationReason?
   private let failureHook: FailureHook
@@ -159,6 +163,7 @@ final class NavigationRestorationStore: @unchecked Sendable {
         // The selections of a split come back with its path: an undecodable one fails the whole split.
         let content = try state.contentSelection.map { try schema.decodeContentSelection($0) }
         let detail = try state.detailSelection.map { try schema.decodeDetailSelection($0) }
+        restoredHosts.insert(path)
         return Restoration(
           state: RestoredState(
             root: root,
@@ -250,7 +255,7 @@ final class NavigationRestorationStore: @unchecked Sendable {
   /// A live node always wins.
   @MainActor
   func snapshot(from root: BaseRouter) -> NavigationSnapshot {
-    let (stored, history) = lock.withLock { (_snapshot, History(used: used, failed: failed, screensGone: screensGone)) }
+    let (stored, history) = lock.withLock { (_snapshot, History(used: used, failed: failed, screensGone: screensGone, restoredHosts: restoredHosts)) }
     let storedRoot = stored.rootSegment == root.restorationSegment ? stored.root : nil
     let node = node(of: root, at: [root.restorationSegment], stored: storedRoot, history: history) ?? RestorationNode()
     return NavigationSnapshot(version: NavigationSnapshot.currentVersion, rootSegment: root.restorationSegment, root: node)
@@ -293,8 +298,8 @@ final class NavigationRestorationStore: @unchecked Sendable {
       let childPath = path + [segment]
       if let slot = Self.modalSlot(of: segment) {
         guard Self.showsSameModal(slot, live: node.state, stored: stored?.state) else { continue }
-      } else if history.screensGone.contains(path) {
-        // A container nested in a screen of a stack that left its restored screens.
+      } else if !keepsNestedContainers(of: router, at: path, history: history) {
+        // A container nested in a screen of a host that was not restored, or that left its restored screens.
         continue
       }
       // shortcut: the node of a renamed tab type or of a removed tab case stays as stale bytes until
@@ -303,6 +308,20 @@ final class NavigationRestorationStore: @unchecked Sendable {
       node.children[segment] = surviving(storedChild, at: childPath, history: history)
     }
     return node.isEmpty ? nil : node
+  }
+
+  /// Whether the non-modal containers saved under `host` may still be kept: under the app root and a
+  /// `TabRouter` (whose unvisited tabs are never built), or under a host restored this session that
+  /// has not left its restored screens.
+  private func keepsNestedContainers(of host: BaseRouter, at path: [String], history: History) -> Bool {
+    Self.isAlwaysSeedable(host) || (history.restoredHosts.contains(path) && !history.screensGone.contains(path))
+  }
+
+  /// The app root and tab routers show no screens of their own that a stored child could be stale against.
+  private static func isAlwaysSeedable(_ host: BaseRouter) -> Bool {
+    guard let router = host as? Router else { return true }
+    if case .app = router.type { return true }
+    return false
   }
 
   /// The saved node, without what a router already consumed or what sits under a failed path.
@@ -330,12 +349,14 @@ final class NavigationRestorationStore: @unchecked Sendable {
     return liveRoute != nil && liveRoute == storedRoute
   }
 
-  /// Whether the container about to be built under `parent` may use its saved node: not when `parent`, a stack,
-  /// left the screens it was restored with (a pop or a deeplink in between leaves the node stale).
+  /// Whether the container about to be built under `parent` may use its saved node: only under the app
+  /// root, a `TabRouter`, or a host restored this session that has not left its restored screens.
+  /// A host that was not restored (non-`Codable` types, a failed decode, nothing saved), or whose screens
+  /// changed (a pop, a selection change, a deeplink), leaves the node stale.
   func allowsSeeding(under parent: BaseRouter) -> Bool {
-    guard parent is Router else { return true }
+    if Self.isAlwaysSeedable(parent) { return true }
     let path = parent.restorationPath
-    return lock.withLock { !screensGone.contains(path) }
+    return lock.withLock { restoredHosts.contains(path) && !screensGone.contains(path) }
   }
 
   /// What `router` contributes to a snapshot, `nil` when its container takes no part in restoration.

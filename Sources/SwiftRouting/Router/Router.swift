@@ -360,6 +360,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
       crashOnNotCodable: parent.configuration.shouldCrashOnRouteNotFound
     )
     // A selection the factory refuses is stale (a removed case): the whole split starts on its default state.
+    // The public closures are total, so this only guards internal factories.
     guard let state = restoration.state, type.isSplit else { return restoration }
     let refused = [
       (state.contentSelection, contentRouteFactory, "content"),

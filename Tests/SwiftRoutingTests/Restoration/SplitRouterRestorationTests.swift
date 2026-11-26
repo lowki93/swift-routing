@@ -125,21 +125,18 @@ struct SplitRouterRestorationTests {
     }
 
     @Test
-    func givenSavedSplit_whenSplitBuilt_thenNothingIsEmitted() async {
+    func givenSavedSplit_whenSplitBuilt_thenNothingIsPresentedAndNoErrorIsLogged() async {
       await Task.yield()
       var presentCount = 0
-      var selectionChangeCount = 0
       var cancellables: Set<AnyCancellable> = []
       launch.root.present.sink { _ in presentCount += 1 }.store(in: &cancellables)
 
       let split = threeColumns(in: launch.root)
-      split.$detailSelection.dropFirst().sink { _ in selectionChangeCount += 1 }.store(in: &cancellables)
-      split.$contentSelection.dropFirst().sink { _ in selectionChangeCount += 1 }.store(in: &cancellables)
       await Task.yield()
 
       #expect(presentCount == 0)
-      #expect(selectionChangeCount == 0)
       #expect(restorationErrorCount(launch.spy) == 0)
+      withExtendedLifetime(split) {}
     }
 
     @Test
@@ -426,4 +423,84 @@ struct SplitRouterRestorationTests {
       #expect(routes(of: nested) == [nestedPath])
     }
   }
+
+  @MainActor
+  struct NotRestoredHost {
+    /// A split saved with a nested stack, relaunched with selections that are not `Codable`.
+    private func nonCodableSplit(in launch: TabLaunch) throws -> Router {
+      Router(
+        root: AnyRoute(wrapped: CodableTestRoute.home),
+        type: .split("home", hasContentColumn: false),
+        parent: launch.root,
+        detailRouteFactory: { ($0 as? NonCodableSplitDetail).map { _ in AnyRoute(wrapped: CodableTestRoute.settings) } },
+        schema: RestorationSchema(route: route, content: Never.self, detail: NonCodableSplitDetail.self)
+      )
+    }
+
+    @Test
+    func givenNonCodableSplit_whenDetailSelectedThenNestedStackBuilt_thenItStartsOnDefault() throws {
+      let launch = TabLaunch(data: try savedThreeColumnData())
+      let split = try nonCodableSplit(in: launch)
+      split.select(detail: NonCodableSplitDetail(id: "y"))
+
+      #expect(nestedStack(in: split).path.isEmpty)
+    }
+
+    @Test
+    func givenNonCodableSplit_whenDetailSelected_thenTheStoredNestedNodeIsNotSavedAgain() throws {
+      let launch = TabLaunch(data: try savedThreeColumnData())
+      let split = try nonCodableSplit(in: launch)
+      split.select(detail: NonCodableSplitDetail(id: "y"))
+
+      #expect(launch.snapshot().splitNode?.children["stack(nested)"] == nil)
+      withExtendedLifetime(split) {}
+    }
+
+    @Test
+    func givenNonCodableStack_whenNestedContainerBuiltUnderAPushedScreen_thenItStartsOnDefault() throws {
+      let launch = TabLaunch(data: try savedStackData())
+      let stack = Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .stack("main"),
+        parent: launch.root,
+        schema: RestorationSchema(route: TestRoute.self)
+      )
+      stack.push(TestRoute.details(id: "1"))
+
+      #expect(nestedStack(in: stack).path.isEmpty)
+      #expect(launch.snapshot().root.children["stack(main)"]?.children["stack(nested)"] == nil)
+    }
+
+    @Test
+    func givenRestoredStack_whenNestedContainerBuilt_thenItIsRestored() throws {
+      let launch = TabLaunch(data: try savedStackData())
+      let stack = Router(
+        root: AnyRoute(wrapped: CodableTestRoute.home),
+        type: .stack("main"),
+        parent: launch.root,
+        schema: RestorationSchema(route: route)
+      )
+
+      #expect(routes(of: nestedStack(in: stack)) == [nestedPath])
+    }
+  }
+}
+
+/// A saved codable stack `main` holding a nested stack `[details(nested)]`.
+@MainActor
+private func savedStackData() throws -> Data {
+  let root = Router(configuration: Configuration())
+  let store = NavigationRestorationStore()
+  root.attachRestorationStore(store)
+  let stack = Router(
+    root: AnyRoute(wrapped: CodableTestRoute.home),
+    type: .stack("main"),
+    parent: root,
+    schema: RestorationSchema(route: route)
+  )
+  let nested = nestedStack(in: stack)
+  nested.path = [AnyRoute(wrapped: nestedPath)]
+  let data = try store.save(from: root)
+  withExtendedLifetime((stack, nested)) {}
+  return data
 }

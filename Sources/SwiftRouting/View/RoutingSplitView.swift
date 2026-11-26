@@ -140,8 +140,7 @@ public struct RoutingSplitView<
       contentRoute: ((ContentData) -> Destination.R)?,
       detailRoute: ((DetailData) -> Destination.R)?
     ) {
-      // The autoclosure of `StateObject` runs once, so a body pass builds no throwaway router that
-      // would consume the saved state.
+      // Built once by the `StateObject` autoclosure, so the saved state is consumed once.
       self._router = StateObject(
         wrappedValue: Router(
           root: AnyRoute(wrapped: sidebarRoute),
