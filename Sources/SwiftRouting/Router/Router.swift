@@ -300,11 +300,22 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
     // Seed through the backing storage and the superclass initializer: the `path` observers, the
     // `.navigation` log, `present` and `events` stay silent, only `.create` is logged.
-    let restoration = Self.restoration(parent: parent, type: type, modalSlot: modalSlot, root: root, schema: schema)
+    let restoration = Self.restoration(
+      parent: parent,
+      type: type,
+      modalSlot: modalSlot,
+      root: root,
+      schema: schema,
+      detailRouteFactory: detailRouteFactory,
+      contentRouteFactory: contentRouteFactory
+    )
     if let restored = restoration.state {
       _path = Published(initialValue: restored.path)
       _sheet = Published(initialValue: restored.sheet)
       _cover = Published(initialValue: restored.cover)
+      // With the path, so the detail stack's `.id(selection)` is coherent on the first frame.
+      _contentSelection = Published(initialValue: restored.contentSelection)
+      _detailSelection = Published(initialValue: restored.detailSelection)
     }
     super.init(configuration: parent.configuration, root: restoration.state?.root ?? root, parent: parent)
     self.isCompact = isCompact
@@ -324,7 +335,9 @@ public final class Router: BaseRouter, @unchecked Sendable {
     type: RouterType,
     modalSlot: ModalSlot?,
     root: AnyRoute,
-    schema: RestorationSchema?
+    schema: RestorationSchema?,
+    detailRouteFactory: ((AnyHashable) -> AnyRoute?)?,
+    contentRouteFactory: ((AnyHashable) -> AnyRoute?)?
   ) -> NavigationRestorationStore.Restoration {
     guard let store = parent.restorationStore else { return .unrestored }
     let path = parent.restorationPath + [restorationSegment(type: type, modalSlot: modalSlot)]
@@ -341,10 +354,21 @@ public final class Router: BaseRouter, @unchecked Sendable {
       return .unrestored
     }
     guard let schema else { return .unrestored }
-    return store.restore(
+    let restoration = store.restore(
       at: path,
       schema: schema,
       crashOnNotCodable: parent.configuration.shouldCrashOnRouteNotFound
+    )
+    // A selection the factory refuses is stale (a removed case): the whole split starts on its default state.
+    guard let state = restoration.state, type.isSplit else { return restoration }
+    let refused = [
+      (state.contentSelection, contentRouteFactory, "content"),
+      (state.detailSelection, detailRouteFactory, "detail"),
+    ].first { selection, factory, _ in selection.map { factory?($0) == nil } ?? false }
+    guard let refused else { return restoration }
+    return NavigationRestorationStore.Restoration(
+      state: nil,
+      reasons: [store.reject(at: path, error: "the \(refused.2) route factory refused the saved selection")].compactMap { $0 }
     )
   }
 
@@ -571,6 +595,7 @@ extension Router: @preconcurrency RouterModel {
     guard type.isSplit else { return }
 
     guard let value else {
+      if contentSelection != nil { selectionDidChange() }
       contentSelection = nil
       return
     }
@@ -583,6 +608,7 @@ extension Router: @preconcurrency RouterModel {
     guard let route = contentRouteFactory?(newSelection) else { return }
     log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
 
+    selectionDidChange()
     contentSelection = newSelection
   }
 
@@ -590,6 +616,7 @@ extension Router: @preconcurrency RouterModel {
     guard type.isSplit else { return }
 
     guard let value else {
+      if detailSelection != nil { selectionDidChange() }
       detailSelection = nil
       return
     }
@@ -599,7 +626,14 @@ extension Router: @preconcurrency RouterModel {
     guard let route = detailRouteFactory?(newSelection) else { return }
     log(.navigation(from: currentRoute.wrapped, to: route.wrapped, type: .push))
 
+    selectionDidChange()
     detailSelection = newSelection
+  }
+
+  /// A new selection leaves the restored detail path and the containers saved under the split behind,
+  /// like a stack leaving its restored screens.
+  private func selectionDidChange() {
+    if restoredPath != nil { restoredScreensGone() }
   }
 }
 

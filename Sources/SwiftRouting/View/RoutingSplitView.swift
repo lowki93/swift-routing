@@ -110,17 +110,7 @@ public struct RoutingSplitView<
 
   public var body: some View {
     Wrapped(
-      router: Router(
-        root: AnyRoute(wrapped: sidebarRoute),
-        type: .split(sidebarRoute.name, hasContentColumn: contentRoute != nil),
-        parent: parent,
-        detailRouteFactory: detailRoute.map { factory in
-          { sel in (sel as? DetailData).map { AnyRoute(wrapped: factory($0)) } }
-        },
-        contentRouteFactory: contentRoute.map { factory in
-          { sel in (sel as? ContentData).map { AnyRoute(wrapped: factory($0)) } }
-        }
-      ),
+      parent: parent,
       columnVisibility: columnVisibility,
       preferredCompactColumn: preferredCompactColumn,
       destination: destination,
@@ -140,6 +130,39 @@ public struct RoutingSplitView<
     let sidebarRoute: Destination.R
     let contentRoute: ((ContentData) -> Destination.R)?
     let detailRoute: ((DetailData) -> Destination.R)?
+
+    init(
+      parent: BaseRouter,
+      columnVisibility: Binding<NavigationSplitViewVisibility>?,
+      preferredCompactColumn: Binding<NavigationSplitViewColumn>,
+      destination: Destination.Type,
+      sidebarRoute: Destination.R,
+      contentRoute: ((ContentData) -> Destination.R)?,
+      detailRoute: ((DetailData) -> Destination.R)?
+    ) {
+      // The autoclosure of `StateObject` runs once, so a body pass builds no throwaway router that
+      // would consume the saved state.
+      self._router = StateObject(
+        wrappedValue: Router(
+          root: AnyRoute(wrapped: sidebarRoute),
+          type: .split(sidebarRoute.name, hasContentColumn: contentRoute != nil),
+          parent: parent,
+          detailRouteFactory: detailRoute.map { factory in
+            { sel in (sel as? DetailData).map { AnyRoute(wrapped: factory($0)) } }
+          },
+          contentRouteFactory: contentRoute.map { factory in
+            { sel in (sel as? ContentData).map { AnyRoute(wrapped: factory($0)) } }
+          },
+          schema: RestorationSchema(route: Destination.R.self, content: ContentData.self, detail: DetailData.self)
+        )
+      )
+      self.columnVisibility = columnVisibility
+      self.preferredCompactColumn = preferredCompactColumn
+      self.destination = destination
+      self.sidebarRoute = sidebarRoute
+      self.contentRoute = contentRoute
+      self.detailRoute = detailRoute
+    }
 
     var body: some View {
       splitView

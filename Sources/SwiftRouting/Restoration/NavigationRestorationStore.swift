@@ -35,6 +35,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
     var cover: AnyRoute?
     /// The saved tab of a `TabRouter`, `nil` when none was saved or it no longer decodes.
     var tab: AnyRoute?
+    /// The saved selections of a split router.
+    var contentSelection: AnyHashable?
+    var detailSelection: AnyHashable?
   }
 
   /// What the store knew when a save started, read once so the walk of the live tree holds no lock.
@@ -153,8 +156,19 @@ final class NavigationRestorationStore: @unchecked Sendable {
         // An undecodable tab (a removed case) only costs the selection: the stacks of the tabs are
         // other containers, restored on their own.
         let tab = decodeTab(state.tab, at: path, schema: schema)
+        // The selections of a split come back with its path: an undecodable one fails the whole split.
+        let content = try state.contentSelection.map { try schema.decodeContentSelection($0) }
+        let detail = try state.detailSelection.map { try schema.decodeDetailSelection($0) }
         return Restoration(
-          state: RestoredState(root: root, path: routes, sheet: sheet.route, cover: cover.route, tab: tab.route),
+          state: RestoredState(
+            root: root,
+            path: routes,
+            sheet: sheet.route,
+            cover: cover.route,
+            tab: tab.route,
+            contentSelection: content,
+            detailSelection: detail
+          ),
           reasons: [sheet.reason, cover.reason, tab.reason].compactMap { $0 }
         )
       } catch {
@@ -162,6 +176,17 @@ final class NavigationRestorationStore: @unchecked Sendable {
         let reason = RestorationReason.decodingFailed(container: Self.name(of: path), error: String(describing: error))
         return Restoration(state: nil, reasons: shouldLog(path, "decodingFailed") ? [reason] : [])
       }
+    }
+  }
+
+  /// Rejects what `restore(at:schema:crashOnNotCodable:)` handed out for the container at `path`
+  /// (a split selection its factory refuses): it and its subtree start on their default state.
+  /// Returns the reason to log, once.
+  func reject(at path: [String], error: String) -> RestorationReason? {
+    lock.withLock {
+      failed.insert(path)
+      let reason = RestorationReason.decodingFailed(container: Self.name(of: path), error: error)
+      return shouldLog(path, "decodingFailed") ? reason : nil
     }
   }
 
@@ -321,7 +346,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
         root: try RestorationCodec.encode(router.root),
         path: try router.path.map(RestorationCodec.encode),
         sheet: try router.sheet.map(RestorationCodec.encode),
-        cover: try router.cover.map(RestorationCodec.encode)
+        cover: try router.cover.map(RestorationCodec.encode),
+        contentSelection: try router.contentSelection.map { try RestorationCodec.encode(value: $0.base, inStack: false) },
+        detailSelection: try router.detailSelection.map { try RestorationCodec.encode(value: $0.base, inStack: false) }
       )
     }
     if let router = router as? TabRouter, router.restorationSchema.firstNonCodable == nil {
