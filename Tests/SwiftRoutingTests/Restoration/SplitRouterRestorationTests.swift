@@ -472,6 +472,90 @@ struct SplitRouterRestorationTests {
     }
 
     @Test
+    func givenNonCodableStack_whenNestedContainerBuiltInRootScreen_thenItIsRestored() throws {
+      let launch = TabLaunch(data: try savedStackData())
+      let stack = nonCodableStack(in: launch)
+
+      #expect(routes(of: nestedStack(in: stack)) == [nestedPath])
+    }
+
+    @Test
+    func givenNonCodableStack_whenPushedThenNestedContainerBuilt_thenItStartsOnDefault() throws {
+      let launch = TabLaunch(data: try savedStackData())
+      let stack = nonCodableStack(in: launch)
+      stack.push(TestRoute.details(id: "1"))
+
+      #expect(nestedStack(in: stack).path.isEmpty)
+    }
+
+    @Test
+    func givenNonCodableStack_whenNestedNotBuiltAndNothingChanged_thenTheStoredNodeIsKept() throws {
+      let launch = TabLaunch(data: try savedStackData())
+      let stack = nonCodableStack(in: launch)
+
+      #expect(launch.snapshot().root.children["stack(main)"]?.children["stack(nested)"] != nil)
+      withExtendedLifetime(stack) {}
+    }
+
+    @Test
+    func givenNonCodableStack_whenPushedAndNestedNotBuilt_thenTheStoredNodeIsNotSavedAgain() throws {
+      let launch = TabLaunch(data: try savedStackData())
+      let stack = nonCodableStack(in: launch)
+      stack.push(TestRoute.details(id: "1"))
+
+      #expect(launch.snapshot().root.children["stack(main)"]?.children["stack(nested)"] == nil)
+    }
+
+    @Test
+    func givenNonCodableSplit_whenNestedContainerBuiltInSidebar_thenItIsRestored() throws {
+      let launch = TabLaunch(data: try savedThreeColumnData())
+      let split = try nonCodableSplit(in: launch)
+
+      #expect(routes(of: nestedStack(in: split)) == [nestedPath])
+    }
+
+    @Test
+    func givenRestoredStackReleased_whenSecondRouterBuiltAndNestedContainerBuiltUnderAnotherScreen_thenItStartsOnDefault() throws {
+      let launch = TabLaunch(data: try savedRestoredStackWithPathData())
+      var first: Router? = codableStack(in: launch)
+      first = nil
+      let second = codableStack(in: launch)
+      second.push(CodableTestRoute.details(id: "y"))
+
+      #expect(nestedStack(in: second).path.isEmpty)
+      withExtendedLifetime(first) {}
+    }
+
+    @Test
+    func givenRestoredStackReleased_whenSecondRouterBuilt_thenTheStaleNestedNodeIsNotSavedAgain() throws {
+      let launch = TabLaunch(data: try savedRestoredStackWithPathData())
+      var first: Router? = codableStack(in: launch)
+      first = nil
+      let second = codableStack(in: launch)
+
+      #expect(launch.snapshot().root.children["stack(main)"]?.children["stack(nested)"] == nil)
+      withExtendedLifetime((first, second)) {}
+    }
+
+    private func nonCodableStack(in launch: TabLaunch) -> Router {
+      Router(
+        root: AnyRoute(wrapped: TestRoute.home),
+        type: .stack("main"),
+        parent: launch.root,
+        schema: RestorationSchema(route: TestRoute.self)
+      )
+    }
+
+    private func codableStack(in launch: TabLaunch) -> Router {
+      Router(
+        root: AnyRoute(wrapped: CodableTestRoute.home),
+        type: .stack("main"),
+        parent: launch.root,
+        schema: RestorationSchema(route: route)
+      )
+    }
+
+    @Test
     func givenRestoredStack_whenNestedContainerBuilt_thenItIsRestored() throws {
       let launch = TabLaunch(data: try savedStackData())
       let stack = Router(
@@ -498,6 +582,26 @@ private func savedStackData() throws -> Data {
     parent: root,
     schema: RestorationSchema(route: route)
   )
+  let nested = nestedStack(in: stack)
+  nested.path = [AnyRoute(wrapped: nestedPath)]
+  let data = try store.save(from: root)
+  withExtendedLifetime((stack, nested)) {}
+  return data
+}
+
+/// A saved codable stack `main` on `[details(x)]` holding a nested stack `[details(nested)]` under it.
+@MainActor
+private func savedRestoredStackWithPathData() throws -> Data {
+  let root = Router(configuration: Configuration())
+  let store = NavigationRestorationStore()
+  root.attachRestorationStore(store)
+  let stack = Router(
+    root: AnyRoute(wrapped: CodableTestRoute.home),
+    type: .stack("main"),
+    parent: root,
+    schema: RestorationSchema(route: route)
+  )
+  stack.push(CodableTestRoute.details(id: "x"))
   let nested = nestedStack(in: stack)
   nested.path = [AnyRoute(wrapped: nestedPath)]
   let data = try store.save(from: root)

@@ -67,8 +67,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
   /// Paths of stacks seeded from the snapshot that later left their restored screens (a pop, a root change,
   /// a deeplink): the nested containers saved under them are never seeded nor kept.
   private var screensGone: Set<[String]> = []
-  /// Paths of containers seeded from the snapshot this session. A stack, split or presented router outside
-  /// this set has no restored screens to compare against, so the containers saved under it are stale.
+  /// Paths of containers seeded from the snapshot this session, or built on their default screens (not
+  /// restorable, nothing saved). A stack, split or presented router outside this set was replaced or
+  /// failed, so the containers saved under it are stale.
   private var restoredHosts: Set<[String]> = []
   private var logged: Set<LogKey> = []
   private var loadFailure: RestorationReason?
@@ -146,11 +147,25 @@ final class NavigationRestorationStore: @unchecked Sendable {
         let reason = RestorationReason.notCodable(container: Self.name(of: path), type: RestorationCodec.name(of: type))
         let reasons = shouldLog(path, "notCodable") ? [reason] : []
         let hook = failureHook
+        // Not restorable, so it starts on its default screens: what is built there is not stale (D43).
+        if !isFailed(path) { restoredHosts.insert(path) }
         return Restoration(state: nil, reasons: reasons, crash: crashOnNotCodable ? { hook(reason.description) } : nil)
       }
-      guard path.first == _snapshot.rootSegment, !isFailed(path), used.insert(path).inserted,
+      guard used.insert(path).inserted else {
+        // A second router at this path was not seeded: what is saved under it is stale.
+        restoredHosts.remove(path)
+        return .unrestored
+      }
+      guard path.first == _snapshot.rootSegment, !isFailed(path),
         let state = _snapshot.root.node(at: path.dropFirst())?.state
-      else { return .unrestored }
+      else {
+        // Nothing saved: it starts on its default screens, so the containers built there are not stale (D43).
+        // shortcut: if the host's root was changed (`update(root:)`) in the previous session, the state saved
+        // under the old root screen may be seeded under the default root; telling them apart needs the saved
+        // root of a non-restorable host. Upgrade if it shows up.
+        if !isFailed(path) { restoredHosts.insert(path) }
+        return .unrestored
+      }
       do {
         let root = try state.root.map { try schema.decodeRoute($0) }
         let routes = try state.path.map { try schema.decodeRoute($0) }
@@ -250,8 +265,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
   /// or cover (so a pending or dismissing modal is never saved), and non-restorable routers. Siblings sharing a segment are not saved.
   ///
   /// The merge keeps a saved node without a live router only when it was never handed out (the stack of a
-  /// tab the user did not visit), is not a modal its live host no longer shows, is not nested in a stack that left its restored
-  /// screens, and is not under a failed path.
+  /// tab the user did not visit), is not a modal its live host no longer shows, is not nested in a stack,
+  /// split or presented router that failed, was replaced by a second router at its path, or left its
+  /// restored or default screens, and is not under a failed path.
   /// A live node always wins.
   @MainActor
   func snapshot(from root: BaseRouter) -> NavigationSnapshot {

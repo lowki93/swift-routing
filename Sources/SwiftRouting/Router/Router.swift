@@ -42,7 +42,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
       removeContext(old: path, new: newValue)
     }
     didSet {
-      if let restoredPath, !path.starts(with: restoredPath) { restoredScreensGone() }
+      if let restoredPath, hostIsOnDefaultScreens ? !path.isEmpty : !path.starts(with: restoredPath) { restoredScreensGone() }
       // `NavigationStack(path: $router.path)` (in `RoutingView`/`RoutingSplitView`) lets
       // SwiftUI mutate `path` directly through the binding -- bypassing push(_:)/pop()/
       // popToRoot()/terminate(_:) entirely -- for a native `NavigationLink` push, a
@@ -206,7 +206,14 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
   /// The path this router was seeded with, until its stack first changes below it.
   /// Read and written from the main actor, after `init`.
+  ///
+  /// A router that was not restored holds `[]` here with `hostIsOnDefaultScreens`: its first-frame screens
+  /// (root screen, sidebar) count as restored until its first change, so containers nested there are seeded.
   private var restoredPath: [AnyRoute]?
+
+  /// `true` when `restoredPath` stands for the default screens of a router that was not restored: any
+  /// push counts as leaving them, as `path.starts(with: [])` would never fire.
+  private var hostIsOnDefaultScreens = false
 
   /// The first change of the stack below the restored screens: the nested containers saved under
   /// them are stale for good, even if an equal screen is pushed again.
@@ -323,6 +330,9 @@ public final class Router: BaseRouter, @unchecked Sendable {
     if let restored = restoration.state {
       restoredModals = [ModalSlot.sheet: restored.sheet, .cover: restored.cover].compactMapValues { $0 }
       restoredPath = restored.path
+    } else if parent.restorationStore != nil {
+      restoredPath = []
+      hostIsOnDefaultScreens = true
     }
 
     restoration.reasons.forEach { log(.error(.restoration($0))) }
