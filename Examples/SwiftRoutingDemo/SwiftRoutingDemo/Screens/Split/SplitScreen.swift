@@ -8,8 +8,14 @@ import SwiftUI
 
 struct SplitScreen: View {
 
-  @State private var isThreeColumn = false
-  @State private var columnVisibility: ColumnVisibility = .all
+  static let isThreeColumnKey = "SwiftRoutingDemo.split.isThreeColumn"
+  static let columnVisibilityKey = "SwiftRoutingDemo.split.columnVisibility"
+
+  // The layout is persisted per window: the 2-column and 3-column splits share the restoration
+  // key `split(Sidebar)` but have different data types, so restoring the saved navigation into
+  // the other layout would fail and fall back to the default state.
+  @SceneStorage(Self.isThreeColumnKey) private var isThreeColumn = false
+  @SceneStorage(Self.columnVisibilityKey) private var columnVisibility: ColumnVisibility = .all
   @State private var preferredCompactColumn: NavigationSplitViewColumn = .detail
 
   var body: some View {
@@ -24,8 +30,8 @@ struct SplitScreen: View {
           destination: AppRoute.self,
           sidebar: .sidebar) { (type: PlayerType) in
             .players(.list(type))
-          } detail: { (player: Player) in
-            .players(.detail(player))
+          } detail: { (id: Player.ID) in
+            .players(.detail(id))
           }
       } else {
         RoutingSplitView(

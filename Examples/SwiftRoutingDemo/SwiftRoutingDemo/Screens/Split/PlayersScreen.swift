@@ -13,25 +13,32 @@ struct PlayersScreen: View {
   @Environment(\.router) private var router
   @Environment(\.isSplitThreeColumn) private var isThreeColumn
   @Environment(\.columnVisibility) private var columnVisibility
+  @Environment(\.horizontalSizeClass) private var horizontalSizeClass
   let type: PlayerType
 
   var body: some View {
     VStack(alignment: .leading) {
       Group {
         if router.hasContentColumn {
-          List(Player.players.for(type: type), selection: router.detailBinding(as: Player.self)) { item in
-            NavigationLink(item.name, value: item)
+          List(Player.players.for(type: type), selection: router.detailBinding(as: Player.ID.self)) { item in
+            NavigationLink(item.name, value: item.id)
           }
           .onFirstAppear {
+            // On compact width the split collapses to a stack: no detail selection means the list itself.
+            // Read the size class directly: `router.isCompact` is only updated on a size-class change,
+            // so it is still `false` on the first frame of a cold launch on iPhone.
+            guard horizontalSizeClass != .compact else { return }
             let players = Player.players.for(type: type)
             // Keep an already-selected player of this type (e.g. deep-linked) instead of
             // stomping it with the first one -- only auto-select when there's nothing usable.
-            if let selected = router.detailSelection as? Player, players.contains(selected) { return }
-            router.select(detail: players.first)
+            // This also matters for navigation restoration: selecting a different player here
+            // would count as a selection change and drop the restored nested state.
+            if let selected = router.detailSelection as? Player.ID, players.contains(where: { $0.id == selected }) { return }
+            router.select(detail: players.first?.id)
           }
         } else {
           List(Player.players.for(type: type)) { item in
-            NavigationLink(item.name, route: AppRoute.players(.detail(item)))
+            NavigationLink(item.name, route: AppRoute.players(.detail(item.id)))
           }
         }
       }

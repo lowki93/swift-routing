@@ -9,7 +9,7 @@ import SwiftRoutingMacros
 
 // Deliberately not uniform: home hides the tab bar on push, the other two don't.
 @TabRoutable
-enum HomeTab {
+enum HomeTab: Codable {
   @HideTabBarOnPush
   case home
   case notifications

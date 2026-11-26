@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftRoutingMacros
 
 @Routable(nameStyle: .capitalized)
-enum AppRoute {
+enum AppRoute: Codable {
   @RouteName(#"Home(\(name))"#)
   case home(name: String)
   @RouteName(.delegate)
@@ -31,15 +31,15 @@ enum AppRoute {
 // a subflow modeled as its own Route enum, exposed through a single case of the parent
 // route, rendered via a dedicated destination view (see PlayersRouteDestination below).
 @Routable
-enum PlayersRoute {
+enum PlayersRoute: Codable {
   @RouteName(#"Players(\(arg0))"#)
   case list(PlayerType)
-  @RouteName(#"Player(\(arg0.name))"#)
-  case detail(Player)
+  @RouteName(#"Player(\(arg0))"#)
+  case detail(Player.ID)
 }
 
 @Routable
-enum FormRoute {
+enum FormRoute: Codable {
   @RouteName(#"FormFlow"#)
   case flow // FormFlowScreen, the coordinator
   @RouteName(#"Form"#)
@@ -47,7 +47,7 @@ enum FormRoute {
 }
 
 @Routable
-enum NotificationsRoute {
+enum NotificationsRoute: Codable {
   @RouteName(#"Notifications"#)
   case list
   @RouteName(#"Notification(\(id))"#)
@@ -94,7 +94,7 @@ struct PlayersRouteDestination: View {
   var body: some View {
     switch route {
     case let .list(type): PlayersScreen(type: type)
-    case let .detail(player): PlayerScreen(player: player)
+    case let .detail(id): PlayerScreen(id: id)
     }
   }
 }
@@ -122,6 +122,6 @@ struct NotificationsRouteDestination: View {
 }
 
 @Routable
-enum FailedRoute {
+enum FailedRoute: Codable {
   case failed
 }
