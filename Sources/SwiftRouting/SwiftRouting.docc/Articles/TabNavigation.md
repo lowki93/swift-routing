@@ -248,6 +248,10 @@ enum HomeTab: TabRoute {
 
 > Tip: With `@TabRoutable`, mark the tabs that hide the tab bar with `@HideTabBarOnPush` and `hideTabBarOnPush` is generated for you. See <doc:Macros#Tab-Routes>.
 
+## Restoring the Selected Tab
+
+With ``SwiftUICore/View/navigationRestoration(_:)`` on, ``RoutingTabView`` comes back on the tab that was selected, without a reselect (no `popToRoot`), and updates your `tab` binding. The tab type must be `Codable`; the stacks of the tabs are restored on their own. A plain `TabView` does not restore its selected tab. See <doc:NavigationRestoration>.
+
 ## Deep Linking with Tabs
 
 Tab deeplink handling is covered in <doc:Deeplinks>, including:

@@ -18,11 +18,14 @@ import Foundation
 /// Configure a logger on ``Configuration`` to receive routing errors:
 ///
 /// ```swift
-/// let config = Configuration(logger: { message in
-///   if case .error(let error) = message.message {
-///     print("Routing error: \(error)")
-///   }
-/// })
+/// let config = Configuration(
+///   logger: { loggerConfiguration in
+///     if case .error(let error) = loggerConfiguration.message {
+///       print("Routing error: \(error)")
+///     }
+///   },
+///   shouldCrashOnRouteNotFound: false
+/// )
 /// ```
 ///
 /// ## Crash behavior
@@ -59,19 +62,22 @@ public enum RouterError: Error, CustomStringConvertible {
   /// `container` is the router's path in the navigation tree, for example `app/stack(home)`.
   ///
   /// ```swift
-  /// let config = Configuration(logger: { message in
-  ///   guard case .error(.restoration(let reason)) = message.message else { return }
-  ///   switch reason {
-  ///   case .notCodable(let container, let type):
-  ///     print("\(container) is not saved: \(type) is not Codable")
-  ///   case .decodingFailed(let container, let error):
-  ///     print("\(container) starts on its default state: \(error)")
-  ///   case .encodingFailed(let container, let error):
-  ///     print("\(container) is not saved: \(error)")
-  ///   case .duplicateKey(let container):
-  ///     print("Several routers share \(container)")
-  ///   }
-  /// })
+  /// let config = Configuration(
+  ///   logger: { loggerConfiguration in
+  ///     guard case .error(.restoration(let reason)) = loggerConfiguration.message else { return }
+  ///     switch reason {
+  ///     case .notCodable(let container, let type):
+  ///       print("\(container) is not saved: \(type) is not Codable")
+  ///     case .decodingFailed(let container, let error):
+  ///       print("\(container) starts on its default state: \(error)")
+  ///     case .encodingFailed(let container, let error):
+  ///       print("\(container) is not saved: \(error)")
+  ///     case .duplicateKey(let container):
+  ///       print("Several routers share \(container)")
+  ///     }
+  ///   },
+  ///   shouldCrashOnRouteNotFound: false
+  /// )
   /// ```
   public enum RestorationReason: Sendable, CustomStringConvertible {
     /// The container's route types are not `Codable`, so it starts on its default state.

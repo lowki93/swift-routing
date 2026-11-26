@@ -49,6 +49,8 @@ Configuration(shouldCrashOnRouteNotFound: true)
 Configuration(shouldCrashOnRouteNotFound: false)
 ```
 
+It also covers navigation restoration: when ``SwiftUICore/View/navigationRestoration(_:)`` is on, a container whose route types are not `Codable` crashes instead of logging a `notCodable` error. A saved state that fails to decode never crashes. See <doc:NavigationRestoration>.
+
 ### Custom Logger
 
 Provide a custom logger closure to handle navigation events:
@@ -115,7 +117,7 @@ SwiftRouting logs various events through ``LoggerMessage``:
 
 | Message | Description |
 |---------|-------------|
-| `.error(RouterError)` | A route could not be resolved to its destination |
+| `.error(RouterError)` | A route could not be resolved to its destination, or navigation restoration could not save or restore a container (`RouterError.restoration`) |
 
 When a route cannot be matched, SwiftRouting emits `.error(RouterError.routeNotFound)` before either crashing or displaying the fallback message. Use this in your logger to monitor unresolved routes in production:
 
@@ -127,6 +129,8 @@ Configuration(logger: { config in
     }
 })
 ```
+
+Restoration failures arrive as `.error(.restoration(reason))`, with a reason of `notCodable`, `decodingFailed`, `encodingFailed` or `duplicateKey`. They are never thrown, and are logged once per container. See <doc:NavigationRestoration#When-Something-Cannot-Be-Restored>.
 
 ## Custom Logger Examples
 

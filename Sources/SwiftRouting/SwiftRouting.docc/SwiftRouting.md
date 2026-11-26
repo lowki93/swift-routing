@@ -165,6 +165,11 @@ npx skills add lowki93/swift-routing --skill swift-routing -g
 - ``LoggerMessage``
 - ``RouterError``
 
+### State Restoration
+
+- <doc:NavigationRestoration>
+- ``SwiftUICore/View/navigationRestoration(_:)``
+
 ### Design
 
 - <doc:Architecture>

@@ -218,6 +218,7 @@ For comprehensive documentation, tutorials, and API reference, visit the **[full
 | [Macros](https://lowki93.github.io/swift-routing/1.2.0/documentation/swiftrouting/macros) | Generate route and tab names, routing types and tab bar visibility with the opt-in `@Routable` / `@TabRoutable` macros |
 | [Deep Linking](https://lowki93.github.io/swift-routing/1.2.0/documentation/swiftrouting/deeplinks) | Handle deep links in your app |
 | [Route Context](https://lowki93.github.io/swift-routing/1.2.0/documentation/swiftrouting/routecontextguide) | Pass data between routes |
+| [Navigation Restoration](https://lowki93.github.io/swift-routing/1.2.0/documentation/swiftrouting/navigationrestoration) | Restore tabs, stacks, sheets and splits after the system kills the app |
 | [Migration](https://lowki93.github.io/swift-routing/1.2.0/documentation/swiftrouting/migration) | Migrate from native NavigationStack |
 
 ## Examples
