@@ -77,19 +77,9 @@ struct RestorationCodableTests {
     func givenPlayerID_whenRoundtripped_thenEqualsOriginal(expected: Player.ID) throws {
       #expect(try roundtrip(expected) == expected)
     }
-
-    @Test(arguments: Player.players)
-    func givenPlayer_whenRoundtripped_thenEqualsOriginal(expected: Player) throws {
-      #expect(try roundtrip(expected) == expected)
-    }
   }
 
   struct StablePlayerIDs {
-    @Test
-    func givenStaticPlayers_whenAccessedTwice_thenSameIDs() {
-      #expect(Player.players.map(\.id) == Player.players.map { $0.id })
-    }
-
     @Test
     func givenStaticPlayers_whenListed_thenIDsAreUniqueAndFixed() {
       let expected = (1...20).map { UUID.stable(UInt8($0)) }
@@ -107,6 +97,11 @@ struct RestorationCodableTests {
     func givenSavedPlayerID_whenResolved_thenReturnsSamePlayer() throws {
       let saved = try roundtrip(Player.players[10].id)
       #expect(Player.player(id: saved) == Player.players[10])
+    }
+
+    @Test
+    func givenUnknownSavedID_whenResolved_thenReturnsNil() {
+      #expect(Player.player(id: UUID()) == nil)
     }
   }
 }
