@@ -28,10 +28,15 @@ enum RestorationCodec {
   }
 
   static func encode(_ route: AnyRoute) throws -> StoredRoute {
-    guard let encodable = route.wrapped as? any Encodable else {
-      throw NotCodable(type: name(of: Swift.type(of: route.wrapped)))
+    try encode(value: route.wrapped, inStack: route.inStack)
+  }
+
+  /// Encodes any `Encodable` value, such as a split selection.
+  static func encode(value: Any, inStack: Bool = true) throws -> StoredRoute {
+    guard let encodable = value as? any Encodable else {
+      throw NotCodable(type: name(of: Swift.type(of: value)))
     }
-    return StoredRoute(payload: try makeEncoder().encode(encodable), inStack: route.inStack)
+    return StoredRoute(payload: try makeEncoder().encode(encodable), inStack: inStack)
   }
 
   /// Decodes `stored` as a `T`, validating the cast to the concrete type.

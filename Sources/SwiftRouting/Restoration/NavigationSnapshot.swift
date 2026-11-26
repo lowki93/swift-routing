@@ -18,10 +18,10 @@ struct StoredRoute: Codable, Equatable, Sendable {
 struct RouterState: Codable, Equatable, Sendable {
   var root: StoredRoute?
   var path: [StoredRoute] = []
-  // `sheet`, `cover`, `tab`, `contentSelection` and `detailSelection` are reserved for T3-T5: not written yet.
   var sheet: StoredRoute?
   var cover: StoredRoute?
   var tab: StoredRoute?
+  /// The selections of a split router, saved as opaque payloads like routes.
   var contentSelection: StoredRoute?
   var detailSelection: StoredRoute?
 }
