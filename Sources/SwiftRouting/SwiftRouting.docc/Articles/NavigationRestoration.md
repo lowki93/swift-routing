@@ -37,7 +37,7 @@ struct RootView: View {
 
 The modifier reads the root router from the environment, so `.environment(\.router, ...)` must come after it in the modifier chain (applied further out), exactly like `printRouterOnChange()` (see <doc:Troubleshooting>).
 
-> Important: Apply it at the root only. Below the root (inside a screen, a sheet or a tab), the modifier is a silent no-op: the root's modifier is the only one that saves and restores.
+> Important: Apply it exactly once per scene, at the root, before `.environment(\.router, ...)`. Inside the content of a `RoutingView`, a split or a modal, the modifier is a silent no-op. Do not apply it to the `RoutingView`s of a ``RoutingTabView`` or around them: there the environment router is still the root, so a second store is attached in place of the root's one.
 
 The optional `key` names the saved state. Most apps never need it. Changing the key reads another slot, so the next launch starts fresh; this is also a way to reset the saved state after an incompatible release.
 
@@ -123,9 +123,9 @@ Avoid identifiers that change between launches (for example a freshly generated 
 
 ### Container Identity
 
-Each container is saved under its identity in the router tree: its router type and the `name` of its root route (`stack(home)`, `tab(settings)`, `split(sidebar)`, `presented(editor)`, plus the sheet or cover slot of a modal), and the tab type name for a ``TabRouter``. Keep these names stable between releases, and distinct between siblings.
+Each container is saved under its identity in the router tree: its router type plus a name: the initial root route's name for a stack (`stack(home)`), the tab's name for a tab stack (`tab(settings)`), the sidebar route's name for a split (`split(sidebar)`), the presented route's name for a modal (`presented(editor)`, plus its sheet or cover slot), and the tab type name for a ``TabRouter``. Keep these names stable between releases, and distinct between siblings.
 
-Two siblings sharing an identity are not saved, and a `duplicateKey` error is logged once. Two splits that share the same sidebar route name but have different data types (for example a 2-column and a 3-column layout) decode each other's state with the wrong types: the result is a `decodingFailed` error and the default state.
+Two siblings sharing an identity are not saved, and a `duplicateKey` error is logged once. Two splits that share the same sidebar route name but have different data types (for example a 2-column and a 3-column layout) may decode each other's state: a 3-column state fails to decode in a 2-column split (`decodingFailed`, default state), and a 2-column state may come back in a 3-column split without a content selection. Give them distinct sidebar route names.
 
 ## When State Is Saved and Discarded
 
@@ -144,16 +144,16 @@ Restoration happens while the containers are created, before your deeplink handl
 
 ## When Something Cannot Be Restored
 
-Restoration never crashes your app because of a bad snapshot. Failures are scoped to a container: the container, and everything inside it, starts on its default state, while the other containers are restored normally. Each failure is logged once as an error through the configured logger, as ``RouterError/restoration(_:)``.
+Restoration never crashes your app because of a bad snapshot. Failures are scoped to a container; the other containers are restored normally. What is lost depends on the reason (see the table below). Each failure is logged once as an error through the configured logger, as ``RouterError/restoration(_:)``.
 
 | Reason | When | Result |
 |--------|------|--------|
 | `notCodable` | The container's route types are not `Codable` | The container starts on its default state and is never saved |
-| `decodingFailed` | The saved state no longer decodes (a renamed or removed case, a type change), or the whole saved data is corrupt or from an unknown version | The container and its subtree start on their default state. Corrupt data or an unknown version discards the whole snapshot |
-| `encodingFailed` | A route could not be encoded when saving (for example a route of another type pushed in the stack) | The container's own state is not saved, its children still are |
+| `decodingFailed` | The saved state no longer decodes (a renamed or removed case, a type change), or the whole saved data is corrupt or from an unknown version | The container and its subtree start on their default state (the only reason that also resets the subtree). Corrupt data or an unknown version discards the whole snapshot |
+| `encodingFailed` | A route could not be encoded when saving (a route or split selection that is not `Encodable`, for example a non-Codable route of another type pushed in the stack, or a custom `encode(to:)` that throws) | The container's own state is not saved, its children still are |
 | `duplicateKey` | Sibling containers share the same identity | None of them is saved |
 
-A saved tab that no longer decodes (a removed case) only costs the selection: the tab starts on the one passed to the view, and the stacks of the tabs are restored.
+A saved tab that no longer decodes (a removed case) only costs the selection: the tab starts on the one passed to the view, and the stacks of the tabs are restored. In the same way, a modal that fails to decode only costs that modal. A Codable route of another type pushed in a stack is saved without error, but makes the container fail to decode on the next launch.
 
 Observe the failures in your logger. The closure receives a ``LoggerConfiguration``:
 
@@ -189,7 +189,7 @@ A stack, split or modal can be created from a screen of another stack (a `Routin
 - the app root or a ``TabRouter``; or
 - a stack, split or modal restored in this launch that has not left its restored screens.
 
-After the host changes (a push, a pop, a root change with `update(root:)`, a selection change in a split, a deeplink), the state saved under the old screens is stale and the nested containers start on their default state. It stays stale even if an equal screen is pushed again.
+After the host leaves its restored screens (a pop below them, a root change with `update(root:)`, a selection change in a split, a deeplink that rebuilds the stack), or after any push or pop on a host that started on its default screens, the state saved under the old screens is stale and the nested containers start on their default state. It stays stale even if an equal screen is pushed again.
 
 A host that was not restored because it is not `Codable`, or because nothing was saved for it, counts as restored on its default first-frame screens (its root screen, a split's sidebar) until its first change. The containers nested there are restored; after the first change they are treated as stale like everywhere else.
 
@@ -197,7 +197,7 @@ A host that was not restored because it is not `Codable`, or because nothing was
 
 ## Orphaned Saved State
 
-A saved container that nothing asks for anymore, such as one under a renamed tab type or a removed tab case, is ignored without an error: the rest of the navigation is restored. Its bytes stay in the saved data until you call `clearNavigationRestoration()` or change the key.
+A saved container that nothing asks for anymore, such as one under a renamed tab type or a removed tab case, is ignored without an error: the rest of the navigation is restored. Its bytes stay in the saved data until you call `clearNavigationRestoration()`. Changing the key stops reading them.
 
 ## Clearing the Saved State at Logout
 

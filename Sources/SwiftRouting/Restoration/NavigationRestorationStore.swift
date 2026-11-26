@@ -65,7 +65,8 @@ final class NavigationRestorationStore: @unchecked Sendable {
   /// their subtree start on their default state.
   private var failed: Set<[String]> = []
   /// Paths of stacks and splits seeded from the snapshot, or built on their default screens, that later left
-  /// those screens (a push, a pop, a root change, a selection change, a deeplink): the nested containers
+  /// those screens (a pop below them, a root change, a selection change, a deeplink, or any push or pop on a
+  /// host built on its default screens): the nested containers
   /// saved under them are never seeded nor kept.
   private var screensGone: Set<[String]> = []
   /// Paths of containers seeded from the snapshot this session, or built on their default screens (not

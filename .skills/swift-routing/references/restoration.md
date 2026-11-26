@@ -4,7 +4,7 @@ Use this guide to bring users back to the same screens after the system kills th
 
 ## Enable
 
-Apply `.navigationRestoration()` once per scene, at the root, **before** `.environment(\.router, ...)`. Below the root it is a silent no-op. Without it nothing is saved, checked or logged.
+Apply `.navigationRestoration()` once per scene, at the root, **before** `.environment(\.router, ...)`. Inside a `RoutingView`, split or modal it is a silent no-op; never apply it around the `RoutingView`s of a `RoutingTabView` (the environment router is still the root there, a second store would be attached). Without it nothing is saved, checked or logged.
 
 ```swift
 RoutingView(destination: HomeRoute.self, root: .home)
@@ -29,13 +29,13 @@ A container is restored only when its types are `Codable`: routes (with associat
 
 ## Failures
 
-Logged once per container as `.error(.restoration(reason))`; the container and its subtree start on their default state, others are restored. Reasons: `notCodable`, `decodingFailed`, `encodingFailed`, `duplicateKey`.
+Logged once per container as `.error(.restoration(reason))`; the container starts on its default state (on `decodingFailed` its subtree too), others are restored. Reasons: `notCodable`, `decodingFailed`, `encodingFailed`, `duplicateKey`.
 - `shouldCrashOnRouteNotFound` crashes only on `notCodable` (when restoration is on), never on decoding failures.
 - `RouterError.restoration` is a new case: exhaustive `switch` over `RouterError` must handle it.
 
 ## Nested containers
 
-A container built inside a screen is restored only under the app root, a tab router, or a host restored in this launch that has not left its restored screens (push, pop, root change, selection change, deeplink). A non-`Codable` host or one with nothing saved counts as restored on its default screens until its first change. Limit: after `update(root:)` in the previous session, the nested state of the old root screen may be seeded under the default root.
+A container built inside a screen is restored only under the app root, a tab router, or a host restored in this launch that has not left its restored screens (a pop below them, root change, selection change, deeplink; a push or pop on a host that started on its default screens also counts). A non-`Codable` host or one with nothing saved counts as restored on its default screens until its first change. Limit: after `update(root:)` in the previous session, the nested state of the old root screen may be seeded under the default root.
 
 ## Logout and security
 

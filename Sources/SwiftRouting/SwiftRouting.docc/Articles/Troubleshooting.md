@@ -81,10 +81,11 @@ The app starts on its default screens after the system killed it, or one contain
 
 ### Cause
 
-- `navigationRestoration(_:)` is not applied at the root, or it is placed after `.environment(\.router, ...)`. Below the root it is a silent no-op.
+- `navigationRestoration(_:)` is not applied at the root, or it is placed after `.environment(\.router, ...)`. Applying it anywhere else is a silent no-op, or attaches a second store (inside a `RoutingTabView` content).
 - The container's route types (or the tab type, `ContentData`, `DetailData`) are not `Codable`.
 - The saved state no longer decodes after a renamed or removed case.
 - The app was closed from the app switcher, which discards the saved state.
+- The container is built in a screen its host has left since launch (no error is logged, the modifier missing also logs nothing). See <doc:NavigationRestoration#Containers-Nested-in-a-Screen>.
 
 ### Solution
 
