@@ -80,6 +80,10 @@ On iPhone, `NavigationSplitView` collapses into a single-column stack. Use ``Rou
 
 `router.present(_:)` and `.cover(_:)` are also router-wide, not per-column: calling them from any column presents the same sheet/cover over the whole `RoutingSplitView`.
 
+## Restoring the Split
+
+With ``SwiftUICore/View/navigationRestoration(_:)`` on, a split whose route type, `ContentData` and `DetailData` are `Codable` comes back with its content selection, detail selection and detail stack. A 2-column split (`ContentData == Never`) restores its detail selection. Pass stable identifiers in your selections rather than models. See <doc:NavigationRestoration>.
+
 ## Deep Linking
 
 Use ``SplitDeeplinkHandler`` to convert an external input into a ``SplitDeeplink``, and ``Router/handle(splitDeeplink:)`` to apply it:

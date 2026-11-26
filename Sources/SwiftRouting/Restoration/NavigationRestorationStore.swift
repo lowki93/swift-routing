@@ -64,8 +64,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
   /// Paths that failed to decode, or that belong to a modal the user presented fresh: they and
   /// their subtree start on their default state.
   private var failed: Set<[String]> = []
-  /// Paths of stacks seeded from the snapshot that later left their restored screens (a pop, a root change,
-  /// a deeplink): the nested containers saved under them are never seeded nor kept.
+  /// Paths of stacks and splits seeded from the snapshot, or built on their default screens, that later left
+  /// those screens (a push, a pop, a root change, a selection change, a deeplink): the nested containers
+  /// saved under them are never seeded nor kept.
   private var screensGone: Set<[String]> = []
   /// Paths of containers seeded from the snapshot this session, or built on their default screens (not
   /// restorable, nothing saved). A stack, split or presented router outside this set was replaced or
@@ -217,7 +218,8 @@ final class NavigationRestorationStore: @unchecked Sendable {
     lock.withLock { _ = failed.insert(path) }
   }
 
-  /// Records that the stack at `path`, seeded from the snapshot, left its restored screens.
+  /// Records that the stack or split at `path`, seeded from the snapshot or built on its default screens,
+  /// left those screens.
   ///
   /// Sticky: pushing an equal screen again does not bring the saved nested containers back.
   func markRestoredScreensGone(under path: [String]) {
@@ -367,8 +369,10 @@ final class NavigationRestorationStore: @unchecked Sendable {
 
   /// Whether the container about to be built under `parent` may use its saved node: only under the app
   /// root, a `TabRouter`, or a host restored this session that has not left its restored screens.
-  /// A host that was not restored (non-`Codable` types, a failed decode, nothing saved), or whose screens
-  /// changed (a pop, a selection change, a deeplink), leaves the node stale.
+  /// A host that failed to decode or was replaced by a second router at its path, or whose screens changed
+  /// (a push or pop on default screens, a pop below the restored path, a root or selection change, a
+  /// deeplink), leaves the node stale. A non-`Codable` host, or one with nothing saved, allows seeding
+  /// until its first change.
   func allowsSeeding(under parent: BaseRouter) -> Bool {
     if Self.isAlwaysSeedable(parent) { return true }
     let path = parent.restorationPath

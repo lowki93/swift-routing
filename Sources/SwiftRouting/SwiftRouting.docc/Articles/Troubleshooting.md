@@ -73,6 +73,23 @@ SwiftUI drops a modal set while the previous one is still animating out, so the 
 
 The delay is the earliest moment the new modal can be shown. If it never appears, look for a later request on the same router that replaced it, or a `close()` / `closeChildren()` call that dropped it.
 
+## Navigation Is Not Restored
+
+### Symptom
+
+The app starts on its default screens after the system killed it, or one container is not restored.
+
+### Cause
+
+- `navigationRestoration(_:)` is not applied at the root, or it is placed after `.environment(\.router, ...)`. Below the root it is a silent no-op.
+- The container's route types (or the tab type, `ContentData`, `DetailData`) are not `Codable`.
+- The saved state no longer decodes after a renamed or removed case.
+- The app was closed from the app switcher, which discards the saved state.
+
+### Solution
+
+Apply the modifier once at the root, before `.environment(\.router, ...)`, and make the types `Codable`. Look for `RouterError.restoration` errors in your logger: `notCodable`, `decodingFailed`, `encodingFailed` or `duplicateKey`. See <doc:NavigationRestoration>.
+
 ## Context Not Received
 
 If a context is sent but no observer is triggered, check:

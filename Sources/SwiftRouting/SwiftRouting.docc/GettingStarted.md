@@ -151,6 +151,7 @@ Now that you have the basics, explore these topics:
 - <doc:DeeplinkRouteGuide> - Define deep link routes with swift-url-routing
 - <doc:RouteContextGuide> - Pass data between routes
 - <doc:ConfigurationGuide> - Configure SwiftRouting and customize logging behavior
+- <doc:NavigationRestoration> - Bring users back to the same screens after the system kills the app
 - <doc:Architecture> - Understand the design principles behind SwiftRouting
 - <doc:Testing> - Write unit tests for your navigation logic
 - <doc:Migration> - Adopt SwiftRouting in an existing app with minimal disruption

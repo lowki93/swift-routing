@@ -61,6 +61,7 @@ Then continue by use case:
 - Child-to-parent data passing -> `references/route-context.md`
 - Declarative row/button navigation -> `references/navigation-link.md`
 - Configuring logger and route-not-found policy -> `references/configuration.md`
+- Restoring navigation after a system kill (`navigationRestoration`, Codable routes, logout) -> `references/restoration.md`
 - Generating `name` / `routingType` / `hideTabBarOnPush` with macros -> `references/macros.md`
 - Lifecycle/routing debugging -> `references/troubleshooting.md`
 
