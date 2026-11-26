@@ -14,12 +14,12 @@ import SwiftRouting
 struct SplitViewDeeplinkHandler: SplitDeeplinkHandler {
   typealias R = SplitViewDeeplinkID
   typealias ContentData = PlayerType
-  typealias DetailData = Player
+  typealias DetailData = Player.ID
   typealias D = AppRoute
 
   private let playerHandler = PlayerSplitDeeplinkHandler()
 
-  func deeplink(from route: SplitViewDeeplinkID) async throws -> SplitDeeplink<PlayerType, Player, AppRoute>? {
+  func deeplink(from route: SplitViewDeeplinkID) async throws -> SplitDeeplink<PlayerType, Player.ID, AppRoute>? {
     switch route {
     case let .players(target):
       try await playerHandler.deeplink(from: target)

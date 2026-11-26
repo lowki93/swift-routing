@@ -30,9 +30,13 @@ struct SidebarScreen: View {
       // On iPhone, NavigationSplitView collapses to a single column -- skip
       // auto-selection there and let the user tap to navigate instead.
       guard !router.isCompact else { return }
+      // Skip when a selection is already there (e.g. restored): selecting a different value
+      // would drop the restored nested state.
       if router.hasContentColumn {
+        guard router.contentSelection == nil else { return }
         router.select(content: array.first)
       } else {
+        guard router.detailSelection == nil else { return }
         router.select(detail: array.first)
       }
     }
