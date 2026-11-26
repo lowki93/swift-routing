@@ -49,10 +49,10 @@ struct TabLaunch {
   let root: Router
   let store: NavigationRestorationStore
 
-  init(data: Data?, shouldCrashOnRouteNotFound: Bool = false) {
+  init(data: Data?, shouldCrashOnRouteNotFound: Bool = false, failureHook: @escaping @Sendable (String) -> Void = { _ in }) {
     let spy = spy
     root = Router(configuration: Configuration(logger: { spy.receive($0) }, shouldCrashOnRouteNotFound: shouldCrashOnRouteNotFound))
-    store = NavigationRestorationStore(data: data, failureHook: { _ in })
+    store = NavigationRestorationStore(data: data, failureHook: failureHook)
     root.attachRestorationStore(store)
   }
 
@@ -106,14 +106,20 @@ struct TabRouterRestorationTests {
     func givenSavedTabB_whenTabRouterBuilt_thenNothingIsEmitted() async {
       await Task.yield()
       var presentCount = 0
-      let cancellable = launch.root.present.sink { _ in presentCount += 1 }
+      var reselectCount = 0
+      var tabChangeCount = 0
+      var cancellables: Set<AnyCancellable> = []
+      launch.root.present.sink { _ in presentCount += 1 }.store(in: &cancellables)
 
       let tabRouter = TabRouter(tab: CodableTestTabRoute.a, parent: launch.root)
+      tabRouter.tabReselected.sink { _ in reselectCount += 1 }.store(in: &cancellables)
+      tabRouter.$tab.dropFirst().sink { _ in tabChangeCount += 1 }.store(in: &cancellables)
       await Task.yield()
 
       #expect(presentCount == 0)
+      #expect(reselectCount == 0)
+      #expect(tabChangeCount == 0)
       #expect(tabRouter.restoredTab != nil)
-      withExtendedLifetime(cancellable) {}
     }
 
     @Test
@@ -409,6 +415,27 @@ struct TabRouterRestorationTests {
     }
 
     @Test
+    func givenNonCodableTabTypeAndCrashFlagOn_whenTabRouterBuilt_thenTheFailureHookIsCalledOnce() throws {
+      let recorder = FailureRecorder()
+      let launch = TabLaunch(data: try data(), shouldCrashOnRouteNotFound: true, failureHook: { recorder.record($0) })
+
+      _ = TabRouter(tab: TestTabRoute.home, parent: launch.root)
+
+      #expect(recorder.messages.count == 1)
+      #expect(recorder.messages.first?.contains("app/tabRouter(TestTabRoute)") == true)
+    }
+
+    @Test
+    func givenNonCodableTabTypeAndCrashFlagOff_whenTabRouterBuilt_thenTheFailureHookIsNotCalled() throws {
+      let recorder = FailureRecorder()
+      let launch = TabLaunch(data: try data(), failureHook: { recorder.record($0) })
+
+      _ = TabRouter(tab: TestTabRoute.home, parent: launch.root)
+
+      #expect(recorder.messages.isEmpty)
+    }
+
+    @Test
     func givenNonCodableTabType_whenStacksRebuilt_thenTheirPathsAreRestored() throws {
       let launch = TabLaunch(data: try data())
       let tabRouter = TabRouter(tab: TestTabRoute.home, parent: launch.root)
@@ -472,6 +499,127 @@ struct TabRouterRestorationTests {
       #expect(tabRouter.tab.wrapped as? RenamedCodableTestTabRoute == .main)
       #expect(tabRouter.restoredTab == nil)
       #expect(restorationErrorCount(launch.spy) == 0)
+    }
+  }
+
+  @MainActor
+  struct OrphanNodes {
+    @Test
+    func givenSavedNodeOfAnOldTabType_whenSavedWithTheRenamedTabRouter_thenTheOldSubtreeIsDropped() throws {
+      let launch = TabLaunch(data: try savedTabsData())
+      let tabRouter = TabRouter(tab: RenamedCodableTestTabRoute.main, parent: launch.root)
+
+      let snapshot = launch.snapshot()
+
+      #expect(snapshot.root.children["tabRouter(CodableTestTabRoute)"] == nil)
+      #expect(snapshot.root.children["tabRouter(RenamedCodableTestTabRoute)"] != nil)
+      withExtendedLifetime(tabRouter) {}
+    }
+
+    @Test
+    func givenSavedNodeOfAnOldTabType_whenSavedWithoutAnyTabRouter_thenTheOldSubtreeIsKept() throws {
+      let launch = TabLaunch(data: try savedTabsData())
+
+      #expect(launch.snapshot().root.children["tabRouter(CodableTestTabRoute)"] != nil)
+    }
+  }
+
+  @MainActor
+  struct NestedContainers {
+    private let home = AnyRoute(wrapped: CodableTestRoute.home)
+
+    /// Session 1: `stack(home)` on `[details(42)]` with a nested `stack(inner)` on `[settings]`,
+    /// built by the pushed screen.
+    private func savedNestedData() throws -> Data {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let host = Router(root: home, type: .stack("home"), parent: root, schema: schema)
+      host.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "42"))]
+      let inner = Router(root: home, type: .stack("inner"), parent: host, schema: schema)
+      inner.path = [AnyRoute(wrapped: CodableTestRoute.settings)]
+      let data = try store.save(from: root)
+      withExtendedLifetime((host, inner)) {}
+      return data
+    }
+
+    @Test
+    func givenHostPoppedBeforeTheNestedStackIsBuilt_whenSavedAndReloaded_thenAFreshPushStartsTheNestedStackEmpty() throws {
+      let second = TabLaunch(data: try savedNestedData())
+      let host2 = Router(root: home, type: .stack("home"), parent: second.root, schema: schema)
+      host2.path = []
+      let data2 = try second.store.save(from: second.root)
+
+      let third = TabLaunch(data: data2)
+      let host3 = Router(root: home, type: .stack("home"), parent: third.root, schema: schema)
+      host3.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "7"))]
+      let inner3 = Router(root: home, type: .stack("inner"), parent: host3, schema: schema)
+
+      #expect(inner3.path.isEmpty)
+    }
+
+    @Test
+    func givenHostPoppedBeforeTheNestedStackIsBuilt_whenSaved_thenTheNestedNodeIsDropped() throws {
+      let launch = TabLaunch(data: try savedNestedData())
+      let host = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
+      host.path = []
+
+      let node = launch.snapshot().root.children["stack(home)"]
+
+      #expect(node?.children["stack(inner)"] == nil)
+    }
+
+    @Test
+    func givenHostStillShowingTheSavedScreen_whenSavedBeforeTheNestedStackIsBuilt_thenTheNestedNodeIsKept() throws {
+      let launch = TabLaunch(data: try savedNestedData())
+      let host = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
+
+      let node = launch.snapshot().root.children["stack(home)"]
+
+      #expect(node?.children["stack(inner)"]?.state?.path.count == 1)
+      withExtendedLifetime(host) {}
+    }
+
+    @Test
+    func givenHostPoppedAndPushedAgainBeforeANestedTabRouterIsBuilt_whenBuilt_thenItStartsOnItsDefaultTab() throws {
+      let root = Router(configuration: Configuration())
+      let store = NavigationRestorationStore()
+      root.attachRestorationStore(store)
+      let host = Router(root: home, type: .stack("home"), parent: root, schema: schema)
+      host.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "42"))]
+      let nested = TabRouter(tab: CodableTestTabRoute.a, parent: host)
+      nested.change(tab: CodableTestTabRoute.b)
+      let data = try store.save(from: root)
+
+      let launch = TabLaunch(data: data)
+      let host2 = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
+      host2.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "7"))]
+      let nested2 = TabRouter(tab: CodableTestTabRoute.a, parent: host2)
+
+      #expect(nested2.restoredTab == nil)
+      #expect(nested2.tab.wrapped as? CodableTestTabRoute == .a)
+      withExtendedLifetime((host, nested)) {}
+    }
+
+    @Test
+    func givenHostStillShowingTheSavedScreen_whenNestedStackBuilt_thenItIsRestored() throws {
+      let launch = TabLaunch(data: try savedNestedData())
+      let host = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
+
+      let inner = Router(root: home, type: .stack("inner"), parent: host, schema: schema)
+
+      #expect(routes(of: inner) == [.settings])
+    }
+
+    @Test
+    func givenUnvisitedTabStacks_whenSavedUnderALiveTabRouter_thenTheyAreKept() throws {
+      let launch = TabLaunch(data: try savedTabsData())
+      let tabRouter = TabRouter(tab: CodableTestTabRoute.a, parent: launch.root)
+
+      let node = launch.snapshot().tabRouterNode
+
+      #expect(node?.children["tab(c)"]?.state?.path.count == 1)
+      withExtendedLifetime(tabRouter) {}
     }
   }
 }

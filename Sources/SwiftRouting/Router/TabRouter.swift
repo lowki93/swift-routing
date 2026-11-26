@@ -80,11 +80,16 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
     let schema = RestorationSchema(route: Tab.self)
     // Seeding is silent: the selection is set through the initial values, so there is no `change(tab:)`
     // log, no `popToRoot` and no `tabReselected`. A saved tab that no longer decodes is a default tab.
-    let restoration = parent.restorationStore?.restore(
-      at: parent.restorationPath + ["tabRouter(\(tabTypeName))"],
-      schema: schema,
-      crashOnNotCodable: parent.configuration.shouldCrashOnRouteNotFound
-    ) ?? .unrestored
+    let path = parent.restorationPath + ["tabRouter(\(tabTypeName))"]
+    var restoration = NavigationRestorationStore.Restoration.unrestored
+    if let store = parent.restorationStore {
+      if store.allowsSeeding(under: parent) {
+        restoration = store.restore(at: path, schema: schema, crashOnNotCodable: parent.configuration.shouldCrashOnRouteNotFound)
+      } else {
+        // The screen that builds this router is no longer the one it was saved under.
+        store.discard(at: path)
+      }
+    }
     let restoredTab = (restoration.state?.tab?.wrapped as? any TabRoute).map { AnyTabRoute(wrapped: $0) }
     self.tab = restoredTab ?? AnyTabRoute(wrapped: tab)
     self.restoredTab = restoredTab

@@ -254,9 +254,16 @@ final class NavigationRestorationStore: @unchecked Sendable {
 
     for (segment, storedChild) in stored?.children ?? [:] where !liveSegments.contains(segment) {
       let childPath = path + [segment]
-      if let slot = Self.modalSlot(of: segment), !Self.showsSameModal(slot, live: node.state, stored: stored?.state) {
-        continue
+      if let slot = Self.modalSlot(of: segment) {
+        guard Self.showsSameModal(slot, live: node.state, stored: stored?.state) else { continue }
+      } else if router is Router {
+        // A container nested in a screen of a live stack: it is kept only while that screen is still shown.
+        guard Self.showsSameScreens(live: node.state, stored: stored?.state) else { continue }
       }
+      // A tab type that was renamed leaves its old node next to the live one: nothing asks for it again.
+      // shortcut: the stack node of a removed tab case under a live TabRouter stays until `clearNavigationRestoration()`,
+      // as telling it apart needs the list of tab cases; upgrade if the stale data on disk becomes a problem.
+      if Self.isTabRouter(segment), liveSegments.contains(where: Self.isTabRouter) { continue }
       node.children[segment] = surviving(storedChild, at: childPath, history: history)
     }
     return node.isEmpty ? nil : node
@@ -285,6 +292,29 @@ final class NavigationRestorationStore: @unchecked Sendable {
     let liveRoute = slot == .sheet ? live?.sheet : live?.cover
     let storedRoute = slot == .sheet ? stored?.sheet : stored?.cover
     return liveRoute != nil && liveRoute == storedRoute
+  }
+
+  private static func isTabRouter(_ segment: String) -> Bool {
+    segment.hasPrefix("tabRouter(")
+  }
+
+  /// Whether a live stack still shows the screens its saved nodes were built from: the same root, and the
+  /// saved path as a prefix of the live one. Without a state on either side there is nothing to compare.
+  static func showsSameScreens(live: RouterState?, stored: RouterState?) -> Bool {
+    guard let live, let stored else { return true }
+    return live.root == stored.root && live.path.starts(with: stored.path)
+  }
+
+  /// Whether the container about to be built under `parent` may use its saved node: `parent`, a stack,
+  /// must still show the screens that node was saved with. A pop or a deeplink in between leaves the node stale.
+  func allowsSeeding(under parent: BaseRouter) -> Bool {
+    guard let parent = parent as? Router, let schema = parent.restorationSchema, schema.firstNonCodable == nil else { return true }
+    let stored = lock.withLock { _snapshot.root.node(at: parent.restorationPath.dropFirst())?.state }
+    guard let live = try? RouterState(
+      root: RestorationCodec.encode(parent.root),
+      path: parent.path.map(RestorationCodec.encode)
+    ) else { return true }
+    return Self.showsSameScreens(live: live, stored: stored)
   }
 
   /// What `router` contributes to a snapshot, `nil` when its container takes no part in restoration.

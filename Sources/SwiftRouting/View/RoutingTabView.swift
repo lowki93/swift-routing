@@ -98,7 +98,7 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
           return currentTab
         },
         set: {
-          hasCaughtUp = true
+          if tabRouter.restoredTab != nil, !hasCaughtUp { hasCaughtUp = true }
           currentTab = $0
         }
       )
@@ -113,11 +113,12 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
 //        }
       }
       .environment(\.tabRouter, tabRouter)
-      .onReceive(tabRouter.$tab) { [$currentTab, $hasCaughtUp] in
+      .onReceive(tabRouter.$tab) { [$currentTab, $hasCaughtUp, tabRouter] in
         if let tab = $0.wrapped as? Tab, tab != $currentTab.wrappedValue {
           $currentTab.wrappedValue = tab
         }
-        $hasCaughtUp.wrappedValue = true
+        // Written only when a tab was restored, so an app without restoration gets no extra body pass.
+        if tabRouter.restoredTab != nil, !$hasCaughtUp.wrappedValue { $hasCaughtUp.wrappedValue = true }
       }
     }
   }
