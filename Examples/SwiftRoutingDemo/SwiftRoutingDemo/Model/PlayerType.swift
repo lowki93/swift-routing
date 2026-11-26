@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum PlayerType: String, Identifiable {
+enum PlayerType: String, Identifiable, Codable {
   case footballer
   case basketballPlayer
 

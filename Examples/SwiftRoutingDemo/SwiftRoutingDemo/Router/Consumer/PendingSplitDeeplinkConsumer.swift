@@ -12,7 +12,7 @@ import SwiftUI
 // scope, same as every other column.
 //
 // SplitScreen swaps between two *structurally different* RoutingSplitView instances depending
-// on `isSplitThreeColumn`: 3-column (ContentData = PlayerType, DetailData = Player) and
+// on `isSplitThreeColumn`: 3-column (ContentData = PlayerType, DetailData = Player.ID) and
 // 2-column (no content column, DetailData = PlayerType). A single SplitDeeplinkHandler can't
 // express both shapes at once, so this consumer picks the handler matching whichever mode is
 // live right now, rather than forcing a mode switch -- the deep link works with the app's

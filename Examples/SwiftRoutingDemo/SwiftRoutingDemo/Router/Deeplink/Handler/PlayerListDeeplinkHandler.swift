@@ -24,7 +24,7 @@ struct PlayerListDeeplinkHandler: SplitDeeplinkHandler {
     case let .detail(type, name):
       Player.players.for(type: type)
         .first(where: { $0.name == name })
-        .map { player in SplitDeeplink(detail: type, deeplink: .push(AppRoute.players(.detail(player)))) }
+        .map { player in SplitDeeplink(detail: type, deeplink: .push(AppRoute.players(.detail(player.id)))) }
     }
   }
 }
