@@ -41,6 +41,7 @@ final class NavigationRestorationStore: @unchecked Sendable {
   private struct History {
     let used: Set<[String]>
     let failed: Set<[String]>
+    let screensGone: Set<[String]>
 
     func isFailed(_ path: [String]) -> Bool {
       failed.contains { path.starts(with: $0) }
@@ -59,6 +60,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
   /// Paths that failed to decode, or that belong to a modal the user presented fresh: they and
   /// their subtree start on their default state.
   private var failed: Set<[String]> = []
+  /// Paths of stacks seeded from the snapshot that later left their restored screens (a pop, a root change,
+  /// a deeplink): the nested containers saved under them are never seeded nor kept.
+  private var screensGone: Set<[String]> = []
   private var logged: Set<LogKey> = []
   private var loadFailure: RestorationReason?
   private let failureHook: FailureHook
@@ -168,6 +172,13 @@ final class NavigationRestorationStore: @unchecked Sendable {
     lock.withLock { _ = failed.insert(path) }
   }
 
+  /// Records that the stack at `path`, seeded from the snapshot, left its restored screens.
+  ///
+  /// Sticky: pushing an equal screen again does not bring the saved nested containers back.
+  func markRestoredScreensGone(under path: [String]) {
+    lock.withLock { _ = screensGone.insert(path) }
+  }
+
   /// Decodes a saved modal route. Callers hold `lock`.
   private func decodeModal(
     _ stored: StoredRoute?,
@@ -209,11 +220,12 @@ final class NavigationRestorationStore: @unchecked Sendable {
   /// or cover (so a pending or dismissing modal is never saved), and non-restorable routers. Siblings sharing a segment are not saved.
   ///
   /// The merge keeps a saved node without a live router only when it was never handed out (the stack of a
-  /// tab the user did not visit), is not a modal its live host no longer shows, and is not under a failed path.
+  /// tab the user did not visit), is not a modal its live host no longer shows, is not nested in a stack that left its restored
+  /// screens, and is not under a failed path.
   /// A live node always wins.
   @MainActor
   func snapshot(from root: BaseRouter) -> NavigationSnapshot {
-    let (stored, history) = lock.withLock { (_snapshot, History(used: used, failed: failed)) }
+    let (stored, history) = lock.withLock { (_snapshot, History(used: used, failed: failed, screensGone: screensGone)) }
     let storedRoot = stored.rootSegment == root.restorationSegment ? stored.root : nil
     let node = node(of: root, at: [root.restorationSegment], stored: storedRoot, history: history) ?? RestorationNode()
     return NavigationSnapshot(version: NavigationSnapshot.currentVersion, rootSegment: root.restorationSegment, root: node)
@@ -256,14 +268,13 @@ final class NavigationRestorationStore: @unchecked Sendable {
       let childPath = path + [segment]
       if let slot = Self.modalSlot(of: segment) {
         guard Self.showsSameModal(slot, live: node.state, stored: stored?.state) else { continue }
-      } else if router is Router {
-        // A container nested in a screen of a live stack: it is kept only while that screen is still shown.
-        guard Self.showsSameScreens(live: node.state, stored: stored?.state) else { continue }
+      } else if history.screensGone.contains(path) {
+        // A container nested in a screen of a stack that left its restored screens.
+        continue
       }
-      // A tab type that was renamed leaves its old node next to the live one: nothing asks for it again.
-      // shortcut: the stack node of a removed tab case under a live TabRouter stays until `clearNavigationRestoration()`,
-      // as telling it apart needs the list of tab cases; upgrade if the stale data on disk becomes a problem.
-      if Self.isTabRouter(segment), liveSegments.contains(where: Self.isTabRouter) { continue }
+      // shortcut: the node of a renamed tab type or of a removed tab case stays as stale bytes until
+      // `clearNavigationRestoration()`, as nothing asks for it again and telling it apart needs the list
+      // of tab cases; upgrade if the stale data on disk becomes a problem.
       node.children[segment] = surviving(storedChild, at: childPath, history: history)
     }
     return node.isEmpty ? nil : node
@@ -294,27 +305,12 @@ final class NavigationRestorationStore: @unchecked Sendable {
     return liveRoute != nil && liveRoute == storedRoute
   }
 
-  private static func isTabRouter(_ segment: String) -> Bool {
-    segment.hasPrefix("tabRouter(")
-  }
-
-  /// Whether a live stack still shows the screens its saved nodes were built from: the same root, and the
-  /// saved path as a prefix of the live one. Without a state on either side there is nothing to compare.
-  static func showsSameScreens(live: RouterState?, stored: RouterState?) -> Bool {
-    guard let live, let stored else { return true }
-    return live.root == stored.root && live.path.starts(with: stored.path)
-  }
-
-  /// Whether the container about to be built under `parent` may use its saved node: `parent`, a stack,
-  /// must still show the screens that node was saved with. A pop or a deeplink in between leaves the node stale.
+  /// Whether the container about to be built under `parent` may use its saved node: not when `parent`, a stack,
+  /// left the screens it was restored with (a pop or a deeplink in between leaves the node stale).
   func allowsSeeding(under parent: BaseRouter) -> Bool {
-    guard let parent = parent as? Router, let schema = parent.restorationSchema, schema.firstNonCodable == nil else { return true }
-    let stored = lock.withLock { _snapshot.root.node(at: parent.restorationPath.dropFirst())?.state }
-    guard let live = try? RouterState(
-      root: RestorationCodec.encode(parent.root),
-      path: parent.path.map(RestorationCodec.encode)
-    ) else { return true }
-    return Self.showsSameScreens(live: live, stored: stored)
+    guard parent is Router else { return true }
+    let path = parent.restorationPath
+    return lock.withLock { !screensGone.contains(path) }
   }
 
   /// What `router` contributes to a snapshot, `nil` when its container takes no part in restoration.

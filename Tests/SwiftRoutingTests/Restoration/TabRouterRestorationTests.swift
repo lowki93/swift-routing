@@ -505,13 +505,13 @@ struct TabRouterRestorationTests {
   @MainActor
   struct OrphanNodes {
     @Test
-    func givenSavedNodeOfAnOldTabType_whenSavedWithTheRenamedTabRouter_thenTheOldSubtreeIsDropped() throws {
+    func givenSavedNodeOfAnOldTabType_whenSavedWithTheRenamedTabRouter_thenTheOldSubtreeStaysAsStaleBytes() throws {
       let launch = TabLaunch(data: try savedTabsData())
       let tabRouter = TabRouter(tab: RenamedCodableTestTabRoute.main, parent: launch.root)
 
       let snapshot = launch.snapshot()
 
-      #expect(snapshot.root.children["tabRouter(CodableTestTabRoute)"] == nil)
+      #expect(snapshot.root.children["tabRouter(CodableTestTabRoute)"] != nil)
       #expect(snapshot.root.children["tabRouter(RenamedCodableTestTabRoute)"] != nil)
       withExtendedLifetime(tabRouter) {}
     }
@@ -593,12 +593,49 @@ struct TabRouterRestorationTests {
 
       let launch = TabLaunch(data: data)
       let host2 = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
-      host2.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "7"))]
+      host2.path = []
+      host2.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "42"))]
       let nested2 = TabRouter(tab: CodableTestTabRoute.a, parent: host2)
 
       #expect(nested2.restoredTab == nil)
       #expect(nested2.tab.wrapped as? CodableTestTabRoute == .a)
       withExtendedLifetime((host, nested)) {}
+    }
+
+    @Test
+    func givenHostPoppedAndPushedAnEqualScreenBeforeTheNestedStackIsBuilt_whenNestedStackBuilt_thenItStartsEmpty() throws {
+      let launch = TabLaunch(data: try savedNestedData())
+      let host = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
+      host.path = []
+      host.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "42"))]
+
+      let inner = Router(root: home, type: .stack("inner"), parent: host, schema: schema)
+
+      #expect(inner.path.isEmpty)
+    }
+
+    @Test
+    func givenHostPoppedAndPushedAnEqualScreen_whenSaved_thenTheStoredNestedNodeIsDropped() throws {
+      let launch = TabLaunch(data: try savedNestedData())
+      let host = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
+      host.path = []
+      host.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "42"))]
+
+      let node = launch.snapshot().root.children["stack(home)"]
+
+      #expect(node?.children["stack(inner)"] == nil)
+    }
+
+    @Test
+    func givenHostRootChangedBeforeTheNestedStackIsBuilt_whenNestedStackBuilt_thenItStartsEmpty() throws {
+      let launch = TabLaunch(data: try savedNestedData())
+      let host = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
+      host.root = AnyRoute(wrapped: CodableTestRoute.settings)
+      host.root = home
+
+      let inner = Router(root: home, type: .stack("inner"), parent: host, schema: schema)
+
+      #expect(inner.path.isEmpty)
     }
 
     @Test

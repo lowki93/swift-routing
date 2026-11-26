@@ -28,7 +28,13 @@ public class BaseRouter: ObservableObject, Identifiable {
         log(.context(.remove(context.route, context: context.routerContext)))
       }
     }
+    didSet {
+      if oldValue != root { rootDidChange() }
+    }
   }
+
+  /// Called after `root` changed to another route. Subclasses override it.
+  func rootDidChange() {}
 
   /// Publisher to know if a router is present or not
   let present: PassthroughSubject<(Bool, BaseRouter), Never>
