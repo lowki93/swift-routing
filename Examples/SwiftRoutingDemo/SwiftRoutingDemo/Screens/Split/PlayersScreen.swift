@@ -13,6 +13,7 @@ struct PlayersScreen: View {
   @Environment(\.router) private var router
   @Environment(\.isSplitThreeColumn) private var isThreeColumn
   @Environment(\.columnVisibility) private var columnVisibility
+  @Environment(\.horizontalSizeClass) private var horizontalSizeClass
   let type: PlayerType
 
   var body: some View {
@@ -24,7 +25,9 @@ struct PlayersScreen: View {
           }
           .onFirstAppear {
             // On compact width the split collapses to a stack: no detail selection means the list itself.
-            guard !router.isCompact else { return }
+            // Read the size class directly: `router.isCompact` is only updated on a size-class change,
+            // so it is still `false` on the first frame of a cold launch on iPhone.
+            guard horizontalSizeClass != .compact else { return }
             let players = Player.players.for(type: type)
             // Keep an already-selected player of this type (e.g. deep-linked) instead of
             // stomping it with the first one -- only auto-select when there's nothing usable.
