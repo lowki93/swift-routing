@@ -63,23 +63,49 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
   }
 
   public var body: some View {
-    Wrapped(
-      tabRouter: TabRouter(tab: tab, parent: parent),
-      currentTab: $tab,
-      destination: destination,
-      content: content
-    )
+    Wrapped(tab: tab, parent: parent, currentTab: $tab, destination: destination, content: content)
   }
 
   private struct Wrapped: View {
 
     @StateObject var tabRouter: TabRouter
     @Binding var currentTab: Tab
+    /// `true` once the caller's binding shows the tab the router was restored with.
+    @State private var hasCaughtUp = false
     let destination: Destination.Type
     let content: (Destination.Type) -> Content
 
+    init(
+      tab: Tab,
+      parent: BaseRouter,
+      currentTab: Binding<Tab>,
+      destination: Destination.Type,
+      content: @escaping (Destination.Type) -> Content
+    ) {
+      // The autoclosure of `StateObject` runs once, so a body pass builds no throwaway router.
+      self._tabRouter = StateObject(wrappedValue: TabRouter(tab: tab, parent: parent))
+      self._currentTab = currentTab
+      self.destination = destination
+      self.content = content
+    }
+
+    /// The restored tab until the caller's binding has caught up, so the first frame shows it and
+    /// the binding catching up is not a reselect.
+    private var selection: Binding<Tab> {
+      Binding(
+        get: {
+          if !hasCaughtUp, let restored = tabRouter.restoredTab?.wrapped as? Tab { return restored }
+          return currentTab
+        },
+        set: {
+          hasCaughtUp = true
+          currentTab = $0
+        }
+      )
+    }
+
     public var body: some View {
-      TabView(selection: .tabToRoot(for: $currentTab, in: tabRouter)) {
+      TabView(selection: .tabToRoot(for: selection, in: tabRouter)) {
         content(destination)
         // TODO: Try to had RoutingView for each child
 //        _VariadicView.Tree(TabViewContainer(currentTab: tab, destination: destination)) {
@@ -87,10 +113,11 @@ public struct RoutingTabView<Tab: TabRoute, Destination: RouteDestination, Conte
 //        }
       }
       .environment(\.tabRouter, tabRouter)
-      .onReceive(tabRouter.$tab) { [$currentTab] in
+      .onReceive(tabRouter.$tab) { [$currentTab, $hasCaughtUp] in
         if let tab = $0.wrapped as? Tab, tab != $currentTab.wrappedValue {
           $currentTab.wrappedValue = tab
         }
+        $hasCaughtUp.wrappedValue = true
       }
     }
   }

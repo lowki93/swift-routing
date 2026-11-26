@@ -430,7 +430,7 @@ struct ModalRestorationTests {
     }
 
     @Test
-    func givenRestoredSheetWithoutChildRouter_whenSnapshotTaken_thenTheSheetIsKeptWithoutItsOldNode() throws {
+    func givenRestoredSheetWithoutChildRouter_whenSnapshotTaken_thenTheSheetAndItsSavedNodeAreKept() throws {
       let data = try savedModalsData()
       let root = Router(configuration: Configuration())
       let store = NavigationRestorationStore(data: data)
@@ -440,7 +440,8 @@ struct ModalRestorationTests {
       let snapshot = store.snapshot(from: root)
 
       #expect(snapshot.root.children["stack(home)"]?.state?.sheet != nil)
-      #expect(snapshot.root.children["stack(home)"]?.children.isEmpty == true)
+      // The host still shows the restored sheet, whose router is not built yet: its node is not lost.
+      #expect(snapshot.root.children["stack(home)"]?.children["presented(details)#sheet"] != nil)
       withExtendedLifetime(host) {}
     }
 

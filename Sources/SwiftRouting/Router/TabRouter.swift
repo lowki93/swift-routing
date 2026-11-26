@@ -62,20 +62,43 @@ public final class TabRouter: BaseRouter, @unchecked Sendable {
     "tabRouter(\(tabTypeName))"
   }
 
+  /// What this router knows about the tab type, to save and restore the selected tab.
+  let restorationSchema: RestorationSchema
+
+  /// The tab this router was seeded with, `nil` when nothing was restored.
+  ///
+  /// `RoutingTabView` shows it from the first frame, until the caller's binding has caught up.
+  let restoredTab: AnyTabRoute?
+
   /// Initializes a `TabRouter` for a given tab.
   ///
   /// - Parameters:
   ///   - tab: The tab associated with this router.
   ///   - parent: The parent `Router` managing this tab.
-  init(tab: some TabRoute, parent: BaseRouter) {
-    self.tab = AnyTabRoute(wrapped: tab)
-    self.tabTypeName = String(describing: type(of: tab))
+  init<Tab: TabRoute>(tab: Tab, parent: BaseRouter) {
+    let tabTypeName = String(describing: Tab.self)
+    let schema = RestorationSchema(route: Tab.self)
+    // Seeding is silent: the selection is set through the initial values, so there is no `change(tab:)`
+    // log, no `popToRoot` and no `tabReselected`. A saved tab that no longer decodes is a default tab.
+    let restoration = parent.restorationStore?.restore(
+      at: parent.restorationPath + ["tabRouter(\(tabTypeName))"],
+      schema: schema,
+      crashOnNotCodable: parent.configuration.shouldCrashOnRouteNotFound
+    ) ?? .unrestored
+    let restoredTab = (restoration.state?.tab?.wrapped as? any TabRoute).map { AnyTabRoute(wrapped: $0) }
+    self.tab = restoredTab ?? AnyTabRoute(wrapped: tab)
+    self.restoredTab = restoredTab
+    self.tabTypeName = tabTypeName
+    self.restorationSchema = schema
     super.init(configuration: parent.configuration, root: AnyRoute(wrapped: tab), parent: parent)
     /// To avoid having more thant instance of the TabRoute, we remove the previous from the parent
     if let tabRouter = parent.tabRouter(for: tab) {
       parent.removeChild(tabRouter)
     }
     parent.addChild(self)
+
+    restoration.reasons.forEach { log(.error(.restoration($0))) }
+    restoration.crash?()
   }
 }
 
