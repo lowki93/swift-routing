@@ -484,7 +484,7 @@ struct RouterRestorationTests {
     }
 
     @Test
-    func givenContextAndTransientState_whenSnapshotEncoded_thenTheyNeverAppearInTheData() throws {
+    func givenContext_whenSnapshotEncoded_thenItNeverAppearsInTheData() throws {
       let root = Router(configuration: Configuration())
       let store = NavigationRestorationStore()
       root.attachRestorationStore(store)
@@ -495,12 +495,10 @@ struct RouterRestorationTests {
         schema: RestorationSchema(route: CodableTestRoute.self)
       )
       stack.add(context: StringContext.self) { _ in }
-      stack.present(CodableTestRoute.settings)
-      stack.present(CodableTestRoute.details(id: "later"))
 
       let snapshot = store.snapshot(from: root)
 
-      // No sheet, cover or other field is written while a modal is pending and a context is registered.
+      // No other field is written while a context is registered.
       let expected = RouterState(root: try RestorationCodec.encode(AnyRoute(wrapped: CodableTestRoute.home)), path: [])
       #expect(snapshot.root.children["stack(home)"]?.state == expected)
     }

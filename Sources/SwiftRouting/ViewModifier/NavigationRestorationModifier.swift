@@ -38,6 +38,8 @@ struct NavigationRestorationModifier: ViewModifier {
   }
 
   private func save(_ store: NavigationRestorationStore) {
+    // Not the store of this router (modifier applied below the app root): the root's modifier saves.
+    guard router.restorationStore === store else { return }
     do {
       data = try store.save(from: router)
     } catch {

@@ -31,6 +31,8 @@ final class NavigationRestorationStore: @unchecked Sendable {
   struct RestoredState {
     var root: AnyRoute?
     var path: [AnyRoute]
+    var sheet: AnyRoute?
+    var cover: AnyRoute?
   }
 
   private struct LogKey: Hashable {
@@ -42,7 +44,8 @@ final class NavigationRestorationStore: @unchecked Sendable {
   private var _snapshot: NavigationSnapshot
   /// Paths whose node was handed out already: a router built later at the same path starts on its default state.
   private var used: Set<[String]> = []
-  /// Paths that failed to decode: they and their subtree start on their default state.
+  /// Paths that failed to decode, or that belong to a modal the user presented fresh: they and
+  /// their subtree start on their default state.
   private var failed: Set<[String]> = []
   private var logged: Set<LogKey> = []
   private var loadFailure: RestorationReason?
@@ -128,7 +131,13 @@ final class NavigationRestorationStore: @unchecked Sendable {
       do {
         let root = try state.root.map { try schema.decodeRoute($0) }
         let routes = try state.path.map { try schema.decodeRoute($0) }
-        return Restoration(state: RestoredState(root: root, path: routes))
+        // An undecodable modal only costs the modal: the host keeps its root and path.
+        let sheet = decodeModal(state.sheet, slot: .sheet, at: path, schema: schema)
+        let cover = decodeModal(state.cover, slot: .cover, at: path, schema: schema)
+        return Restoration(
+          state: RestoredState(root: root, path: routes, sheet: sheet.route, cover: cover.route),
+          reasons: [sheet.reason, cover.reason].compactMap { $0 }
+        )
       } catch {
         failed.insert(path)
         let reason = RestorationReason.decodingFailed(container: Self.name(of: path), error: String(describing: error))
@@ -137,12 +146,36 @@ final class NavigationRestorationStore: @unchecked Sendable {
     }
   }
 
+  /// Starts the container at `path`, and everything below it, on its default state.
+  ///
+  /// Used for a modal the user presented fresh: no saved node may seed it, nor a container nested in it.
+  func discard(at path: [String]) {
+    lock.withLock { _ = failed.insert(path) }
+  }
+
+  /// Decodes a saved modal route. Callers hold `lock`.
+  private func decodeModal(
+    _ stored: StoredRoute?,
+    slot: ModalSlot,
+    at path: [String],
+    schema: RestorationSchema
+  ) -> (route: AnyRoute?, reason: RestorationReason?) {
+    guard let stored else { return (nil, nil) }
+    do {
+      return (try schema.decodeRoute(stored), nil)
+    } catch {
+      let modalPath = path.dropLast() + [(path.last ?? "") + "#\(slot.rawValue)"]
+      let reason = RestorationReason.decodingFailed(container: Self.name(of: Array(modalPath)), error: String(describing: error))
+      return (nil, shouldLog(Array(modalPath), "decodingFailed") ? reason : nil)
+    }
+  }
+
   // MARK: - Saving
 
   /// Walks the live tree from `root` and returns what it holds right now.
   ///
   /// Skips routers that left the screen, presented routers that are not their parent's current sheet
-  /// or cover, and non-restorable routers. Siblings sharing a segment are not saved.
+  /// or cover (so a pending or dismissing modal is never saved), and non-restorable routers. Siblings sharing a segment are not saved.
   @MainActor
   func snapshot(from root: BaseRouter) -> NavigationSnapshot {
     let node = node(of: root, at: [root.restorationSegment]) ?? RestorationNode()
@@ -186,7 +219,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
   private func state(of router: Router) throws -> RouterState {
     RouterState(
       root: try RestorationCodec.encode(router.root),
-      path: try router.path.map(RestorationCodec.encode)
+      path: try router.path.map(RestorationCodec.encode),
+      sheet: try router.sheet.map(RestorationCodec.encode),
+      cover: try router.cover.map(RestorationCodec.encode)
     )
   }
 
@@ -197,7 +232,9 @@ final class NavigationRestorationStore: @unchecked Sendable {
     guard router.isPresented else { return true }
     guard router.restorationSchema != nil else { return false }
     guard let parent = parent as? Router else { return false }
-    return [router].presenting([parent.sheet, parent.cover].compactMap { $0 }) != nil
+    // Only the router showing the parent's current sheet or cover, in its own slot.
+    let current = router.modalSlot.map { [$0 == .sheet ? parent.sheet : parent.cover] } ?? [parent.sheet, parent.cover]
+    return [router].presenting(current.compactMap { $0 }) != nil
   }
 
   // MARK: - Helpers

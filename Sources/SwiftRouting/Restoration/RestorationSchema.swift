@@ -21,15 +21,6 @@ struct RestorationSchema {
     }
   }
 
-  /// A schema for a container of the given type, `nil` for a presented container.
-  ///
-  /// A presented container takes no part in restoration until the host restores its own modal,
-  /// otherwise a sheet the user opens later would start from the previous session's state.
-  init?<R: Route>(type: RouterType, route: R.Type) {
-    guard !type.isPresented else { return nil }
-    self.init(route: route)
-  }
-
   /// The first type that is not `Codable`, if any.
   var firstNonCodable: Any.Type? {
     types.first { !RestorationCodec.isCodable($0) }

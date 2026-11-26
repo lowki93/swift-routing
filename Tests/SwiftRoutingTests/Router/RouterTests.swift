@@ -911,6 +911,58 @@ struct RouterTests {
       expectedLoggerSpy.receivedCallCount = 0
     }
 
+    /// A store whose snapshot holds `app -> stack(home)` showing a restored sheet and cover, as a previous session saved it.
+    private func restoredHost(in root: Router) throws -> Router {
+      let route = try RestorationCodec.encode(AnyRoute(wrapped: CodableTestRoute.home))
+      var snapshot = NavigationSnapshot(version: NavigationSnapshot.currentVersion, root: RestorationNode())
+      snapshot.root.children["stack(home)"] = RestorationNode(state: RouterState(root: route, sheet: route, cover: route))
+      root.attachRestorationStore(NavigationRestorationStore(snapshot: snapshot))
+      return Router(
+        root: AnyRoute(wrapped: CodableTestRoute.home),
+        type: .stack("home"),
+        parent: root,
+        schema: RestorationSchema(route: CodableTestRoute.self)
+      )
+    }
+
+    @Test
+    func restoredModalsWithoutChild_closeChildren_return_sheetAndCoverNil() throws {
+      let expectedRoot = Router(configuration: Configuration())
+      let expectedHost = try restoredHost(in: expectedRoot)
+
+      expectedHost.closeChildren()
+
+      #expect(expectedHost.sheet == nil)
+      #expect(expectedHost.cover == nil)
+    }
+
+    @Test
+    func restoredSheetWithoutChildAndNotRestoredCover_closeChildren_return_onlySheetNil() throws {
+      let expectedRoot = Router(configuration: Configuration())
+      let expectedHost = try restoredHost(in: expectedRoot)
+      expectedHost.cover = nil
+      expectedHost.cover = AnyRoute(wrapped: CodableTestRoute.settings)
+
+      expectedHost.closeChildren()
+
+      #expect(expectedHost.sheet == nil)
+      #expect((expectedHost.cover?.wrapped as? CodableTestRoute) == .settings)
+    }
+
+    @Test
+    func restoredSheetCleared_closeChildren_return_loggerNotCalled() throws {
+      let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)
+      let expectedRoot = Router(configuration: Configuration(loggerSpy: expectedLoggerSpy))
+      let expectedHost = try restoredHost(in: expectedRoot)
+      expectedHost.sheet = nil
+      expectedHost.cover = nil
+      let expectedCount = expectedLoggerSpy.receivedMessages.count
+
+      expectedHost.closeChildren()
+
+      #expect(expectedLoggerSpy.receivedMessages.count == expectedCount)
+    }
+
     @Test
     func presentedChildExists_closeChildren_return_loggerCalledWithActionCloseChildren() {
       let expectedLoggerSpy = LoggerSpy(storesConfiguration: false)

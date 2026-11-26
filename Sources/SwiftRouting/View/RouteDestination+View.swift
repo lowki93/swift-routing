@@ -60,7 +60,7 @@ public extension View {
     onDismiss: @escaping () -> Void
   ) -> some View {
     self.sheet(item: route, onDismiss: onDismiss) { route in
-      dismissableContent(anyRoute: route, for: destination)
+      dismissableContent(anyRoute: route, for: destination, slot: .sheet)
     }
   }
 
@@ -90,21 +90,26 @@ public extension View {
   ) -> some View {
     #if os(iOS)
     self.fullScreenCover(item: route, onDismiss: onDismiss) { route in
-      dismissableContent(anyRoute: route, for: destination)
+      dismissableContent(anyRoute: route, for: destination, slot: .cover)
     }
     #else
     // Fallback to sheet on macOS since fullScreenCover is not available
     self.sheet(item: route, onDismiss: onDismiss) { route in
-      dismissableContent(anyRoute: route, for: destination)
+      dismissableContent(anyRoute: route, for: destination, slot: .cover)
     }
     #endif
   }
 
   @ViewBuilder
-  private func dismissableContent<D: RouteDestination>(anyRoute: AnyRoute, for destination: D.Type) -> some View {
+  private func dismissableContent<D: RouteDestination>(
+    anyRoute: AnyRoute,
+    for destination: D.Type,
+    slot: ModalSlot
+  ) -> some View {
     ErrorView(route: anyRoute, destination: destination) { route, destination in
       RoutingView(
         type: .presented(route.name),
+        modalSlot: slot,
         inStack: anyRoute.inStack,
         destination: destination,
         root: route
