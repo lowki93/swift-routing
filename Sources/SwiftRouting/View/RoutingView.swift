@@ -42,6 +42,7 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
   @Environment(\.router) private var router
   @Environment(\.tabRouter) private var tabRouter
   private let type: RouterType
+  private let modalSlot: ModalSlot?
   private let inStack: Bool
   private let destination: Destination.Type
   private let root: Destination.R
@@ -55,12 +56,14 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
   init(
     type: RouterType,
+    modalSlot: ModalSlot? = nil,
     inStack: Bool,
     destination: Destination.Type,
     root: Destination.R,
     content: (() -> Content)?
   ) {
     self.type = type
+    self.modalSlot = modalSlot
     self.inStack = inStack
     self.destination = destination
     self.root = root
@@ -103,7 +106,8 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
         root: AnyRoute(wrapped: root, inStack: inStack),
         type: type,
         parent: parent,
-        schema: RestorationSchema(type: type, route: Destination.R.self)
+        modalSlot: modalSlot,
+        schema: RestorationSchema(route: Destination.R.self)
       ),
       inStack: inStack,
       destination: destination,
@@ -161,8 +165,8 @@ public struct RoutingView<Destination: RouteDestination, Content: View>: View {
 
 extension RoutingView where Content == EmptyView {
 
-  init(type: RouterType, inStack: Bool, destination: Destination.Type, root: Destination.R) {
-    self.init(type: type, inStack: inStack, destination: destination, root: root, content: nil)
+  init(type: RouterType, modalSlot: ModalSlot? = nil, inStack: Bool, destination: Destination.Type, root: Destination.R) {
+    self.init(type: type, modalSlot: modalSlot, inStack: inStack, destination: destination, root: root, content: nil)
   }
 
   /// Initializes a `RoutingView` for tab-based navigation.

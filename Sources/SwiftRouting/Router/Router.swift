@@ -73,6 +73,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var sheet: AnyRoute? {
     didSet {
       guard oldValue != sheet else { return }
+      forgetRestoredModal(.sheet)
       // Before `present.send`: an observer reacting to `false` may request the next modal right away.
       modalSlotChanged(from: oldValue, to: sheet)
       present.send((sheet != nil, self))
@@ -84,6 +85,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
   @Published internal var cover: AnyRoute? {
     didSet {
       guard oldValue != cover else { return }
+      forgetRestoredModal(.cover)
       modalSlotChanged(from: oldValue, to: cover)
       present.send((cover != nil, self))
       logCloseIfNeeded(from: oldValue, to: cover)
@@ -193,6 +195,14 @@ public final class Router: BaseRouter, @unchecked Sendable {
   /// What this router's container knows about its types, `nil` when it takes no part in restoration.
   let restorationSchema: RestorationSchema?
 
+  /// Guards `restoredModals`, read by a presented child built from `init`, off the main actor.
+  private let restoredModalsLock = NSLock()
+
+  /// The sheet and cover this router was seeded with and whose presented child is not built yet.
+  /// Only a child built for one of them may use its saved node, and the entry goes with the first
+  /// change of the slot, so a modal presented later starts on its default state.
+  private var restoredModals: [ModalSlot: AnyRoute] = [:]
+
   override var restorationSegment: String {
     Self.restorationSegment(type: type, modalSlot: modalSlot)
   }
@@ -274,13 +284,18 @@ public final class Router: BaseRouter, @unchecked Sendable {
 
     // Seed through the backing storage and the superclass initializer: the `path` observers, the
     // `.navigation` log, `present` and `events` stay silent, only `.create` is logged.
-    let restoration = Self.restoration(parent: parent, type: type, modalSlot: modalSlot, schema: schema)
+    let restoration = Self.restoration(parent: parent, type: type, modalSlot: modalSlot, root: root, schema: schema)
     if let restored = restoration.state {
       _path = Published(initialValue: restored.path)
+      _sheet = Published(initialValue: restored.sheet)
+      _cover = Published(initialValue: restored.cover)
     }
     super.init(configuration: parent.configuration, root: restoration.state?.root ?? root, parent: parent)
     self.isCompact = isCompact
     parent.addChild(self)
+    if let restored = restoration.state {
+      restoredModals = [ModalSlot.sheet: restored.sheet, .cover: restored.cover].compactMapValues { $0 }
+    }
 
     restoration.reasons.forEach { log(.error(.restoration($0))) }
     restoration.crash?()
@@ -291,14 +306,34 @@ public final class Router: BaseRouter, @unchecked Sendable {
     parent: BaseRouter,
     type: RouterType,
     modalSlot: ModalSlot?,
+    root: AnyRoute,
     schema: RestorationSchema?
   ) -> NavigationRestorationStore.Restoration {
-    guard let schema, let store = parent.restorationStore else { return .unrestored }
+    guard let store = parent.restorationStore else { return .unrestored }
+    let path = parent.restorationPath + [restorationSegment(type: type, modalSlot: modalSlot)]
+    if type.isPresented {
+      // A presented router uses its saved node only when its host restored this very modal in this
+      // session. A modal the user presents fresh starts on its default state, and so does everything in it.
+      guard let modalSlot, let host = parent as? Router, host.consumeRestoredModal(modalSlot, matching: root) else {
+        store.discard(at: path)
+        return .unrestored
+      }
+    }
+    guard let schema else { return .unrestored }
     return store.restore(
-      at: parent.restorationPath + [restorationSegment(type: type, modalSlot: modalSlot)],
+      at: path,
       schema: schema,
       crashOnNotCodable: parent.configuration.shouldCrashOnRouteNotFound
     )
+  }
+
+  /// Takes the modal this router restored in `slot`, `true` if `route` is the one a child is built for.
+  private func consumeRestoredModal(_ slot: ModalSlot, matching route: AnyRoute) -> Bool {
+    restoredModalsLock.withLock { restoredModals.removeValue(forKey: slot) } == route
+  }
+
+  private func forgetRestoredModal(_ slot: ModalSlot) {
+    restoredModalsLock.withLock { _ = restoredModals.removeValue(forKey: slot) }
   }
 
   /// A dismissing child released without reporting its dismissal ends it, as `dismissingChild` is
@@ -336,7 +371,14 @@ extension Router: @preconcurrency PresentationModel {
     pendingModal = nil
     let presentedChildren = children.values.compactMap({ $0.value as? Router }).filter(\.isPresented)
 
-    guard !presentedChildren.isEmpty else { return }
+    guard !presentedChildren.isEmpty else {
+      // A restored modal whose child is not built yet is not on screen to be closed by SwiftUI:
+      // a launch deeplink clears it here. A modal that was not restored is left alone.
+      let restored = restoredModalsLock.withLock { Set(restoredModals.keys) }
+      if restored.contains(.sheet) { sheet = nil }
+      if restored.contains(.cover) { cover = nil }
+      return
+    }
     presentedChildren.forEach {
       $0.isCloseLoggedExplicitly = true
       log(.action(.closeChildren($0)))

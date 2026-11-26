@@ -97,11 +97,19 @@ public class BaseRouter: ObservableObject, Identifiable {
 
   /// Makes `store` reachable from this router and every descendant, and reports why it
   /// discarded the data it was loaded with, if it did.
-  func attachRestorationStore(_ store: NavigationRestorationStore) {
+  ///
+  /// Only a root router takes a store. A router with a parent (for instance the one of a sheet whose
+  /// content applies the modifier by mistake) keeps the store it already reaches, so nothing is saved twice.
+  ///
+  /// - Returns: `true` if `store` was attached.
+  @discardableResult
+  func attachRestorationStore(_ store: NavigationRestorationStore) -> Bool {
+    guard parent == nil else { return false }
     restorationLock.withLock { attachedRestorationStore = store }
     if let failure = store.takeLoadFailure() {
       log(.error(.restoration(failure)))
     }
+    return true
   }
 
   /// Initializes a `BaseRouter` with a given configuration and an optional parent.
