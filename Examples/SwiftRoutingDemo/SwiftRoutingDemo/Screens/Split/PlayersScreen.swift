@@ -23,6 +23,8 @@ struct PlayersScreen: View {
             NavigationLink(item.name, value: item.id)
           }
           .onFirstAppear {
+            // On compact width the split collapses to a stack: no detail selection means the list itself.
+            guard !router.isCompact else { return }
             let players = Player.players.for(type: type)
             // Keep an already-selected player of this type (e.g. deep-linked) instead of
             // stomping it with the first one -- only auto-select when there's nothing usable.

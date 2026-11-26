@@ -5,7 +5,6 @@
 //  Created by Kevin Budain on 22/01/2025.
 //
 
-import SwiftRouting
 import SwiftUI
 
 @main

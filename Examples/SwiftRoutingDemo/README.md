@@ -31,6 +31,7 @@ The demo comes back to the same state after the app is killed and relaunched. `R
 
 What makes it work in the demo:
 
+- The plain **TabView** example keeps its selected tab as app state (not restored; its per-tab stacks are), while **RoutingTabView** restores its tab through the library.
 - Routes and tab routes (`AppRoute`, `PlayersRoute`, `FormRoute`, `NotificationsRoute`, `HomeTab`) are `Codable`.
 - Routes and selections carry stable identifiers, not models: `PlayersRoute.detail` takes a `Player.ID`, and players have fixed ids (a `UUID()` per launch would not resolve after a relaunch). `PlayerType` is `Codable`.
 - `ChoiceScreen` persists the selected example with `@SceneStorage`, and `SplitScreen` persists its 2-column or 3-column layout. Both layouts share the restoration key `split(Sidebar)` but use different data types, so the layout must come back with the navigation.
@@ -39,11 +40,11 @@ What makes it work in the demo:
 
 To try it:
 
-1. Run the app on a simulator from Xcode, pick an example (for instance **RoutingTabView**), switch to another tab, push a screen and present a sheet. For **SplitView**, pick a player and push a screen in the detail column.
+1. Run the app on a simulator from Xcode, pick an example (for instance **RoutingTabView**), switch to another tab, push a screen and present a sheet. For **SplitView** (2 columns), pick a type then a player (a push in the detail column); in 3 columns, pick a player and open Search (a sheet).
 2. Send the app to the background (Home, or `Shift+Cmd+H`). The state is saved when the scene leaves the foreground.
 3. Stop the app from Xcode (Stop button), then run it again. The same example, tab, stack and sheet come back without a flash.
 4. Closing the app from the app switcher starts fresh, because the system discards the scene's saved state.
-5. Tap **Reset saved state**, background the app, stop and relaunch: the app starts on the choice screen with the default layout.
+5. Tap **Reset saved state**, background the app, stop and relaunch: the app starts on the choice screen.
 
 On iPad, open two windows to see that each one restores independently. A deeplink opened at launch is applied on top of the restored state.
 

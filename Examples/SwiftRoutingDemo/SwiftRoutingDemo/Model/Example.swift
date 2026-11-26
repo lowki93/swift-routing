@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum Example: String, Codable {
+enum Example: String {
   case navigationStack
   case tabView
   case routingTabView

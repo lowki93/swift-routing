@@ -17,8 +17,6 @@ struct ChoiceScreen: View {
   // The selected example is persisted per window, so a relaunch comes back on the same example
   // (the navigation inside it is restored by `.navigationRestoration()` on the root).
   @SceneStorage("SwiftRoutingDemo.example") private var example: Example?
-  @SceneStorage(SplitScreen.isThreeColumnKey) private var isSplitThreeColumn = false
-  @SceneStorage(SplitScreen.columnVisibilityKey) private var splitColumnVisibility: ColumnVisibility = .all
 
   var body: some View {
     content
@@ -39,12 +37,10 @@ struct ChoiceScreen: View {
   }
 
   // Erases the saved navigation, then unmounts the example so nothing re-saves it when the app
-  // goes to the background: the next launch starts on the choice screen with the default layout.
+  // goes to the background: the next launch starts on the choice screen.
   private func resetRestoration() {
     router.clearNavigationRestoration()
     example = nil
-    isSplitThreeColumn = false
-    splitColumnVisibility = .all
   }
 
   @ViewBuilder private var content: some View {
