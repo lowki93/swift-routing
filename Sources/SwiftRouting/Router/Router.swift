@@ -42,6 +42,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
       removeContext(old: path, new: newValue)
     }
     didSet {
+      if let restoredPath, !path.starts(with: restoredPath) { restoredScreensGone() }
       // `NavigationStack(path: $router.path)` (in `RoutingView`/`RoutingSplitView`) lets
       // SwiftUI mutate `path` directly through the binding -- bypassing push(_:)/pop()/
       // popToRoot()/terminate(_:) entirely -- for a native `NavigationLink` push, a
@@ -203,6 +204,21 @@ public final class Router: BaseRouter, @unchecked Sendable {
   /// change of the slot, so a modal presented later starts on its default state.
   private var restoredModals: [ModalSlot: AnyRoute] = [:]
 
+  /// The path this router was seeded with, until its stack first changes below it.
+  /// Read and written from the main actor, after `init`.
+  private var restoredPath: [AnyRoute]?
+
+  /// The first change of the stack below the restored screens: the nested containers saved under
+  /// them are stale for good, even if an equal screen is pushed again.
+  private func restoredScreensGone() {
+    restoredPath = nil
+    restorationStore?.markRestoredScreensGone(under: restorationPath)
+  }
+
+  override func rootDidChange() {
+    if restoredPath != nil { restoredScreensGone() }
+  }
+
   override var restorationSegment: String {
     Self.restorationSegment(type: type, modalSlot: modalSlot)
   }
@@ -295,6 +311,7 @@ public final class Router: BaseRouter, @unchecked Sendable {
     parent.addChild(self)
     if let restored = restoration.state {
       restoredModals = [ModalSlot.sheet: restored.sheet, .cover: restored.cover].compactMapValues { $0 }
+      restoredPath = restored.path
     }
 
     restoration.reasons.forEach { log(.error(.restoration($0))) }
@@ -318,6 +335,10 @@ public final class Router: BaseRouter, @unchecked Sendable {
         store.discard(at: path)
         return .unrestored
       }
+    } else if !store.allowsSeeding(under: parent) {
+      // The screen that builds this container is no longer the one it was saved under.
+      store.discard(at: path)
+      return .unrestored
     }
     guard let schema else { return .unrestored }
     return store.restore(
