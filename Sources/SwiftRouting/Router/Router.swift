@@ -318,6 +318,10 @@ public final class Router: BaseRouter, @unchecked Sendable {
         store.discard(at: path)
         return .unrestored
       }
+    } else if !store.allowsSeeding(under: parent) {
+      // The screen that builds this container is no longer the one it was saved under.
+      store.discard(at: path)
+      return .unrestored
     }
     guard let schema else { return .unrestored }
     return store.restore(

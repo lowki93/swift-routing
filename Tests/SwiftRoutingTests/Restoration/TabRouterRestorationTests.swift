@@ -602,6 +602,17 @@ struct TabRouterRestorationTests {
     }
 
     @Test
+    func givenHostPushedAnotherScreenBeforeTheNestedStackIsBuilt_whenNestedStackBuilt_thenItStartsEmpty() throws {
+      let launch = TabLaunch(data: try savedNestedData())
+      let host = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
+      host.path = [AnyRoute(wrapped: CodableTestRoute.details(id: "7"))]
+
+      let inner = Router(root: home, type: .stack("inner"), parent: host, schema: schema)
+
+      #expect(inner.path.isEmpty)
+    }
+
+    @Test
     func givenHostStillShowingTheSavedScreen_whenNestedStackBuilt_thenItIsRestored() throws {
       let launch = TabLaunch(data: try savedNestedData())
       let host = Router(root: home, type: .stack("home"), parent: launch.root, schema: schema)
